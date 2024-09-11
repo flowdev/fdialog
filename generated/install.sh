@@ -11,13 +11,13 @@ main() {
 
 	# this is quite ugly, but this way we do not depend on the json parse, nor do we depend
 	# on any particular formatting, just the value
-	version=$(curl -s https://api.github.com/repos/https://github.com/flowdev/fdialog/releases/latest | grep -o 'https://github.com/https://github.com/flowdev/fdialog/releases/tag/v[0-9.]*' | grep -o 'v[0-9.]*$')
+	version=$(curl -s https://api.github.com/repos/flowdev/fdialog/releases/latest | grep -o 'https://github.com/flowdev/fdialog/releases/tag/v[0-9.]*' | grep -o 'v[0-9.]*$')
 
 	if [ ! -z $1 ]; then
 		version="v$1"
 	fi
 
-	release_uri="https://github.com/https://github.com/flowdev/fdialog/releases/download/$version/fdialog_${os}_${arch}.tar.gz"
+	release_uri="https://github.com/flowdev/fdialog/releases/download/$version/fdialog_${os}_${arch}.tar.gz"
 	echo "Getting version $version, $release_uri"
 
 	install_path="${CUSTOM_INSTALL:-$HOME}"
