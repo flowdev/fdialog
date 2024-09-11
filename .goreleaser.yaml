@@ -6,7 +6,7 @@
 # yaml-language-server: $schema=https://goreleaser.com/static/schema.json
 # vim: set ts=2 sw=2 tw=0 fo=cnqoj
 
-version: 1
+version: 2
 
 env:
   - BUILD_ENV={{if index .Env "BUILD_ENV"}}{{.Env.BUILD_ENV}}{{else}}production{{end}}
@@ -21,7 +21,6 @@ builds:
       - CGO_ENABLED=0
     goos:
       - linux
-      - darwin
     ldflags:
       - -X github.com/https://github.com/flowdev/fdialog/generated/buildinfo.buildDate={{.CommitDate}}
       - -X github.com/https://github.com/flowdev/fdialog/generated/buildinfo.buildVersion={{.Version}}
