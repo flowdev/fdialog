@@ -97,7 +97,7 @@ func BuildTime() time.Time {
 // it's generated only once, no need to have it
 // as a parameter
 func GithubRepo() string {
-	return "https://github.com/flowdev/fdialog"
+	return "flowdev/fdialog"
 }
 
 func ProjectName() string {
