@@ -6,24 +6,28 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var dest string
-var genFormat string
+var generateCmdData = struct {
+	dest   string
+	format string
+}{}
 
 // generateCmd represents the generate command
 var generateCmd = &cobra.Command{
 	Use:   "generate",
 	Short: "Generate Go files that create the described GUI",
 	Long:  `Generate Go files that create the described GUI`,
+	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("generate called")
+		fmt.Printf("generate called with dest=%q, format=%q and args=%q\n",
+			generateCmdData.dest, generateCmdData.format, args)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(generateCmd)
 
-	generateCmd.Flags().StringVarP(&genFormat, "format", "t", "uidl",
+	generateCmd.Flags().StringVarP(&generateCmdData.format, "format", "t", "uidl",
 		"format of the GUI description (valid values are: json, go or uidl)")
-	generateCmd.Flags().StringVarP(&dest, "dest", "d", ".",
+	generateCmd.Flags().StringVarP(&generateCmdData.dest, "dest", "d", ".",
 		"destination directory for the generated result files")
 }
