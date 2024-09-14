@@ -47,6 +47,7 @@ func doRun(cmd *cobra.Command, args []string) {
 
 	// For info:
 	//win := window.NewInformation("Info!", "This is the info for you.", fda)
+	//win.SetDismissText("Got it.")
 	//win.SetOnClosed(func() {
 	//	fda.Quit()
 	//	os.Exit(0)
