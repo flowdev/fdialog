@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 	"fyne.io/fyne/v2"
-	"github.com/flowdev/fdialog/window"
+	"fyne.io/fyne/v2/dialog"
 	"os"
 
 	"fyne.io/fyne/v2/app"
@@ -61,12 +61,20 @@ func doRun(cmd *cobra.Command, args []string) {
 	//})
 
 	// For Confirmation:
-	win := window.NewConfirm("Confirmation", "Do you really want to do XXX?", confirmCallback(fda), fda)
-	win.SetDismissText("Nah")
-	win.SetConfirmText("Oh Yes!")
-
-	win.Resize(fyne.NewSize(200, 100))
+	//win := window.NewConfirm("Confirmation", "Do you really want to do XXX?", confirmCallback(fda), fda)
+	//win.SetDismissText("Nah")
+	//win.SetConfirmText("Oh Yes!")
+	win := fda.NewWindow("")
+	cnf := dialog.NewConfirm("", "Do you really want to do XXX?", confirmCallback(fda), win)
+	cnf.SetDismissText("Oh, NO!")
+	cnf.SetConfirmText("Yes, please.")
+	cnfSize := fyne.NewSize(400, 200)
+	cnf.Resize(cnfSize)
+	win.Resize(cnfSize)
 	win.SetFixedSize(true)
+	cnf.Show()
+
+	win.SetTitle("Confirmation")
 	win.Show()
 	fda.Run()
 }
