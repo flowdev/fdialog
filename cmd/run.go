@@ -31,7 +31,7 @@ func init() {
 	rootCmd.AddCommand(runCmd)
 
 	runCmd.Flags().StringVarP(&runCmdData.format, "format", "t", "uidl",
-		"format of the GUI description (valid values are: json, go or uidl)")
+		"format of the GUI description (valid values are: json or uidl)")
 	runCmd.Flags().StringVarP(&runCmdData.fileName, "file", "f", "",
 		"name of file with GUI description")
 	runCmd.Flags().StringVarP(&runCmdData.url, "url", "u", "",
