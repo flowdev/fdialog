@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"os"
 	"reflect"
 	"regexp"
 )
@@ -52,17 +53,17 @@ var validKeywords = map[keywordType]keywordValueType{
 				required: true,
 				validate: stringValidator(1, 0, nil),
 			},
-			"dismissText": {
+			"buttonText": {
 				kind:     reflect.String,
 				validate: stringValidator(1, 0, nil),
 			},
 			"width": {
 				kind:     reflect.Int,
-				validate: intValidator(50, 0),
+				validate: intValidator(50, math.MaxInt64),
 			},
 			"height": {
 				kind:     reflect.Int,
-				validate: intValidator(80, 0),
+				validate: intValidator(80, math.MaxInt64),
 			},
 		},
 	},
@@ -83,17 +84,17 @@ var validKeywords = map[keywordType]keywordValueType{
 				required: true,
 				validate: stringValidator(1, 0, nil),
 			},
-			"dismissText": {
+			"buttonText": {
 				kind:     reflect.String,
 				validate: stringValidator(1, 0, nil),
 			},
 			"width": {
 				kind:     reflect.Int,
-				validate: intValidator(50, 0),
+				validate: intValidator(50, math.MaxInt64),
 			},
 			"height": {
 				kind:     reflect.Int,
-				validate: intValidator(80, 0),
+				validate: intValidator(80, math.MaxInt64),
 			},
 		},
 	},
@@ -128,27 +129,28 @@ var validKeywords = map[keywordType]keywordValueType{
 			},
 			"width": {
 				kind:     reflect.Int,
-				validate: intValidator(50, 0),
+				validate: intValidator(50, math.MaxInt64),
 			},
 			"height": {
 				kind:     reflect.Int,
-				validate: intValidator(80, 0),
+				validate: intValidator(80, math.MaxInt64),
 			},
 		},
 	},
 }
 
 // Validate validates the data from a whole UI description file independent of its format.
-// If lenient is true additional attributes are no errors.
-func Validate(uiDescr []map[string]any, lenient bool) error {
+// If strict is true additional attributes are errors.
+func Validate(uiDescr []map[string]any, strict bool) error {
 	var errs []error
 
 	for i, keywordMap := range uiDescr {
 		keyword, name, typ, err := keywordNameType(i, keywordMap)
 		if err != nil {
 			errs = append(errs, err)
+		} else {
+			errs = append(errs, validateKeyword(i, keyword, name, typ, keywordMap, strict))
 		}
-		errs = append(errs, validateKeyword(i, keyword, name, typ, keywordMap, lenient))
 	}
 	return errors.Join(errs...)
 }
@@ -157,14 +159,15 @@ func validateKeyword(
 	i int,
 	keyword, name, typ string,
 	valueMap map[string]any,
-	lenient bool,
+	strict bool,
 ) error {
 	keywordTypeValidationData, ok := validKeywords[keywordType{keyword: keyword, typ: typ}]
 	if !ok {
-		return fmt.Errorf("for %d-th keyword %q is the type %q not supported", i, keyword, typ)
+		return fmt.Errorf("for %d-th keyword map is the combination of keyword %q and type %q not supported",
+			i, keyword, typ)
 	}
 
-	return validateAttributes(i, keyword, name, typ, valueMap, keywordTypeValidationData.attributes, lenient)
+	return validateAttributes(i, keyword, name, typ, valueMap, keywordTypeValidationData.attributes, strict)
 }
 
 func validateAttributes(
@@ -172,7 +175,7 @@ func validateAttributes(
 	keyword, name, typ string,
 	valueMap map[string]any,
 	attributes map[string]attributeValueType,
-	lenient bool,
+	strict bool,
 ) error {
 
 	validatedAttributes := make(map[string]bool, len(attributes))
@@ -181,7 +184,11 @@ func validateAttributes(
 	for attrName, attribute := range attributes {
 		if vv, ok := valueMap[attrName]; ok {
 			validatedAttributes[attrName] = true
-			errs = append(errs, attribute.validate(vv))
+			err := attribute.validate(vv)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("for the %d-th keyword %q, name %q, type %q and attribute %q: %v",
+					i, keyword, name, typ, attrName, err.Error()))
+			}
 		} else if attribute.required {
 			errs = append(errs, fmt.Errorf("for the %d-th keyword %q, name %q and type %q is attribute %q required",
 				i, keyword, name, typ, attrName))
@@ -200,10 +207,13 @@ func validateAttributes(
 
 		err := fmt.Errorf("for the %d-th keyword %q, name %q and type %q are these given attributes too much: %q",
 			i, keyword, name, typ, keysTooMuch)
-		if !lenient {
+		if strict {
 			errs = append(errs, err)
 		} else {
-			fmt.Println("Warning:", err.Error())
+			_, err = fmt.Fprintln(os.Stderr, "Warning:", err.Error())
+			if err != nil {
+				// can't do much here
+			}
 		}
 	}
 	return errors.Join(errs...)
