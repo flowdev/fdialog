@@ -71,6 +71,18 @@ func TestValidate(t *testing.T) {
 					"confirmText": "Yes, please.",
 					"width":       int64(240),
 					"height":      int64(200),
+					"children": map[string]map[string]any{
+						"confirm": {
+							"keyword": "action",
+							"type":    "exit",
+							"code":    int64(0),
+						},
+						"dismiss": {
+							"keyword": "action",
+							"type":    "exit",
+							"code":    int64(1),
+						},
+					},
 				},
 			},
 			givenStrict:      true,
@@ -108,6 +120,18 @@ func TestValidate(t *testing.T) {
 					"keyword": "dialog",
 					"type":    "confirmation",
 					"message": "Please confirm (no. two)",
+					"children": map[string]map[string]any{
+						"confirm": {
+							"keyword": "action",
+							"type":    "exit",
+							"code":    int64(0),
+						},
+						"dismiss": {
+							"keyword": "action",
+							"type":    "exit",
+							"code":    int64(1),
+						},
+					},
 				},
 			},
 			givenStrict:      true,
@@ -213,7 +237,7 @@ func TestValidate(t *testing.T) {
 				},
 			},
 			givenStrict:      true,
-			expectedErrCount: 7,
+			expectedErrCount: 8,
 		}, {
 			name: "errorWithTitle",
 			givenUiDescr: map[string]map[string]any{
@@ -324,6 +348,79 @@ func TestValidate(t *testing.T) {
 			},
 			givenStrict:      true,
 			expectedErrCount: 2,
+		}, {
+			name: "minimalLink",
+			givenUiDescr: map[string]map[string]any{
+				"link1": {
+					"keyword":     "link",
+					"destination": "info1",
+				},
+			},
+			givenStrict:      true,
+			expectedErrCount: 0,
+		}, {
+			name: "minimalLink",
+			givenUiDescr: map[string]map[string]any{
+				"link1": {
+					"keyword":     "link",
+					"destination": "info1",
+				},
+			},
+			givenStrict:      true,
+			expectedErrCount: 0,
+		}, {
+			name: "maximalLink",
+			givenUiDescr: map[string]map[string]any{
+				"link2": {
+					"keyword":     "link",
+					"type":        "local",
+					"destination": "main.info1",
+				},
+			},
+			givenStrict:      true,
+			expectedErrCount: 0,
+		}, {
+			name: "wrongLink",
+			givenUiDescr: map[string]map[string]any{
+				"link3": {
+					"keyword":     "link",
+					"destination": "main:info1",
+				},
+			},
+			givenStrict:      true,
+			expectedErrCount: 1,
+		}, {
+			name: "minimalAction",
+			givenUiDescr: map[string]map[string]any{
+				"act1": {
+					"keyword": "action",
+					"type":    "exit",
+				},
+			},
+			givenStrict:      true,
+			expectedErrCount: 0,
+		}, {
+			name: "maximalAction",
+			givenUiDescr: map[string]map[string]any{
+				"act2": {
+					"keyword": "action",
+					"type":    "exit",
+					"code":    int64(127),
+				},
+			},
+			givenStrict:      true,
+			expectedErrCount: 0,
+		}, {
+			name: "wrongAction",
+			givenUiDescr: map[string]map[string]any{
+				"act2": {
+					"keyword": "action",
+					"type":    "exit",
+					"code":    int64(-1),
+				},
+			},
+			givenStrict:      true,
+			expectedErrCount: 1,
 		},
 	}
 

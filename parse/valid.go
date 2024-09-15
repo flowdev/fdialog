@@ -36,6 +36,7 @@ var validKeywords map[keywordType]keywordValueType
 // need this init function, or we would get an initialization cycle :(
 func init() {
 	nameRegex := regexp.MustCompile(`^[\pL\pN_]*$`)
+	linkRegex := regexp.MustCompile(`^[\pL\pN_](?:[\pL\pN_.]*?[\pL\pN_])?$`)
 
 	validKeywords = map[keywordType]keywordValueType{
 		keywordType{"window", ""}: {
@@ -49,7 +50,7 @@ func init() {
 					validate: stringValidator(1, 0, nameRegex),
 				},
 				keyType: {
-					validate: stringValidator(1, 0, nil),
+					validate: stringValidator(1, 0, nameRegex),
 				},
 				"title": {
 					validate: stringValidator(1, 0, nil),
@@ -62,6 +63,24 @@ func init() {
 				},
 				"children": {
 					validate: childrenValidator(0, math.MaxInt),
+				},
+			},
+		},
+		keywordType{"link", ""}: {
+			attributes: map[string]attributeValueType{
+				keyKeyword: {
+					required: true,
+					validate: exactStringValidator("link", "", keyKeyword, "link"),
+				},
+				keyName: {
+					required: true,
+					validate: stringValidator(1, 0, nameRegex),
+				},
+				keyType: {
+					validate: stringValidator(1, 0, nameRegex),
+				},
+				"destination": {
+					validate: stringValidator(1, 0, linkRegex),
 				},
 			},
 		},
@@ -160,6 +179,7 @@ func init() {
 					validate: intValidator(80, math.MaxInt64),
 				},
 				"children": {
+					required: true,
 					validate: childrenValidator(2, 2),
 				},
 			},
@@ -226,6 +246,9 @@ func validateKeyword(
 	strict bool,
 ) error {
 	keywordTypeValidationData, ok := validKeywords[keywordType{keyword: keyword, typ: typ}]
+	if !ok && typ != "" { // try empty type; will error later if not supported
+		keywordTypeValidationData, ok = validKeywords[keywordType{keyword: keyword, typ: ""}]
+	}
 	if !ok {
 		return fmt.Errorf("for the keyword map %q is the combination of keyword %q and type %q not supported",
 			name, keyword, typ)
