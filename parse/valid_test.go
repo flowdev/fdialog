@@ -139,6 +139,17 @@ func TestValidate(t *testing.T) {
 			givenStrict:      true,
 			expectedErrCount: 1,
 		}, {
+			name: "wrongName",
+			givenUiDescr: map[string]map[string]any{
+				"dia.log1": {
+					"keyword": "dialog",
+					"type":    "info",
+					"message": "Your info",
+				},
+			},
+			givenStrict:      true,
+			expectedErrCount: 1,
+		}, {
 			name: "wrongType",
 			givenUiDescr: map[string]map[string]any{
 				"dialog1": {

@@ -35,6 +35,8 @@ var validKeywords map[keywordType]keywordValueType
 
 // need this init function, or we would get an initialization cycle :(
 func init() {
+	nameRegex := regexp.MustCompile(`^[\pL\pN_]*$`)
+
 	validKeywords = map[keywordType]keywordValueType{
 		keywordType{"window", ""}: {
 			attributes: map[string]attributeValueType{
@@ -44,7 +46,7 @@ func init() {
 				},
 				keyName: {
 					required: true,
-					validate: stringValidator(1, 0, nil),
+					validate: stringValidator(1, 0, nameRegex),
 				},
 				keyType: {
 					validate: stringValidator(1, 0, nil),
@@ -71,7 +73,7 @@ func init() {
 				},
 				keyName: {
 					required: true,
-					validate: stringValidator(1, 0, nil),
+					validate: stringValidator(1, 0, nameRegex),
 				},
 				keyType: {
 					required: true,
@@ -103,7 +105,7 @@ func init() {
 				},
 				keyName: {
 					required: true,
-					validate: stringValidator(1, 0, nil),
+					validate: stringValidator(1, 0, nameRegex),
 				},
 				keyType: {
 					required: true,
@@ -132,7 +134,7 @@ func init() {
 				},
 				keyName: {
 					required: true,
-					validate: stringValidator(1, 0, nil),
+					validate: stringValidator(1, 0, nameRegex),
 				},
 				keyType: {
 					required: true,
@@ -170,7 +172,7 @@ func init() {
 				},
 				keyName: {
 					required: true,
-					validate: stringValidator(1, 0, nil),
+					validate: stringValidator(1, 0, nameRegex),
 				},
 				keyType: {
 					required: true,
