@@ -7,7 +7,7 @@ import (
 	hjson "github.com/hjson/hjson-go/v4"
 )
 
-// ParseJSON parses (H)JSON from a Reader and gives it back suitable for validation.
+// ParseJSON parses (H)JSON from a Reader and gives the content back suitable for validation.
 // An error is returned if the steam can't be unmarshalled or a data type doesn't match.
 func ParseJSON(input io.Reader) (map[string]map[string]any, error) {
 	data := make(map[string]map[string]any)

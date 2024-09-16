@@ -53,7 +53,7 @@ func init() {
 			attributes: map[string]attributeValueType{
 				KeyKeyword: {
 					required: true,
-					validate: exactStringValidator(KeywordWindow, "", KeyKeyword, KeywordWindow),
+					validate: exactStringValidator(KeywordWindow),
 				},
 				KeyName: {
 					required: true,
@@ -80,7 +80,7 @@ func init() {
 			attributes: map[string]attributeValueType{
 				KeyKeyword: {
 					required: true,
-					validate: exactStringValidator(KeywordLink, "", KeyKeyword, KeywordLink),
+					validate: exactStringValidator(KeywordLink),
 				},
 				KeyName: {
 					required: true,
@@ -99,7 +99,7 @@ func init() {
 			attributes: map[string]attributeValueType{
 				KeyKeyword: {
 					required: true,
-					validate: exactStringValidator(KeywordDialog, "info", KeyKeyword, KeywordDialog),
+					validate: exactStringValidator(KeywordDialog),
 				},
 				KeyName: {
 					required: true,
@@ -107,7 +107,7 @@ func init() {
 				},
 				KeyType: {
 					required: true,
-					validate: exactStringValidator(KeywordDialog, "info", KeyType, "info"),
+					validate: exactStringValidator("info"),
 				},
 				"title": {
 					validate: stringValidator(1, 0, nil),
@@ -131,7 +131,7 @@ func init() {
 			attributes: map[string]attributeValueType{
 				KeyKeyword: {
 					required: true,
-					validate: exactStringValidator(KeywordDialog, "error", KeyKeyword, KeywordDialog),
+					validate: exactStringValidator(KeywordDialog),
 				},
 				KeyName: {
 					required: true,
@@ -139,7 +139,7 @@ func init() {
 				},
 				KeyType: {
 					required: true,
-					validate: exactStringValidator(KeywordDialog, "error", KeyType, "error"),
+					validate: exactStringValidator("error"),
 				},
 				"message": {
 					required: true,
@@ -160,7 +160,7 @@ func init() {
 			attributes: map[string]attributeValueType{
 				KeyKeyword: {
 					required: true,
-					validate: exactStringValidator(KeywordDialog, "confirmation", KeyKeyword, KeywordDialog),
+					validate: exactStringValidator(KeywordDialog),
 				},
 				KeyName: {
 					required: true,
@@ -168,7 +168,7 @@ func init() {
 				},
 				KeyType: {
 					required: true,
-					validate: exactStringValidator(KeywordDialog, "confirmation", KeyType, "confirmation"),
+					validate: exactStringValidator("confirmation"),
 				},
 				"title": {
 					validate: stringValidator(1, 0, nil),
@@ -199,7 +199,7 @@ func init() {
 			attributes: map[string]attributeValueType{
 				KeyKeyword: {
 					required: true,
-					validate: exactStringValidator(KeywordAction, "exit", KeyKeyword, KeywordAction),
+					validate: exactStringValidator(KeywordAction),
 				},
 				KeyName: {
 					required: true,
@@ -207,7 +207,7 @@ func init() {
 				},
 				KeyType: {
 					required: true,
-					validate: exactStringValidator(KeywordAction, "exit", KeyType, "exit"),
+					validate: exactStringValidator("exit"),
 				},
 				"code": {
 					validate: intValidator(0, 127),
@@ -224,19 +224,10 @@ func init() {
 // Mandatory key for keyword maps is: "keyword"
 // The key "type" is expected for most keywords but not for all.
 func Validate(uiDescr map[string]map[string]any, strict bool) error {
-	return validateRecursivMap(uiDescr, 0, 0, strict, "")
+	return validateRecursiveMap(uiDescr, strict, "")
 }
 
-func validateRecursivMap(m map[string]map[string]any, minLen, maxLen int, strict bool, parent string) error {
-	if minLen > 0 && len(m) < minLen {
-		return fmt.Errorf("for keyword map %q: expecting at least %d map elements, got %d",
-			parent, minLen, len(m))
-	}
-	if maxLen > 0 && len(m) > maxLen {
-		return fmt.Errorf("for keyword map %q: expecting at most %d map elements, got %d",
-			parent, maxLen, len(m))
-	}
-
+func validateRecursiveMap(m map[string]map[string]any, strict bool, parent string) error {
 	var errs []error
 
 	for name, keywordMap := range m {
@@ -252,7 +243,7 @@ func validateRecursivMap(m map[string]map[string]any, minLen, maxLen int, strict
 }
 
 func validateKeyword(
-	keyword, name, typ string,
+	keyword, fullName, typ string,
 	valueMap map[string]any,
 	strict bool,
 ) error {
@@ -261,15 +252,15 @@ func validateKeyword(
 		keywordTypeValidationData, ok = validKeywords[keywordType{keyword: keyword, typ: ""}]
 	}
 	if !ok {
-		return fmt.Errorf("for the keyword map %q is the combination of keyword %q and type %q not supported",
-			name, keyword, typ)
+		return fmt.Errorf("for %q: the combination of keyword %q and type %q is not supported",
+			fullName, keyword, typ)
 	}
 
-	return validateAttributes(keyword, name, typ, valueMap, keywordTypeValidationData.attributes, strict)
+	return validateAttributes(fullName, valueMap, keywordTypeValidationData.attributes, strict)
 }
 
 func validateAttributes(
-	keyword, name, typ string,
+	fullName string,
 	valueMap map[string]any,
 	attributes map[string]attributeValueType,
 	strict bool,
@@ -281,14 +272,14 @@ func validateAttributes(
 	for attrName, attribute := range attributes {
 		if vv, ok := valueMap[attrName]; ok {
 			validatedAttributes[attrName] = true
-			err := attribute.validate(vv, strict, name)
+			err := attribute.validate(vv, strict, fullName)
 			if err != nil {
-				errs = append(errs, fmt.Errorf("for the keyword %q, name %q, type %q and attribute %q: %v",
-					keyword, name, typ, attrName, err.Error()))
+				errs = append(errs, fmt.Errorf("for %q, attribute %q: %v",
+					fullName, attrName, err.Error()))
 			}
 		} else if attribute.required {
-			errs = append(errs, fmt.Errorf("for the keyword %q, name %q and type %q is attribute %q required",
-				keyword, name, typ, attrName))
+			errs = append(errs, fmt.Errorf("for %q, is attribute %q required",
+				fullName, attrName))
 		}
 	}
 
@@ -302,8 +293,7 @@ func validateAttributes(
 			}
 		}
 
-		err := fmt.Errorf("for the keyword %q, name %q and type %q are these attributes too much: %q",
-			keyword, name, typ, keysTooMuch)
+		err := fmt.Errorf("for %q: these attributes are too much: %s", fullName, keysTooMuch)
 		if strict {
 			errs = append(errs, err)
 		} else {
@@ -313,13 +303,12 @@ func validateAttributes(
 	return errors.Join(errs...)
 }
 
-func getKeywordType(keywordMap map[string]any, name string) (keyword, typ string, err error) {
+func getKeywordType(keywordMap map[string]any, fullName string) (keyword, typ string, err error) {
 	rkeyword := reflect.ValueOf(keywordMap[KeyKeyword])
 	if rkeyword.Kind() != reflect.String {
-		return "", "", fmt.Errorf(
-			"expecting a string value for the keyword map %q and key %q, got a %s",
-			name, KeyKeyword, rkeyword.Kind(),
-		)
+		return "", "",
+			fmt.Errorf("for %q: expecting the keyword to be a string, got a %s",
+				fullName, rkeyword.Kind())
 	}
 	keyword = rkeyword.String()
 
@@ -328,10 +317,9 @@ func getKeywordType(keywordMap map[string]any, name string) (keyword, typ string
 	if ok {
 		rtype := reflect.ValueOf(atype)
 		if rtype.Kind() != reflect.String {
-			return "", "", fmt.Errorf(
-				"expecting a string value for the keyword %q, name %q and key %q, got a %s",
-				keyword, name, KeyType, rtype.Kind(),
-			)
+			return "", "",
+				fmt.Errorf("for %q: expecting the type attribute to be a string, got a %s",
+					fullName, rtype.Kind())
 		}
 		typ = rtype.String()
 	}
@@ -361,18 +349,17 @@ func stringValidator(minLen, maxLen int, regex *regexp.Regexp) func(v any, stric
 		return nil
 	}
 }
-func exactStringValidator(keyword, typ, attribute string, expected string) func(v any, strict bool, parent string) error {
+func exactStringValidator(expected string) func(v any, strict bool, parent string) error {
 	return func(v any, strict bool, parent string) error {
 		rv := reflect.ValueOf(v)
 		if rv.Kind() != reflect.String {
-			return fmt.Errorf("for keyword %q, type %q expecting attribute %s to be of type string, got %q",
-				keyword, typ, attribute, rv.Kind())
+			return fmt.Errorf("expecting a string value, got %q", rv.Kind())
 		}
 		s := rv.String()
 
 		if s != expected {
-			return fmt.Errorf("for keyword %q, type %q expecting attribute %s to have value %q, got %q",
-				keyword, typ, attribute, expected, s)
+			return fmt.Errorf("expecting value to be %q, got %q",
+				expected, s)
 		}
 
 		return nil
@@ -390,7 +377,7 @@ func intValidator(minVal, maxVal int64) func(v any, strict bool, parent string) 
 				return fmt.Errorf("expecting an int64 (or a float64 convertable to it), got %f", f)
 			}
 		} else if rv.Kind() != reflect.Int64 {
-			return fmt.Errorf("expecting a int64 value, got %s", rv.Kind())
+			return fmt.Errorf("expecting an int64 value, got %s", rv.Kind())
 		} else {
 			i = rv.Int()
 		}
@@ -452,7 +439,7 @@ func childrenValidator(minLen, maxLen int) func(v any, strict bool, parent strin
 			return fmt.Errorf("expecting at most %d map elements, got %d", maxLen, len(m))
 		}
 
-		return validateRecursivMap(m, minLen, maxLen, strict, parent)
+		return validateRecursiveMap(m, strict, parent)
 	}
 }
 
