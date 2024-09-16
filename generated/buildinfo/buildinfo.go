@@ -1,6 +1,7 @@
 package buildinfo
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -9,7 +10,6 @@ import (
 
 	"github.com/can3p/kleiner/shared/types"
 	"github.com/can3p/kleiner/shared/version"
-	"github.com/pkg/errors"
 )
 
 // The code has been borrowed from flyctl project - https://github.com/superfly/flyctl/blob/0dff860a878e2b280f2f53ce2aaf21ce39d800c2/internal/buildinfo
@@ -31,15 +31,15 @@ func init() {
 
 func loadMeta() error {
 	if err := loadCachedName(); err != nil {
-		return errors.Wrap(err, "error loading executable name")
+		return fmt.Errorf("error loading executable name: %w", err)
 	}
 
 	if err := loadBuildTime(); err != nil {
-		return errors.Wrap(err, "error loading build date from embedded flag")
+		return fmt.Errorf("error loading build date from embedded flag: %w", err)
 	}
 
 	if err := loadVersion(); err != nil {
-		return errors.Wrap(err, "error loading build version from embedded flag")
+		return fmt.Errorf("error loading build version from embedded flag: %w", err)
 	}
 
 	return nil

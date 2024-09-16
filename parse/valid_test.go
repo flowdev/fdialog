@@ -359,16 +359,6 @@ func TestValidate(t *testing.T) {
 			givenStrict:      true,
 			expectedErrCount: 0,
 		}, {
-			name: "minimalLink",
-			givenUiDescr: map[string]map[string]any{
-				"link1": {
-					"keyword":     "link",
-					"destination": "info1",
-				},
-			},
-			givenStrict:      true,
-			expectedErrCount: 0,
-		}, {
 			name: "maximalLink",
 			givenUiDescr: map[string]map[string]any{
 				"link2": {

@@ -3,17 +3,27 @@ package parse
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"math"
-	"os"
 	"reflect"
 	"regexp"
 	"strings"
 )
 
+// Reserved attribute names:
 const (
-	keyKeyword = "keyword"
-	keyName    = "name"
-	keyType    = "type"
+	KeyKeyword  = "keyword"
+	KeyName     = "name"
+	KeyChildren = "children"
+	KeyType     = "type" // type is used like an ordinary attribute, but it has special semantics
+)
+
+// Recognized keywords:
+const (
+	KeywordWindow = "window"
+	KeywordDialog = "dialog"
+	KeywordAction = "action"
+	KeywordLink   = "link"
 )
 
 type keywordType struct {
@@ -35,68 +45,69 @@ var validKeywords map[keywordType]keywordValueType
 
 // need this init function, or we would get an initialization cycle :(
 func init() {
-	nameRegex := regexp.MustCompile(`^[\pL\pN_]*$`)
-	linkRegex := regexp.MustCompile(`^[\pL\pN_](?:[\pL\pN_.]*?[\pL\pN_])?$`)
+	nameRegex := regexp.MustCompile(`^[\pL\pN_]+$`)
+	linkRegex := regexp.MustCompile(`^[\pL\pN_]+(?:[.][\pL\pN_]+)*$`)
 
 	validKeywords = map[keywordType]keywordValueType{
-		keywordType{"window", ""}: {
+		keywordType{KeywordWindow, ""}: {
 			attributes: map[string]attributeValueType{
-				keyKeyword: {
+				KeyKeyword: {
 					required: true,
-					validate: exactStringValidator("window", "", keyKeyword, "window"),
+					validate: exactStringValidator(KeywordWindow, "", KeyKeyword, KeywordWindow),
 				},
-				keyName: {
+				KeyName: {
 					required: true,
 					validate: stringValidator(1, 0, nameRegex),
 				},
-				keyType: {
+				KeyType: {
 					validate: stringValidator(1, 0, nameRegex),
 				},
 				"title": {
 					validate: stringValidator(1, 0, nil),
 				},
 				"width": {
-					validate: intValidator(50, math.MaxInt64),
+					validate: floatValidator(50.0, math.MaxFloat32),
 				},
 				"height": {
-					validate: intValidator(80, math.MaxInt64),
+					validate: floatValidator(80.0, math.MaxFloat32),
 				},
-				"children": {
+				KeyChildren: {
 					validate: childrenValidator(0, math.MaxInt),
 				},
 			},
 		},
-		keywordType{"link", ""}: {
+		keywordType{KeywordLink, ""}: {
 			attributes: map[string]attributeValueType{
-				keyKeyword: {
+				KeyKeyword: {
 					required: true,
-					validate: exactStringValidator("link", "", keyKeyword, "link"),
+					validate: exactStringValidator(KeywordLink, "", KeyKeyword, KeywordLink),
 				},
-				keyName: {
+				KeyName: {
 					required: true,
 					validate: stringValidator(1, 0, nameRegex),
 				},
-				keyType: {
+				KeyType: {
 					validate: stringValidator(1, 0, nameRegex),
 				},
 				"destination": {
+					required: true,
 					validate: stringValidator(1, 0, linkRegex),
 				},
 			},
 		},
-		keywordType{"dialog", "info"}: {
+		keywordType{KeywordDialog, "info"}: {
 			attributes: map[string]attributeValueType{
-				keyKeyword: {
+				KeyKeyword: {
 					required: true,
-					validate: exactStringValidator("dialog", "info", keyKeyword, "dialog"),
+					validate: exactStringValidator(KeywordDialog, "info", KeyKeyword, KeywordDialog),
 				},
-				keyName: {
+				KeyName: {
 					required: true,
 					validate: stringValidator(1, 0, nameRegex),
 				},
-				keyType: {
+				KeyType: {
 					required: true,
-					validate: exactStringValidator("dialog", "info", keyType, "info"),
+					validate: exactStringValidator(KeywordDialog, "info", KeyType, "info"),
 				},
 				"title": {
 					validate: stringValidator(1, 0, nil),
@@ -109,26 +120,26 @@ func init() {
 					validate: stringValidator(1, 0, nil),
 				},
 				"width": {
-					validate: intValidator(50, math.MaxInt64),
+					validate: floatValidator(50.0, math.MaxFloat32),
 				},
 				"height": {
-					validate: intValidator(80, math.MaxInt64),
+					validate: floatValidator(80.0, math.MaxFloat32),
 				},
 			},
 		},
-		keywordType{"dialog", "error"}: {
+		keywordType{KeywordDialog, "error"}: {
 			attributes: map[string]attributeValueType{
-				keyKeyword: {
+				KeyKeyword: {
 					required: true,
-					validate: exactStringValidator("dialog", "error", keyKeyword, "dialog"),
+					validate: exactStringValidator(KeywordDialog, "error", KeyKeyword, KeywordDialog),
 				},
-				keyName: {
+				KeyName: {
 					required: true,
 					validate: stringValidator(1, 0, nameRegex),
 				},
-				keyType: {
+				KeyType: {
 					required: true,
-					validate: exactStringValidator("dialog", "error", keyType, "error"),
+					validate: exactStringValidator(KeywordDialog, "error", KeyType, "error"),
 				},
 				"message": {
 					required: true,
@@ -138,26 +149,26 @@ func init() {
 					validate: stringValidator(1, 0, nil),
 				},
 				"width": {
-					validate: intValidator(50, math.MaxInt64),
+					validate: floatValidator(50.0, math.MaxFloat32),
 				},
 				"height": {
-					validate: intValidator(80, math.MaxInt64),
+					validate: floatValidator(80.0, math.MaxFloat32),
 				},
 			},
 		},
-		keywordType{"dialog", "confirmation"}: {
+		keywordType{KeywordDialog, "confirmation"}: {
 			attributes: map[string]attributeValueType{
-				keyKeyword: {
+				KeyKeyword: {
 					required: true,
-					validate: exactStringValidator("dialog", "confirmation", keyKeyword, "dialog"),
+					validate: exactStringValidator(KeywordDialog, "confirmation", KeyKeyword, KeywordDialog),
 				},
-				keyName: {
+				KeyName: {
 					required: true,
 					validate: stringValidator(1, 0, nameRegex),
 				},
-				keyType: {
+				KeyType: {
 					required: true,
-					validate: exactStringValidator("dialog", "confirmation", keyType, "confirmation"),
+					validate: exactStringValidator(KeywordDialog, "confirmation", KeyType, "confirmation"),
 				},
 				"title": {
 					validate: stringValidator(1, 0, nil),
@@ -173,30 +184,30 @@ func init() {
 					validate: stringValidator(1, 0, nil),
 				},
 				"width": {
-					validate: intValidator(50, math.MaxInt64),
+					validate: floatValidator(50.0, math.MaxFloat32),
 				},
 				"height": {
-					validate: intValidator(80, math.MaxInt64),
+					validate: floatValidator(80.0, math.MaxFloat32),
 				},
-				"children": {
+				KeyChildren: {
 					required: true,
 					validate: childrenValidator(2, 2),
 				},
 			},
 		},
-		keywordType{"action", "exit"}: {
+		keywordType{KeywordAction, "exit"}: {
 			attributes: map[string]attributeValueType{
-				keyKeyword: {
+				KeyKeyword: {
 					required: true,
-					validate: exactStringValidator("action", "exit", keyKeyword, "action"),
+					validate: exactStringValidator(KeywordAction, "exit", KeyKeyword, KeywordAction),
 				},
-				keyName: {
+				KeyName: {
 					required: true,
 					validate: stringValidator(1, 0, nameRegex),
 				},
-				keyType: {
+				KeyType: {
 					required: true,
-					validate: exactStringValidator("action", "exit", keyType, "exit"),
+					validate: exactStringValidator(KeywordAction, "exit", KeyType, "exit"),
 				},
 				"code": {
 					validate: intValidator(0, 127),
@@ -229,12 +240,12 @@ func validateRecursivMap(m map[string]map[string]any, minLen, maxLen int, strict
 	var errs []error
 
 	for name, keywordMap := range m {
-		keywordMap[keyName] = name
-		keyword, typ, err := getKeywordType(keywordMap, joinParentName(parent, name))
+		keywordMap[KeyName] = name
+		keyword, typ, err := getKeywordType(keywordMap, JoinParentName(parent, name))
 		if err != nil {
 			errs = append(errs, err)
 		} else {
-			errs = append(errs, validateKeyword(keyword, joinParentName(parent, name), typ, keywordMap, strict))
+			errs = append(errs, validateKeyword(keyword, JoinParentName(parent, name), typ, keywordMap, strict))
 		}
 	}
 	return errors.Join(errs...)
@@ -291,38 +302,35 @@ func validateAttributes(
 			}
 		}
 
-		err := fmt.Errorf("for the keyword %q, name %q and type %q are these given attributes too much: %q",
+		err := fmt.Errorf("for the keyword %q, name %q and type %q are these attributes too much: %q",
 			keyword, name, typ, keysTooMuch)
 		if strict {
 			errs = append(errs, err)
 		} else {
-			_, err = fmt.Fprintln(os.Stderr, "Warning:", err.Error())
-			if err != nil {
-				// can't do much here
-			}
+			slog.Warn(err.Error())
 		}
 	}
 	return errors.Join(errs...)
 }
 
 func getKeywordType(keywordMap map[string]any, name string) (keyword, typ string, err error) {
-	rkeyword := reflect.ValueOf(keywordMap[keyKeyword])
+	rkeyword := reflect.ValueOf(keywordMap[KeyKeyword])
 	if rkeyword.Kind() != reflect.String {
 		return "", "", fmt.Errorf(
 			"expecting a string value for the keyword map %q and key %q, got a %s",
-			name, keyKeyword, rkeyword.Kind(),
+			name, KeyKeyword, rkeyword.Kind(),
 		)
 	}
 	keyword = rkeyword.String()
 
 	typ = "" // this it the intentional default
-	atype, ok := keywordMap[keyType]
+	atype, ok := keywordMap[KeyType]
 	if ok {
 		rtype := reflect.ValueOf(atype)
 		if rtype.Kind() != reflect.String {
 			return "", "", fmt.Errorf(
 				"expecting a string value for the keyword %q, name %q and key %q, got a %s",
-				keyword, name, keyType, rtype.Kind(),
+				keyword, name, KeyType, rtype.Kind(),
 			)
 		}
 		typ = rtype.String()
@@ -448,7 +456,7 @@ func childrenValidator(minLen, maxLen int) func(v any, strict bool, parent strin
 	}
 }
 
-func joinParentName(parent, name string) string {
+func JoinParentName(parent, name string) string {
 	if parent == "" {
 		return name
 	}
