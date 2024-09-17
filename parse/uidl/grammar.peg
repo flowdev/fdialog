@@ -1,0 +1,43 @@
+package uidl
+
+import (
+)
+
+type UIDLParser Peg {
+    AST map[string]map[string]any
+}
+
+uidlAll     <- Spacing Version Command+ EndOfFile
+
+Version     <- 'version' MustSpacing VersionNo
+VersionNo   <- < [0-9]+ > Spacing
+
+Command     <- Identifier Name Attributes CommandBody? Spacing
+
+Attributes  <- '(' Spacing ')' Spacing / '(' Attribute (',' Spacing Attribute)*  ')' Spacing
+Attribute   <- Identifier Spacing '=' Spacing Value Spacing
+
+CommandBody        <- '{' Spacing Command '}' Spacing
+
+
+
+Value       <- < ( StringValue / IntValue / FloatValue / BoolValue ) > Spacing
+StringValue <- NormalString / BacktickString
+BacktickString <- '`' < [] > '`'
+IntValue    <- [0-9]+
+FloatValue  <- IntValue '.' IntValue
+BoolValue   <- 'true' / 'false'
+
+Name        <- < IdentStart IdentCont* > Spacing
+
+Identifier	<- < IdentStart IdentCont* > Spacing
+IdentStart	<- [[a-z_]]
+IdentCont	<- IdentStart / [0-9]
+
+Spacing	        <- SpaceComment*
+MustSpacing     <- SpaceComment+
+SpaceComment    <- (Space / Comment)
+Comment	        <- '#' (!EndOfLine .)* EndOfLine
+Space           <- ' ' / '\t' / EndOfLine
+EndOfLine       <- '\r\n' / '\n'
+EndOfFile       <- !.
