@@ -42,7 +42,7 @@ func init() {
 		"if flag is given, additional attributes in the UI description are only warned about")
 }
 
-func doRun(cmd *cobra.Command, args []string) {
+func doRun(_ *cobra.Command, args []string) {
 	fmt.Printf("run called with file=%q, url=%q, format=%q and args=%q\n",
 		runCmdData.fileName, runCmdData.url, runCmdData.format, args)
 
