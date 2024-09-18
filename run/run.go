@@ -261,11 +261,14 @@ func confirmCallback(
 func runError(errorDescr map[string]any, fullName string, win fyne.Window) error {
 	_ = fullName                              // currently not used but might change
 	message := errorDescr["message"].(string) // message is required
-	info := dialog.NewError(errors.New(message), win)
+	errorDialog := dialog.NewError(errors.New(message), win)
+	errorDialog.SetOnClosed(func() {
+		os.Exit(0) // error has been noted
+	})
 
 	value := errorDescr["buttonText"]
 	if value != nil {
-		info.SetDismissText(value.(string))
+		errorDialog.SetDismissText(value.(string))
 	}
 
 	width := float64(0)
@@ -284,10 +287,10 @@ func runError(errorDescr map[string]any, fullName string, win fyne.Window) error
 	}
 	if width > 0 && height > 0 {
 		infoSize := fyne.NewSize(float32(width), float32(height))
-		info.Resize(infoSize)
+		errorDialog.Resize(infoSize)
 	}
 
-	info.Show()
+	errorDialog.Show()
 	return nil
 }
 
@@ -300,6 +303,9 @@ func runInfo(infoDescr map[string]any, fullName string, win fyne.Window) error {
 	}
 	message := infoDescr["message"].(string) // message is required
 	info := dialog.NewInformation(title, message, win)
+	info.SetOnClosed(func() {
+		os.Exit(0) // info has been noted
+	})
 
 	value = infoDescr["buttonText"]
 	if value != nil {

@@ -35,7 +35,7 @@ func parseUIDL(pd *gparselib.ParseData, ctx any) (*gparselib.ParseData, any) {
 		gparselib.NewParseEOFPlugin(nil),
 	}, func(pd *gparselib.ParseData, ctx any) (*gparselib.ParseData, any) {
 		versionResult := pd.SubResults[0]
-		version := versionResult.Value.(int64)
+		version := versionResult.Value.(uint64)
 		if version != 1 {
 			pd.AddError(
 				versionResult.Pos,
@@ -83,8 +83,9 @@ func parseCommand(pd *gparselib.ParseData, ctx any) (*gparselib.ParseData, any) 
 			name:         pd.SubResults[2].Value.(string),
 			attributeMap: pd.SubResults[4].Value.(map[string]any),
 		}
-		children := pd.SubResults[5].Value.(map[string]map[string]any)
-		if children != nil {
+		achildren := pd.SubResults[5].Value
+		if achildren != nil {
+			children := achildren.(map[string]map[string]any)
 			command.attributeMap[KeyChildren] = children
 		}
 		command.attributeMap[KeyKeyword] = keyword
@@ -117,7 +118,6 @@ func parseCommands(pd *gparselib.ParseData, ctx any) (*gparselib.ParseData, any)
 		})
 }
 
-// CommandBody        <- '{' Spacing Command '}' Spacing
 func parseCommandBody(pd *gparselib.ParseData, ctx any) (*gparselib.ParseData, any) {
 	return gparselib.ParseAll(pd, ctx, []gparselib.SubparserOp{
 		gparselib.NewParseLiteralPlugin(nil, "{"),

@@ -2,25 +2,26 @@ package cmd
 
 import (
 	"fmt"
-	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/dialog"
-	"os"
-
-	"fyne.io/fyne/v2/app"
+	"github.com/flowdev/fdialog/parse"
+	"github.com/flowdev/fdialog/run"
 	"github.com/spf13/cobra"
+	"io"
+	"log/slog"
+	"os"
 )
 
 var runCmdData = struct {
 	format   string
 	fileName string
 	url      string
+	lenient  bool
 }{}
 
 // runCmd represents the run command
 var runCmd = &cobra.Command{
 	Use:   "run",
-	Short: "display and run a description of a GUI",
-	Long: `Display And Run a Description Of a GUI
+	Short: "display and run a description for a UI",
+	Long: `Display And Run a Description For a User Interface
 
 If no file or URL is given, the UI description is read from standard input.`,
 	Args: cobra.NoArgs,
@@ -30,62 +31,42 @@ If no file or URL is given, the UI description is read from standard input.`,
 func init() {
 	rootCmd.AddCommand(runCmd)
 
-	runCmd.Flags().StringVarP(&runCmdData.format, "format", "t", "uidl",
-		"format of the GUI description (valid values are: json or uidl)")
 	runCmd.Flags().StringVarP(&runCmdData.fileName, "file", "f", "",
-		"name of file with GUI description")
+		"name of file with UI description")
 	runCmd.Flags().StringVarP(&runCmdData.url, "url", "u", "",
 		"URL where the GUI description can be fetched with HTTP GET")
 	runCmd.MarkFlagsMutuallyExclusive("file", "url")
+	runCmd.Flags().StringVarP(&runCmdData.format, "format", "t", "uidl",
+		"format of the UI description (valid values are: 'json' or 'uidl')")
+	runCmd.Flags().BoolVarP(&runCmdData.lenient, "lenient", "l", true,
+		"if flag is given, additional attributes in the UI description are only warned about")
 }
 
 func doRun(cmd *cobra.Command, args []string) {
 	fmt.Printf("run called with file=%q, url=%q, format=%q and args=%q\n",
 		runCmdData.fileName, runCmdData.url, runCmdData.format, args)
 
-	fda := app.New()
+	var rd io.Reader
+	var err error
 
-	// For info:
-	//win := window.NewInformation("Info!", "This is the info for you.", fda)
-	//win.SetDismissText("Got it.")
-	//win.SetOnClosed(func() {
-	//	fda.Quit()
-	//	os.Exit(0)
-	//})
-
-	// For error:
-	//win := window.NewError(errors.New("An error happened!"), fda)
-	//win.SetOnClosed(func() {
-	//	fda.Quit()
-	//	os.Exit(0)
-	//})
-
-	// For Confirmation:
-	//win := window.NewConfirm("Confirmation", "Do you really want to do XXX?", confirmCallback(fda), fda)
-	//win.SetDismissText("Nah")
-	//win.SetConfirmText("Oh Yes!")
-	win := fda.NewWindow("")
-	cnf := dialog.NewConfirm("", "Do you really want to do XXX?", confirmCallback(fda), win)
-	cnf.SetDismissText("Oh, NO!")
-	cnf.SetConfirmText("Yes, please.")
-	cnfSize := fyne.NewSize(400, 200)
-	cnf.Resize(cnfSize)
-	win.Resize(cnfSize)
-	win.SetFixedSize(true)
-	cnf.Show()
-
-	win.SetTitle("Confirmation")
-	win.Show()
-	fda.Run()
-}
-
-func confirmCallback(fda fyne.App) func(bool) {
-	return func(response bool) {
-		fda.Quit()
-		fmt.Println("Fyne confirmCallback responded with:", response)
-		if response {
-			os.Exit(0)
+	if runCmdData.fileName != "" {
+		rd, err = os.Open(runCmdData.fileName)
+		if err != nil {
+			slog.Error("could not open UI description file:", err)
+			os.Exit(11)
 		}
-		os.Exit(1)
+	} else {
+		rd = os.Stdin
+	}
+
+	uiDescr, err := parse.UIDescription(rd, runCmdData.fileName, runCmdData.format, !runCmdData.lenient)
+	if err != nil {
+		slog.Error("unable to parse UI description", "cause", err)
+		os.Exit(12)
+	}
+	err = run.UIDescription(uiDescr)
+	if err != nil {
+		slog.Error("unable to run UI description", "cause", err)
+		os.Exit(13)
 	}
 }
