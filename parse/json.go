@@ -9,7 +9,7 @@ import (
 
 // ParseJSON parses (H)JSON from a Reader and gives the content back suitable for validation.
 // An error is returned if the steam can't be unmarshalled or a data type doesn't match.
-func ParseJSON(input io.Reader) (map[string]map[string]any, error) {
+func ParseJSON(input io.Reader, name string) (map[string]map[string]any, error) {
 	data := make(map[string]map[string]any)
 	inputData, err := io.ReadAll(input)
 	if err != nil {
@@ -22,38 +22,40 @@ func ParseJSON(input io.Reader) (map[string]map[string]any, error) {
 		DisallowDuplicateKeys: true,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error parsing JSON file %v: %w", name, err)
 	}
 
 	err = cleanAllChildren(data)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error cleaning JSON data from file %v: %w", name, err)
 	}
 
 	return data, nil
 }
 
 func cleanAllChildren(data map[string]map[string]any) error {
-	for _, value := range data {
-		if err := cleanKeyword(value); err != nil {
+	for keyword, value := range data {
+		if err := cleanKeyword(value, keyword); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func cleanKeyword(data map[string]any) error {
+func cleanKeyword(data map[string]any, fullName string) error {
 	if rawChildren, ok := data[KeyChildren]; ok {
 		mapChildren, ok := rawChildren.(map[string]any)
 		if !ok {
-			return fmt.Errorf("expected attribute cleanChildren to contain a map[string]any, got %T", rawChildren)
+			return fmt.Errorf("for %q: expected attribute children to contain a map[string]any, got %T",
+				fullName, rawChildren)
 		}
 
 		cleanChildren := make(map[string]map[string]any, len(mapChildren))
 		for key, avalue := range mapChildren {
 			cleanChild, ok := avalue.(map[string]any)
 			if !ok {
-				return fmt.Errorf("expected value of a keyword to be a map[string]any, got %T", avalue)
+				return fmt.Errorf("for %q: expected value of keyword to be a map[string]any, got %T",
+					JoinParentName(fullName, key), avalue)
 			}
 			cleanChildren[key] = cleanChild
 		}
