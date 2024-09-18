@@ -1,12 +1,11 @@
 package cmd
 
 import (
-	"fmt"
 	"github.com/flowdev/fdialog/parse"
 	"github.com/flowdev/fdialog/run"
 	"github.com/spf13/cobra"
 	"io"
-	"log/slog"
+	"log"
 	"os"
 )
 
@@ -43,16 +42,13 @@ func init() {
 }
 
 func doRun(_ *cobra.Command, args []string) {
-	fmt.Printf("run called with file=%q, url=%q, format=%q and args=%q\n",
-		runCmdData.fileName, runCmdData.url, runCmdData.format, args)
-
 	var rd io.Reader
 	var err error
 
 	if runCmdData.fileName != "" {
 		rd, err = os.Open(runCmdData.fileName)
 		if err != nil {
-			slog.Error("could not open UI description file:", err)
+			log.Printf("ERROR: Could not open UI description file: %v", err)
 			os.Exit(11)
 		}
 	} else {
@@ -61,12 +57,12 @@ func doRun(_ *cobra.Command, args []string) {
 
 	uiDescr, err := parse.UIDescription(rd, runCmdData.fileName, runCmdData.format, !runCmdData.lenient)
 	if err != nil {
-		slog.Error("unable to parse UI description", "cause", err)
+		log.Printf("ERROR: Unable to parse UI description: %v", err)
 		os.Exit(12)
 	}
 	err = run.UIDescription(uiDescr)
 	if err != nil {
-		slog.Error("unable to run UI description", "cause", err)
+		log.Printf("ERROR: Unable to run UI description: %v", err)
 		os.Exit(13)
 	}
 }

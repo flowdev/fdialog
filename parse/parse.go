@@ -26,7 +26,7 @@ func UIDescription(input io.Reader, name string, format string, strict bool) (ma
 
 	err = Validate(uiDescr, strict)
 	if err != nil {
-		return nil, fmt.Errorf("error validating uiDescr from file %q in format %q: %w", name, format, err)
+		return nil, fmt.Errorf("error validating UI description from file %q in format %q: %w", name, format, err)
 	}
 	return uiDescr, err
 }

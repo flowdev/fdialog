@@ -7,7 +7,7 @@ import (
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/dialog"
 	"github.com/flowdev/fdialog/parse"
-	"log/slog"
+	"log"
 	"os"
 	"strings"
 )
@@ -146,7 +146,7 @@ func runExit(exitDescr map[string]any, fullName string) error {
 	if exitDescr["code"] != nil {
 		code = int(exitDescr["code"].(int64))
 	}
-	slog.Info("exiting app as requested", "position", fullName, "code", code)
+	log.Printf("INFO: exiting app as requested at position %q with code: %d", fullName, code)
 	os.Exit(code)
 	return nil // just for the compiler :)
 }
@@ -247,12 +247,12 @@ func confirmCallback(
 		if confirmed {
 			err := runAction(actConfirm, parse.JoinParentName(fullName, "confirm"), uiDescr)
 			if err != nil {
-				slog.Error(err.Error())
+				log.Printf("ERROR: Can't run confirm action: %v", err)
 			}
 		} else {
 			err := runAction(actDismiss, parse.JoinParentName(fullName, "dismiss"), uiDescr)
 			if err != nil {
-				slog.Error(err.Error())
+				log.Printf("ERROR: Can't run dismiss action: %v", err)
 			}
 		}
 	}, nil

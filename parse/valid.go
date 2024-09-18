@@ -3,7 +3,7 @@ package parse
 import (
 	"errors"
 	"fmt"
-	"log/slog"
+	"log"
 	"math"
 	"reflect"
 	"regexp"
@@ -297,7 +297,7 @@ func validateAttributes(
 		if strict {
 			errs = append(errs, err)
 		} else {
-			slog.Warn(err.Error())
+			log.Printf("WARNING: %v", err)
 		}
 	}
 	return errors.Join(errs...)

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/flowdev/gparselib"
 	"io"
-	"log/slog"
+	"log"
 	"strconv"
 )
 
@@ -20,7 +20,7 @@ func ParseUIDL(input io.Reader, name string) (map[string]map[string]any, error) 
 	pd, _ = parseUIDL(pd, nil)
 	msg, err := pd.GetFeedback()
 	if msg != "" {
-		slog.Info(msg)
+		log.Println(msg)
 	}
 	if err != nil {
 		return nil, err
@@ -44,6 +44,7 @@ func parseUIDL(pd *gparselib.ParseData, ctx any) (*gparselib.ParseData, any) {
 			)
 		}
 		pd.Result.Value = pd.SubResults[1].Value
+		pd.CleanFeedback(true)
 		return pd, ctx
 	})
 }
@@ -65,6 +66,7 @@ func parseVersion(pd *gparselib.ParseData, ctx any) (*gparselib.ParseData, any) 
 		parseSpaceComment,
 	}, func(pd *gparselib.ParseData, ctx any) (*gparselib.ParseData, any) {
 		pd.Result.Value = pd.SubResults[3].Value
+		pd.CleanFeedback(false)
 		return pd, ctx
 	})
 }
@@ -90,6 +92,7 @@ func parseCommand(pd *gparselib.ParseData, ctx any) (*gparselib.ParseData, any) 
 		}
 		command.attributeMap[KeyKeyword] = keyword
 
+		pd.CleanFeedback(false)
 		pd.Result.Value = command
 		return pd, ctx
 	})
@@ -354,10 +357,15 @@ func parseSpaceComment(pd *gparselib.ParseData, ctx any) (*gparselib.ParseData, 
 		panic(err) // can only be a programming error!
 	}
 	pSpaceOrComment := gparselib.NewParseAnyPlugin(
-		[]gparselib.SubparserOp{pSpc, pLnCmnt},
-		textSemantic,
+		[]gparselib.SubparserOp{pSpc, pLnCmnt}, textSemantic,
 	)
-	return gparselib.ParseMulti0(pd, ctx, pSpaceOrComment, nil)
+	return gparselib.ParseMulti0(pd, ctx, pSpaceOrComment,
+		func(pd *gparselib.ParseData, ctx any) (*gparselib.ParseData, any) {
+			pd.Result.Value = pd.Result.Text
+			pd.CleanFeedback(true)
+			return pd, ctx
+		},
+	)
 }
 
 //
