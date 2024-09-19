@@ -38,7 +38,7 @@ type keywordValueType struct {
 
 type attributeValueType struct {
 	required bool
-	validate func(v any, strict bool, parent string) error
+	validate func(v any, strict bool, parent string) (any, error)
 }
 
 var validKeywords map[keywordType]keywordValueType
@@ -224,10 +224,11 @@ func init() {
 // Mandatory key for keyword maps is: "keyword"
 // The key "type" is expected for most keywords but not for all.
 func Validate(uiDescr map[string]map[string]any, strict bool) error {
-	return validateRecursiveMap(uiDescr, strict, "")
+	_, err := validateRecursiveMap(uiDescr, strict, "")
+	return err
 }
 
-func validateRecursiveMap(m map[string]map[string]any, strict bool, parent string) error {
+func validateRecursiveMap(m map[string]map[string]any, strict bool, parent string) (any, error) {
 	var errs []error
 
 	for name, keywordMap := range m {
@@ -239,7 +240,7 @@ func validateRecursiveMap(m map[string]map[string]any, strict bool, parent strin
 			errs = append(errs, validateKeyword(keyword, JoinParentName(parent, name), typ, keywordMap, strict))
 		}
 	}
-	return errors.Join(errs...)
+	return m, errors.Join(errs...)
 }
 
 func validateKeyword(
@@ -272,11 +273,12 @@ func validateAttributes(
 	for attrName, attribute := range attributes {
 		if vv, ok := valueMap[attrName]; ok {
 			validatedAttributes[attrName] = true
-			err := attribute.validate(vv, strict, fullName)
+			vv, err := attribute.validate(vv, strict, fullName)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("for %q, attribute %q: %v",
 					fullName, attrName, err.Error()))
 			}
+			valueMap[attrName] = vv
 		} else if attribute.required {
 			errs = append(errs, fmt.Errorf("for %q, is attribute %q required",
 				fullName, attrName))
@@ -327,116 +329,121 @@ func getKeywordType(keywordMap map[string]any, fullName string) (keyword, typ st
 	return keyword, typ, nil
 }
 
-func stringValidator(minLen, maxLen int, regex *regexp.Regexp) func(v any, strict bool, parent string) error {
-	return func(v any, strict bool, parent string) error {
+func stringValidator(minLen, maxLen int, regex *regexp.Regexp) func(v any, strict bool, parent string) (any, error) {
+	return func(v any, strict bool, parent string) (any, error) {
 		rv := reflect.ValueOf(v)
 		if rv.Kind() != reflect.String {
-			return fmt.Errorf("expecting a string value, got %s", rv.Kind())
+			return v, fmt.Errorf("expecting a string value, got %s", rv.Kind())
 		}
 		s := rv.String()
 
 		if minLen > 0 && len(s) < minLen {
-			return fmt.Errorf("string too short (min %d > actual %d)", minLen, len(s))
+			return s, fmt.Errorf("string too short (min %d > actual %d)", minLen, len(s))
 		}
 		if maxLen > 0 && len(s) > maxLen {
-			return fmt.Errorf("string too long (max %d < actual %d)", maxLen, len(s))
+			return s, fmt.Errorf("string too long (max %d < actual %d)", maxLen, len(s))
 		}
 
 		if regex != nil && !regex.MatchString(s) {
-			return fmt.Errorf("string %q does not match pattern %q", s, regex.String())
+			return s, fmt.Errorf("string %q does not match pattern %q", s, regex.String())
 		}
 
-		return nil
+		return s, nil
 	}
 }
-func exactStringValidator(expected string) func(v any, strict bool, parent string) error {
-	return func(v any, strict bool, parent string) error {
+func exactStringValidator(expected string) func(v any, strict bool, parent string) (any, error) {
+	return func(v any, strict bool, parent string) (any, error) {
 		rv := reflect.ValueOf(v)
 		if rv.Kind() != reflect.String {
-			return fmt.Errorf("expecting a string value, got %q", rv.Kind())
+			return v, fmt.Errorf("expecting a string value, got %q", rv.Kind())
 		}
 		s := rv.String()
 
 		if s != expected {
-			return fmt.Errorf("expecting value to be %q, got %q",
+			return s, fmt.Errorf("expecting value to be %q, got %q",
 				expected, s)
 		}
 
-		return nil
+		return s, nil
 	}
 }
 
-func intValidator(minVal, maxVal int64) func(v any, strict bool, parent string) error {
-	return func(v any, strict bool, parent string) error {
+func intValidator(minVal, maxVal int64) func(v any, strict bool, parent string) (any, error) {
+	return func(v any, strict bool, parent string) (any, error) {
 		var i int64
 		rv := reflect.ValueOf(v)
 		if rv.Kind() == reflect.Float64 {
 			f := rv.Float()
 			i = int64(f)
 			if f != float64(i) {
-				return fmt.Errorf("expecting an int64 (or a float64 convertable to it), got %f", f)
+				return v, fmt.Errorf("expecting an int64 (or a float64 convertable to it), got %f", f)
 			}
 		} else if rv.Kind() != reflect.Int64 {
-			return fmt.Errorf("expecting an int64 value, got %s", rv.Kind())
+			return v, fmt.Errorf("expecting an int64 value, got %s", rv.Kind())
 		} else {
 			i = rv.Int()
 		}
 
 		if i < minVal {
-			return fmt.Errorf("integer value too small (min %d > actual %d)", minVal, i)
+			return i, fmt.Errorf("integer value too small (min %d > actual %d)", minVal, i)
 		}
 		if i > maxVal {
-			return fmt.Errorf("integer value too big (max %d < actual %d)", maxVal, i)
+			return i, fmt.Errorf("integer value too big (max %d < actual %d)", maxVal, i)
 		}
-		return nil
+		return i, nil
 	}
 }
 
-func floatValidator(minVal, maxVal float64) func(v any, strict bool, parent string) error {
-	return func(v any, strict bool, parent string) error {
+func floatValidator(minVal, maxVal float64) func(v any, strict bool, parent string) (any, error) {
+	return func(v any, strict bool, parent string) (any, error) {
+		var f float64
 		rv := reflect.ValueOf(v)
 		if rv.Kind() != reflect.Float64 {
-			return fmt.Errorf("expecting a float64 value, got %s", rv.Kind())
+			if rv.Kind() != reflect.Int64 {
+				return v, fmt.Errorf("expecting a float64 value, got %s", rv.Kind())
+			}
+			f = float64(rv.Int()) // treat ints as floats as they are automatically recognized
+		} else {
+			f = rv.Float()
 		}
-		f := rv.Float()
 
 		if !math.IsNaN(f) && f < minVal {
-			return fmt.Errorf("float value too small (min %f > actual %f)", minVal, f)
+			return f, fmt.Errorf("float value too small (min %f > actual %f)", minVal, f)
 		}
 		if !math.IsNaN(f) && f > maxVal {
-			return fmt.Errorf("float value too big (max %f < actual %f)", maxVal, f)
+			return f, fmt.Errorf("float value too big (max %f < actual %f)", maxVal, f)
 		}
-		return nil
+		return f, nil
 	}
 }
 
-func boolValidator() func(v any, strict bool, parent string) error {
-	return func(v any, strict bool, parent string) error {
+func boolValidator() func(v any, strict bool, parent string) (any, error) {
+	return func(v any, strict bool, parent string) (any, error) {
 		rv := reflect.ValueOf(v)
 		if rv.Kind() != reflect.Bool {
-			return fmt.Errorf("expecting a boolean value, got %s", rv.Kind())
+			return v, fmt.Errorf("expecting a boolean value, got %s", rv.Kind())
 		}
-		return nil
+		return v, nil
 	}
 }
 
-func childrenValidator(minLen, maxLen int) func(v any, strict bool, parent string) error {
-	return func(v any, strict bool, parent string) error {
+func childrenValidator(minLen, maxLen int) func(v any, strict bool, parent string) (any, error) {
+	return func(v any, strict bool, parent string) (any, error) {
 		rv := reflect.ValueOf(v)
 		if rv.Kind() != reflect.Map {
-			return fmt.Errorf("expecting a map value, got %s", rv.Kind())
+			return v, fmt.Errorf("expecting a map value, got %s", rv.Kind())
 		}
 
 		m, ok := v.(map[string]map[string]any)
 		if !ok {
-			return fmt.Errorf("expecting a map[string]map[string]any value, got %T", v)
+			return v, fmt.Errorf("expecting a map[string]map[string]any value, got %T", v)
 		}
 
 		if len(m) < minLen {
-			return fmt.Errorf("expecting at least %d map elements, got %d", minLen, len(m))
+			return v, fmt.Errorf("expecting at least %d map elements, got %d", minLen, len(m))
 		}
 		if len(m) > maxLen {
-			return fmt.Errorf("expecting at most %d map elements, got %d", maxLen, len(m))
+			return v, fmt.Errorf("expecting at most %d map elements, got %d", maxLen, len(m))
 		}
 
 		return validateRecursiveMap(m, strict, parent)

@@ -50,7 +50,7 @@ func runWindow(winDescr map[string]any, fullName string, _ fyne.Window, uiDescr 
 		width = winDescr["width"].(float64)
 	}
 	if _, ok := winDescr["height"]; ok {
-		width = winDescr["height"].(float64)
+		height = winDescr["height"].(float64)
 	}
 	if width > 0 && height <= 0 {
 		height = width * 0.5 // wide windows look good
@@ -203,7 +203,7 @@ func runConfirmation(
 		width = cnfDescr["width"].(float64)
 	}
 	if _, ok := cnfDescr["height"]; ok {
-		width = cnfDescr["height"].(float64)
+		height = cnfDescr["height"].(float64)
 	}
 	if width > 0 && height <= 0 {
 		height = width * 0.5 // wide dialogs look good
@@ -277,7 +277,7 @@ func runError(errorDescr map[string]any, fullName string, win fyne.Window) error
 		width = errorDescr["width"].(float64)
 	}
 	if _, ok := errorDescr["height"]; ok {
-		width = errorDescr["height"].(float64)
+		height = errorDescr["height"].(float64)
 	}
 	if width > 0 && height <= 0 {
 		height = width * 0.5 // wide dialogs look good
@@ -318,7 +318,7 @@ func runInfo(infoDescr map[string]any, fullName string, win fyne.Window) error {
 		width = infoDescr["width"].(float64)
 	}
 	if _, ok := infoDescr["height"]; ok {
-		width = infoDescr["height"].(float64)
+		height = infoDescr["height"].(float64)
 	}
 	if width > 0 && height <= 0 {
 		height = width * 0.5 // wide dialogs look good

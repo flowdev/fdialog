@@ -5,7 +5,7 @@ go 1.23.1
 require (
 	fyne.io/fyne/v2 v2.5.1
 	github.com/can3p/kleiner v0.0.12
-	github.com/flowdev/gparselib v0.5.4
+	github.com/flowdev/gparselib v0.5.7
 	github.com/hjson/hjson-go/v4 v4.4.0
 	github.com/spf13/cobra v1.8.0
 )

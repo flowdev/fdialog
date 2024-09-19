@@ -137,7 +137,6 @@ func parseCommandBody(pd *gparselib.ParseData, ctx any) (*gparselib.ParseData, a
 func parseAttributes(pd *gparselib.ParseData, ctx any) (*gparselib.ParseData, any) {
 	pParenOpen := gparselib.NewParseLiteralPlugin(nil, "(")
 	pParenClose := gparselib.NewParseLiteralPlugin(nil, ")")
-	pComma := gparselib.NewParseLiteralPlugin(nil, ",")
 
 	pNoAttributes := gparselib.NewParseAllPlugin([]gparselib.SubparserOp{
 		pParenOpen,
@@ -147,7 +146,7 @@ func parseAttributes(pd *gparselib.ParseData, ctx any) (*gparselib.ParseData, an
 	}, nil)
 
 	pCommaAttribute := gparselib.NewParseAllPlugin([]gparselib.SubparserOp{
-		pComma,
+		gparselib.NewParseLiteralPlugin(nil, ","),
 		parseSpaceComment,
 		parseAttribute,
 	}, func(pd *gparselib.ParseData, ctx any) (*gparselib.ParseData, any) {
@@ -307,6 +306,8 @@ func parseFloatValue(pd *gparselib.ParseData, ctx any) (*gparselib.ParseData, an
 			pd.Result.Value, err = strconv.ParseFloat(pd.Result.Text, 64)
 			if err != nil {
 				pd.AddError(pd.Result.Pos, err.Error(), nil)
+			} else {
+				pd.CleanFeedback(true)
 			}
 			return pd, ctx
 		})
@@ -326,6 +327,8 @@ func parseIntValue(pd *gparselib.ParseData, ctx any) (*gparselib.ParseData, any)
 			pd.Result.Value, err = strconv.ParseInt(pd.Result.Text, 10, 64) // TODO: handle overflow?
 			if err != nil {
 				pd.AddError(pd.Result.Pos, err.Error(), nil)
+			} else {
+				pd.CleanFeedback(true)
 			}
 			return pd, ctx
 		})
