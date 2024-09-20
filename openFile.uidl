@@ -1,0 +1,12 @@
+#!/usr/bin/env -S FYNE_THEME=dark fdialog run --file
+version 1
+
+window main(title="Open File", width=500, height=400) {
+    dialog openFile (
+        type="openFile",
+        confirmText="Open",
+        dismissText="Go back",
+        extensions=".jpg,.jpeg",
+        width=500, height=400
+    )
+}

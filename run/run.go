@@ -6,15 +6,20 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/storage"
 	"github.com/flowdev/fdialog/parse"
 	"log"
 	"os"
+	"os/signal"
 	"strings"
+	"sync/atomic"
+	"syscall"
 )
 
 const winMain = "main"
 
-var fapp fyne.App
+var fapp fyne.App // needed for exiting cleanly in actions
+var exitCode = new(atomic.Int32)
 
 func UIDescription(uiDescr map[string]map[string]any) error {
 	mainWin := uiDescr[winMain]
@@ -24,7 +29,7 @@ func UIDescription(uiDescr map[string]map[string]any) error {
 	if mainWin[parse.KeyKeyword] != parse.KeywordWindow {
 		return fmt.Errorf(`keyword map with name "main" is not a window but a:  %q`, mainWin[parse.KeyKeyword])
 	}
-	fapp = app.New()
+	fapp = app.NewWithID("github.com/flowdev/fdialog")
 
 	err := runWindow(mainWin, winMain, nil, uiDescr)
 	if err != nil {
@@ -69,6 +74,26 @@ func runWindow(winDescr map[string]any, fullName string, _ fyne.Window, uiDescr 
 		if err != nil {
 			return err
 		}
+	}
+
+	if fullName == "main" {
+		// Exit the app nicely with the correct exit code ...
+		interceptor := func() {
+			fapp.Quit()
+			code := int(exitCode.Load())
+			log.Printf("INFO: exiting app as requested from main window with code: %d", code)
+			os.Exit(code)
+		}
+		win.SetCloseIntercept(interceptor) // ... when the main window is closed or
+
+		// ... when a terminating signal is received.
+		signalChan := make(chan os.Signal, 1)
+		signal.Notify(signalChan, os.Interrupt, os.Kill, syscall.SIGTERM, syscall.SIGQUIT)
+		go func() {
+			// Block until a signal is received.
+			_ = <-signalChan
+			interceptor()
+		}()
 	}
 
 	win.SetTitle(title)
@@ -142,7 +167,7 @@ func runAction(actionDescr map[string]any, fullName string, uiDescr map[string]m
 }
 
 func runExit(exitDescr map[string]any, fullName string) error {
-	code := 0
+	code := 0 // intentional default
 	if exitDescr["code"] != nil {
 		code = int(exitDescr["code"].(int64))
 	}
@@ -162,10 +187,79 @@ func runDialog(dialogDescr map[string]any, fullName string, win fyne.Window, uiD
 		err = runError(dialogDescr, fullName, win)
 	case "confirmation":
 		err = runConfirmation(dialogDescr, fullName, win, uiDescr)
+	case "openFile":
+		err = runOpenFile(dialogDescr, fullName, win, uiDescr)
 	default:
 		err = fmt.Errorf(`for %q: unknown dialog type %q`, fullName, dlg)
 	}
 	return err
+}
+
+func runOpenFile(
+	ofDescr map[string]any,
+	fullName string,
+	win fyne.Window,
+	uiDescr map[string]map[string]any,
+) error {
+	ofDialog := dialog.NewFileOpen(func(frd fyne.URIReadCloser, err error) {
+		if err != nil {
+			dialog.ShowError(err, win)
+			return
+		}
+		if frd == nil {
+			fmt.Println("<CLOSED>")
+			fapp.Quit()
+			os.Exit(1)
+		}
+		fmt.Println("file to open:", strings.TrimPrefix(frd.URI().String(), "file://"))
+
+		fapp.Quit()
+		os.Exit(0)
+	}, win)
+
+	ofDialog.SetOnClosed(func() {
+		fmt.Println("dialog closed, exiting?")
+	})
+
+	extAttr := ofDescr["extensions"]
+	if extAttr != nil {
+		extSlice := strings.Split(extAttr.(string), ",")
+		for i := 0; i < len(extSlice); i++ {
+			extSlice[i] = strings.TrimSpace(extSlice[i])
+		}
+		ofDialog.SetFilter(storage.NewExtensionFileFilter(extSlice))
+	}
+
+	value := ofDescr["confirmText"]
+	if value != nil {
+		ofDialog.SetConfirmText(value.(string))
+	}
+	value = ofDescr["dismissText"]
+	if value != nil {
+		ofDialog.SetDismissText(value.(string))
+	}
+
+	width := float64(0)
+	height := float64(0)
+	if _, ok := ofDescr["width"]; ok {
+		width = ofDescr["width"].(float64)
+	}
+	if _, ok := ofDescr["height"]; ok {
+		height = ofDescr["height"].(float64)
+	}
+	if width > 0 && height <= 0 {
+		height = width * 0.5 // wide dialogs look good
+	}
+	if width <= 0 && height > 0 {
+		width = height * 2 // wide dialogs look good
+	}
+	if width > 0 && height > 0 {
+		ofSize := fyne.NewSize(float32(width), float32(height))
+		ofDialog.Resize(ofSize)
+	}
+
+	ofDialog.Show()
+	return nil
 }
 
 func runConfirmation(
@@ -216,6 +310,7 @@ func runConfirmation(
 		cnf.Resize(cnfSize)
 	}
 
+	exitCode.Store(1) // closing the window => dismissed
 	cnf.Show()
 	return nil
 }
@@ -290,6 +385,7 @@ func runError(errorDescr map[string]any, fullName string, win fyne.Window) error
 		errorDialog.Resize(infoSize)
 	}
 
+	exitCode.Store(0) // error has been noted; so all is OK
 	errorDialog.Show()
 	return nil
 }
@@ -331,6 +427,7 @@ func runInfo(infoDescr map[string]any, fullName string, win fyne.Window) error {
 		info.Resize(infoSize)
 	}
 
+	exitCode.Store(0) // info has been noted; so all is OK
 	info.Show()
 	return nil
 }

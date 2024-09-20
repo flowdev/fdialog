@@ -195,6 +195,41 @@ func init() {
 				},
 			},
 		},
+		keywordType{KeywordDialog, "openFile"}: {
+			attributes: map[string]attributeValueType{
+				KeyKeyword: {
+					required: true,
+					validate: exactStringValidator(KeywordDialog),
+				},
+				KeyName: {
+					required: true,
+					validate: stringValidator(1, 0, nameRegex),
+				},
+				KeyType: {
+					required: true,
+					validate: exactStringValidator("openFile"),
+				},
+				"extensions": {
+					validate: stringValidator(2, 0, nil),
+				},
+				"dismissText": {
+					validate: stringValidator(1, 0, nil),
+				},
+				"confirmText": {
+					validate: stringValidator(1, 0, nil),
+				},
+				"width": {
+					validate: floatValidator(50.0, math.MaxFloat32),
+				},
+				"height": {
+					validate: floatValidator(80.0, math.MaxFloat32),
+				},
+				//KeyChildren: {
+				//	required: true,
+				//	validate: childrenValidator(2, 2),
+				//},
+			},
+		},
 		keywordType{KeywordAction, "exit"}: {
 			attributes: map[string]attributeValueType{
 				KeyKeyword: {
@@ -210,7 +245,7 @@ func init() {
 					validate: exactStringValidator("exit"),
 				},
 				"code": {
-					validate: intValidator(0, 127),
+					validate: intValidator(0, 125),
 				},
 			},
 		},

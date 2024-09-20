@@ -2,6 +2,8 @@ module github.com/flowdev/fdialog
 
 go 1.23.1
 
+replace github.com/flowdev/gparselib => /home/ole/go/src/github.com/flowdev/gparselib
+
 require (
 	fyne.io/fyne/v2 v2.5.1
 	github.com/can3p/kleiner v0.0.12

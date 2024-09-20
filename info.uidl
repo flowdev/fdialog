@@ -1,0 +1,7 @@
+#!/usr/bin/env -S fdialog run --file
+version 1
+
+window main(title="Information", width=400.0, height=300.0) # bla
+{
+    dialog inf(type="info", message="Please note.", buttonText="OK.", width=400.0, height=300.0)
+}
