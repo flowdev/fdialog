@@ -6,6 +6,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/storage"
 	"github.com/flowdev/fdialog/parse"
 	"log"
@@ -63,8 +64,10 @@ func runWindow(winDescr map[string]any, fullName string, _ fyne.Window, uiDescr 
 	if width <= 0 && height > 0 {
 		width = height * 2 // wide windows look good
 	}
+	var winSize fyne.Size
 	if width > 0 && height > 0 {
-		winSize := fyne.NewSize(float32(width), float32(height))
+		// TODO: after the real fix with Fyne 2.6 we can use the real values
+		winSize = fyne.NewSize(float32(width+1.0), float32(height+1.0))
 		win.Resize(winSize)
 		win.SetFixedSize(true)
 	}
@@ -98,6 +101,10 @@ func runWindow(winDescr map[string]any, fullName string, _ fyne.Window, uiDescr 
 
 	win.SetTitle(title)
 	win.Show()
+	if width > 0 && height > 0 { // TODO: after the real fix with Fyne 2.6 we can remove this workaround
+		winSize = fyne.NewSize(float32(width), float32(height))
+		win.Resize(winSize)
+	}
 	return nil
 }
 
@@ -201,6 +208,7 @@ func runOpenFile(
 	win fyne.Window,
 	uiDescr map[string]map[string]any,
 ) error {
+	_, _ = fullName, uiDescr
 	ofDialog := dialog.NewFileOpen(func(frd fyne.URIReadCloser, err error) {
 		if err != nil {
 			dialog.ShowError(err, win)
@@ -309,6 +317,10 @@ func runConfirmation(
 		cnfSize := fyne.NewSize(float32(width), float32(height))
 		cnf.Resize(cnfSize)
 	}
+	escapeKey := &desktop.CustomShortcut{KeyName: fyne.KeyEscape}
+	win.Canvas().AddShortcut(escapeKey, func(shortcut fyne.Shortcut) {
+		log.Println("We tapped Escape")
+	})
 
 	exitCode.Store(1) // closing the window => dismissed
 	cnf.Show()
