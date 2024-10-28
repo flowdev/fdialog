@@ -4,10 +4,10 @@ version 1
 window main(title="Confirmation", width=450, height=200) {
     dialog confirm (
         type="confirmation",
-        message="Do you really want to suspend to RAM?",
+        message=`Do you really want to suspend to RAM?`,
         confirmText="Yes, please.",
         dismissText="Oh, no!",
-        width=450, height=200
+        width=450, height=200,
     ) {
         action confirm(type="exit", code=0)
         action dismiss(type="exit", code=1)

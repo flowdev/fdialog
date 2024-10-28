@@ -1,33 +1,187 @@
 package parse
 
 import (
+	"errors"
 	"fmt"
-	"github.com/flowdev/gparselib"
+	"github.com/antlr4-go/antlr/v4"
+	"github.com/flowdev/fdialog/parse/uidl"
 	"io"
-	"log"
 	"strconv"
 )
 
 const UIDLVersion = 1
 
-func ParseUIDL(input io.Reader, name string) (map[string]map[string]any, error) {
-	inputData, err := io.ReadAll(input)
-	if err != nil {
-		return nil, err
-	}
-
-	pd := gparselib.NewParseData(name, string(inputData))
-	pd, _ = parseUIDL(pd, nil)
-	msg, err := pd.GetFeedback()
-	if msg != "" {
-		log.Println(msg)
-	}
-	if err != nil {
-		return nil, err
-	}
-	return pd.Result.Value.(map[string]map[string]any), nil
+type ErrorCollector interface {
+	CollectError(error)
+}
+type AntlrErrorListener struct {
+	*antlr.DefaultErrorListener
+	errs []error
 }
 
+func NewAntlrErrorListener() *AntlrErrorListener {
+	return &AntlrErrorListener{errs: make([]error, 0, 32)}
+}
+
+// SyntaxError stores Go errors with messages of
+// the following format:
+//
+//	line <line>:<column> <message>
+func (ael *AntlrErrorListener) SyntaxError(
+	_ antlr.Recognizer,
+	_ interface{},
+	line, column int, msg string,
+	_ antlr.RecognitionException,
+) {
+	ael.CollectError(fmt.Errorf("line %d:%d %s", line, column, msg))
+}
+
+func (ael *AntlrErrorListener) CollectError(err error) {
+	ael.errs = append(ael.errs, err)
+}
+
+func (ael *AntlrErrorListener) CombinedError() error {
+	if len(ael.errs) == 0 {
+		return nil
+	}
+	return errors.Join(ael.errs...)
+}
+
+func ParseUIDL(input io.Reader, _ string) (map[string]map[string]any, error) {
+	inputStr, err := io.ReadAll(input)
+	if err != nil {
+		return nil, err
+	}
+
+	antlrInput := antlr.NewInputStream(string(inputStr))
+	antlrLexer := uidl.NewUIDLLexer(antlrInput)
+	antlrStream := antlr.NewCommonTokenStream(antlrLexer, 0)
+	antlrParser := uidl.NewUIDLParser(antlrStream)
+	ael := NewAntlrErrorListener()
+	antlrParser.RemoveErrorListeners()
+	antlrParser.AddErrorListener(ael)
+
+	return convertUIDL(antlrParser.Uidl(), ael), ael.CombinedError()
+}
+
+func convertUIDL(antlrUIDL uidl.IUidlContext, errColl ErrorCollector) map[string]map[string]any {
+	version := antlrUIDL.Version().Natural()
+	errCtx := errorContext(version.GetSymbol())
+
+	intVersion, err := strconv.Atoi(version.GetText())
+	if err != nil {
+		errColl.CollectError(fmt.Errorf("%s %w", errCtx, err))
+		return nil
+	}
+	if intVersion != UIDLVersion {
+		errColl.CollectError(fmt.Errorf("%s expected version %d, got: %d",
+			errCtx, UIDLVersion, intVersion))
+		return nil
+	}
+	return convertCommands(antlrUIDL.Commands().AllCommand(), errColl)
+}
+
+// convertCommands converts all commands to a map.
+func convertCommands(antlrCommands []uidl.ICommandContext, errColl ErrorCollector) map[string]map[string]any {
+	commandMap := make(map[string]map[string]any, len(antlrCommands))
+
+	for _, command := range antlrCommands {
+		keyword := command.Identifier(0)
+		name := command.Identifier(1)
+		strName := name.GetText()
+		if _, ok := commandMap[strName]; ok {
+			errColl.CollectError(
+				fmt.Errorf("%s duplicate command name: %q",
+					errorContext(name.GetSymbol()), strName),
+			)
+			continue
+		}
+		attrMap := convertAttributes(command.Attributes().AllAttribute(), errColl)
+		attrMap[KeyKeyword] = keyword.GetText()
+		commandMap[strName] = attrMap
+
+		if command.CommandBody() != nil {
+			attrMap[KeyChildren] = convertCommands(command.CommandBody().Commands().AllCommand(), errColl)
+		}
+	}
+
+	return commandMap
+}
+
+func convertAttributes(attributes []uidl.IAttributeContext, errColl ErrorCollector) map[string]any {
+	attrMap := make(map[string]any, len(attributes)+2) // space for keyword + children
+
+	for _, attribute := range attributes {
+		name := attribute.Identifier()
+		strName := name.GetText()
+		if _, ok := attrMap[strName]; ok {
+			errColl.CollectError(
+				fmt.Errorf("%s duplicate attribute key: %q",
+					errorContext(name.GetSymbol()), strName),
+			)
+			continue
+		}
+		attrMap[strName] = convertAttributeValue(attribute.Value(), errColl)
+	}
+
+	return attrMap
+}
+
+func convertAttributeValue(antlrValue uidl.IValueContext, errColl ErrorCollector) any {
+	doubleQuotedString := antlrValue.DoubleQuotedString()
+	backQuotedString := antlrValue.BackQuotedString()
+	aFloat := antlrValue.Float()
+	natural := antlrValue.Natural()
+	aInt := antlrValue.Int()
+	aBool := antlrValue.Bool()
+
+	switch {
+	case doubleQuotedString != nil:
+		s, err := strconv.Unquote(doubleQuotedString.GetText())
+		if err != nil {
+			errColl.CollectError(fmt.Errorf("%s %w", errorContext(antlrValue.DoubleQuotedString().GetSymbol()), err))
+		}
+		return s
+	case backQuotedString != nil:
+		s, err := strconv.Unquote(backQuotedString.GetText())
+		if err != nil {
+			errColl.CollectError(fmt.Errorf("%s %w", errorContext(antlrValue.BackQuotedString().GetSymbol()), err))
+		}
+		return s
+	case aFloat != nil:
+		f, err := strconv.ParseFloat(aFloat.GetText(), 64)
+		if err != nil {
+			errColl.CollectError(fmt.Errorf("%s %w", errorContext(antlrValue.Float().GetSymbol()), err))
+		}
+		return f
+	case natural != nil:
+		n, err := strconv.ParseInt(natural.GetText(), 0, 64)
+		if err != nil {
+			errColl.CollectError(fmt.Errorf("%s %w", errorContext(antlrValue.Natural().GetSymbol()), err))
+		}
+		return n
+	case aInt != nil:
+		i, err := strconv.ParseInt(aInt.GetText(), 0, 64)
+		if err != nil {
+			errColl.CollectError(fmt.Errorf("%s %w", errorContext(antlrValue.Int().GetSymbol()), err))
+		}
+		return i
+	case aBool != nil:
+		b, err := strconv.ParseBool(aBool.GetText())
+		if err != nil {
+			errColl.CollectError(fmt.Errorf("%s %w", errorContext(antlrValue.Bool().GetSymbol()), err))
+		}
+		return b
+	}
+	errColl.CollectError(fmt.Errorf("%s unknown value %q", errorContext(antlrValue.GetStart()), antlrValue.GetText()))
+	return nil
+}
+
+func errorContext(symbol antlr.Token) string {
+	return fmt.Sprintf("line %d:%d", symbol.GetLine(), symbol.GetColumn())
+}
+
+/*
 func parseUIDL(pd *gparselib.ParseData, ctx any) (*gparselib.ParseData, any) {
 	return gparselib.ParseAll(pd, ctx, []gparselib.SubparserOp{
 		parseVersion,
@@ -45,28 +199,6 @@ func parseUIDL(pd *gparselib.ParseData, ctx any) (*gparselib.ParseData, any) {
 		}
 		pd.Result.Value = pd.SubResults[1].Value
 		pd.CleanFeedback(true)
-		return pd, ctx
-	})
-}
-
-func parseVersion(pd *gparselib.ParseData, ctx any) (*gparselib.ParseData, any) {
-	pMustSpace := gparselib.NewParseSpacePlugin(nil, true)
-	pVersionLiteral := gparselib.NewParseLiteralPlugin(nil, "version")
-	pVersionNumber, err := gparselib.NewParseNaturalPlugin(nil, 10)
-	if err != nil {
-		panic(err) // can only happen if 10 would be an illegal radix
-	}
-
-	return gparselib.ParseAll(pd, ctx, []gparselib.SubparserOp{
-		parseSpaceComment,
-		pVersionLiteral,
-		pMustSpace,
-		pVersionNumber,
-		pMustSpace,
-		parseSpaceComment,
-	}, func(pd *gparselib.ParseData, ctx any) (*gparselib.ParseData, any) {
-		pd.Result.Value = pd.SubResults[3].Value
-		pd.CleanFeedback(false)
 		return pd, ctx
 	})
 }
@@ -391,3 +523,4 @@ func textSemantic(pd *gparselib.ParseData, ctx any) (*gparselib.ParseData, any) 
 	pd.Result.Value = pd.Result.Text
 	return pd, ctx
 }
+*/

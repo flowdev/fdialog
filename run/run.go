@@ -3,18 +3,20 @@ package run
 import (
 	"errors"
 	"fmt"
-	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/app"
-	"fyne.io/fyne/v2/dialog"
-	"fyne.io/fyne/v2/driver/desktop"
-	"fyne.io/fyne/v2/storage"
-	"github.com/flowdev/fdialog/parse"
 	"log"
 	"os"
 	"os/signal"
 	"strings"
 	"sync/atomic"
 	"syscall"
+
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/driver/desktop"
+	"fyne.io/fyne/v2/storage"
+
+	"github.com/flowdev/fdialog/parse"
 )
 
 const winMain = "main"

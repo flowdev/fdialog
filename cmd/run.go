@@ -57,7 +57,7 @@ func doRun(_ *cobra.Command, args []string) {
 
 	uiDescr, err := parse.UIDescription(rd, runCmdData.fileName, runCmdData.format, !runCmdData.lenient)
 	if err != nil {
-		log.Printf("ERROR: Unable to parse UI description: %v", err)
+		log.Printf("ERROR: Unable to parse UI description:\n%v", err)
 		os.Exit(12)
 	}
 	err = run.UIDescription(uiDescr)
