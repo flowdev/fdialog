@@ -13,7 +13,7 @@ uidl
     ;
 
 version
-    : 'version' WhiteSpace Natural
+    : ('version' | 'v') WhiteSpace Natural
     ;
 
 commands

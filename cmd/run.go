@@ -41,7 +41,7 @@ func init() {
 		"if flag is given, additional attributes in the UI description are only warned about")
 }
 
-func doRun(_ *cobra.Command, args []string) {
+func doRun(_ *cobra.Command, _ []string) {
 	var rd io.Reader
 	var err error
 
