@@ -25,7 +25,7 @@ func RegisterAll() error {
 	return nil
 }
 
-func runDialog(dialogDescr map[string]any, fullName string, win fyne.Window, uiDescr map[string]map[string]any) error {
+func runDialog(dialogDescr map[string]any, fullName []string, win fyne.Window, uiDescr map[string]map[string]any) error {
 	var err error
 	dlg := dialogDescr[parse.KeyType]
 
@@ -46,7 +46,7 @@ func runDialog(dialogDescr map[string]any, fullName string, win fyne.Window, uiD
 
 func runOpenFile(
 	ofDescr map[string]any,
-	fullName string,
+	fullName []string,
 	win fyne.Window,
 	uiDescr map[string]map[string]any,
 ) error {
@@ -112,7 +112,7 @@ func runOpenFile(
 
 func runConfirmation(
 	cnfDescr map[string]any,
-	fullName string,
+	fullName []string,
 	win fyne.Window,
 	uiDescr map[string]map[string]any,
 ) error {
@@ -169,7 +169,7 @@ func runConfirmation(
 
 func confirmCallback(
 	childrenDescr map[string]map[string]any,
-	fullName string,
+	fullName []string,
 	win fyne.Window,
 	uiDescr map[string]map[string]any,
 ) (func(bool), error) {
@@ -193,12 +193,12 @@ func confirmCallback(
 	}
 	return func(confirmed bool) {
 		if confirmed {
-			err := run.Action(actConfirm, parse.JoinParentName(fullName, "confirm"), win, uiDescr)
+			err := run.Action(actConfirm, append(fullName, "confirm"), win, uiDescr)
 			if err != nil {
 				log.Printf("ERROR: Can't run confirm action: %v", err)
 			}
 		} else {
-			err := run.Action(actDismiss, parse.JoinParentName(fullName, "dismiss"), win, uiDescr)
+			err := run.Action(actDismiss, append(fullName, "dismiss"), win, uiDescr)
 			if err != nil {
 				log.Printf("ERROR: Can't run dismiss action: %v", err)
 			}
@@ -206,7 +206,7 @@ func confirmCallback(
 	}, nil
 }
 
-func runError(errorDescr map[string]any, fullName string, win fyne.Window) error {
+func runError(errorDescr map[string]any, fullName []string, win fyne.Window) error {
 	_ = fullName                              // currently not used but might change
 	message := errorDescr["message"].(string) // message is required
 	errorDialog := dialog.NewError(errors.New(message), win)
@@ -243,7 +243,7 @@ func runError(errorDescr map[string]any, fullName string, win fyne.Window) error
 	return nil
 }
 
-func runInfo(infoDescr map[string]any, fullName string, win fyne.Window) error {
+func runInfo(infoDescr map[string]any, fullName []string, win fyne.Window) error {
 	_ = fullName // currently not used but might change
 	value := infoDescr["title"]
 	title := ""

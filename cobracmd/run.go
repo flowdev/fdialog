@@ -1,12 +1,14 @@
-package cmd
+package cobracmd
 
 import (
-	"github.com/flowdev/fdialog/parse"
-	"github.com/flowdev/fdialog/run"
-	"github.com/spf13/cobra"
 	"io"
 	"log"
 	"os"
+
+	"github.com/spf13/cobra"
+
+	"github.com/flowdev/fdialog/parse"
+	"github.com/flowdev/fdialog/run"
 )
 
 var runCmdData = struct {
@@ -63,6 +65,6 @@ func doRun(_ *cobra.Command, _ []string) {
 	err = run.UIDescription(uiDescr)
 	if err != nil {
 		log.Printf("ERROR: Unable to run UI description: %v", err)
-		os.Exit(13)
+		os.Exit(14)
 	}
 }

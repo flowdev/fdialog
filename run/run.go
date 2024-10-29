@@ -57,7 +57,7 @@ func UIDescription(uiDescr map[string]map[string]any) error {
 		return fmt.Errorf(`unable to get run function for keyword 'window'`)
 	}
 
-	err := win(mainWin, ui.WinMain, nil, uiDescr)
+	err := win(mainWin, []string{ui.WinMain}, nil, uiDescr)
 	if err != nil {
 		return err
 	}
@@ -68,7 +68,7 @@ func UIDescription(uiDescr map[string]map[string]any) error {
 // Window runs a window description including all of its children.
 // In the case of the main window it will run the whole UI.
 // The fyne.Window parameter isn't currently used but might be used in the future for a parent window.
-func Window(winDescr map[string]any, fullName string, _ fyne.Window, uiDescr map[string]map[string]any) error {
+func Window(winDescr map[string]any, fullName []string, _ fyne.Window, uiDescr map[string]map[string]any) error {
 	title := ""
 	if _, ok := winDescr["title"]; ok {
 		title = winDescr["title"].(string)
@@ -104,7 +104,7 @@ func Window(winDescr map[string]any, fullName string, _ fyne.Window, uiDescr map
 		}
 	}
 
-	if fullName == "main" {
+	if ui.SameFullName(fullName, "main") {
 		// Exit the app nicely with the correct exit code ...
 		interceptor := func() {
 			fapp.Quit()
@@ -133,11 +133,11 @@ func Window(winDescr map[string]any, fullName string, _ fyne.Window, uiDescr map
 	return nil
 }
 
-func Children(achildren any, parent string, win fyne.Window, uiDescr map[string]map[string]any) error {
+func Children(achildren any, parent []string, win fyne.Window, uiDescr map[string]map[string]any) error {
 	childDescr := achildren.(map[string]map[string]any) // type validation has happened already :)
 
 	for name, keywordDescr := range childDescr {
-		fullName := parse.JoinParentName(parent, name)
+		fullName := append(parent, name)
 		err := Keyword(keywordDescr, fullName, win, uiDescr)
 		if err != nil {
 			return err
@@ -146,16 +146,16 @@ func Children(achildren any, parent string, win fyne.Window, uiDescr map[string]
 	return nil
 }
 
-func Keyword(keywordDescr map[string]any, fullName string, win fyne.Window, uiDescr map[string]map[string]any) error {
+func Keyword(keywordDescr map[string]any, fullName []string, win fyne.Window, uiDescr map[string]map[string]any) error {
 	keyword := keywordDescr[parse.KeyKeyword]
 	keywordFunc, ok := ui.KeywordRunFunc(keyword.(string))
 	if !ok {
-		return fmt.Errorf(`for %q: unknown keyword %q`, fullName, keyword)
+		return fmt.Errorf(`for %q: unknown keyword %q`, ui.DisplayName(fullName), keyword)
 	}
 	return keywordFunc(keywordDescr, fullName, win, uiDescr)
 }
 
-func Link(linkDescr map[string]any, fullName string, win fyne.Window, uiDescr map[string]map[string]any) error {
+func Link(linkDescr map[string]any, fullName []string, win fyne.Window, uiDescr map[string]map[string]any) error {
 	dest := linkDescr["destination"].(string) // has been validated already :)
 	dnames := strings.Split(dest, ".")
 
@@ -171,29 +171,25 @@ func Link(linkDescr map[string]any, fullName string, win fyne.Window, uiDescr ma
 	}
 	dkwMap := tree[dnames[n-1]] // the last name always exists or the link wouldn't be valid
 
-	return Keyword(dkwMap, dest, win, uiDescr)
+	return Keyword(dkwMap, ui.FullName(dest), win, uiDescr)
 }
 
-func Action(actionDescr map[string]any, fullName string, win fyne.Window, uiDescr map[string]map[string]any) error {
+func Action(actionDescr map[string]any, fullName []string, win fyne.Window, uiDescr map[string]map[string]any) error {
 	_ = uiDescr // currently not used but might change with more actions
-	var err error
 	action := actionDescr[parse.KeyType]
-
-	switch action {
-	case "exit":
-		err = Exit(actionDescr, fullName, win, uiDescr)
-	default:
-		err = fmt.Errorf(`for %q: unknown action type %q`, fullName, action)
+	runFunc, ok := ui.ActionRunFunc(action.(string))
+	if !ok {
+		return fmt.Errorf(`for %q: unknown action %q`, ui.DisplayName(fullName), action)
 	}
-	return err
+	return runFunc(actionDescr, fullName, win, uiDescr)
 }
 
-func Exit(exitDescr map[string]any, fullName string, _ fyne.Window, _ map[string]map[string]any) error {
+func Exit(exitDescr map[string]any, fullName []string, _ fyne.Window, _ map[string]map[string]any) error {
 	code := 0 // intentional default
 	if exitDescr["code"] != nil {
 		code = int(exitDescr["code"].(int64))
 	}
-	log.Printf("INFO: exiting app as requested at position %q with code: %d", fullName, code)
+	log.Printf("INFO: exiting app as requested at position %q with code: %d", ui.DisplayName(fullName), code)
 	os.Exit(code)
 	return nil // just for the compiler :)
 }

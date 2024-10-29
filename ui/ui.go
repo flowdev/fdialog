@@ -3,6 +3,8 @@ package ui
 import (
 	"errors"
 	"fmt"
+	"strings"
+
 	"fyne.io/fyne/v2"
 )
 
@@ -10,7 +12,7 @@ const WinMain = "main"
 
 type RunFunction func(
 	detailDescr map[string]any,
-	fullName string,
+	fullName []string,
 	win fyne.Window,
 	completeDescr map[string]map[string]any,
 ) error
@@ -72,6 +74,26 @@ func RegisterAction(name string, runFunc RunFunction) error {
 }
 
 func ActionRunFunc(name string) (runFunc RunFunction, ok bool) {
-	runFunc, ok = keywordMap[name]
+	runFunc, ok = actionMap[name]
 	return runFunc, ok
+}
+
+func SameFullName(a []string, b ...string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i, s := range a {
+		if s != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func DisplayName(fullName []string) string {
+	return strings.Join(fullName, ".")
+}
+
+func FullName(displayName string) []string {
+	return strings.Split(displayName, ".")
 }

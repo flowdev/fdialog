@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/flowdev/fdialog/cmd"
+	"github.com/flowdev/fdialog/cobracmd"
 	"github.com/flowdev/fdialog/uimain"
 	"log"
 )
@@ -12,5 +12,5 @@ func main() {
 	if err != nil {
 		log.Printf("FATAL: %v", err)
 	}
-	cmd.Execute()
+	cobracmd.Execute()
 }
