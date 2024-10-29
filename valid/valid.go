@@ -1,13 +1,32 @@
 package valid
 
 import (
+	"errors"
 	"fmt"
+	"log"
 	"math"
 	"reflect"
 	"regexp"
+
+	"github.com/flowdev/fdialog/ui"
 )
 
-func StringValidator(minLen, maxLen int, regex *regexp.Regexp) func(v any, strict bool, parent []string) (any, error) {
+// UIDescription validates the data from a whole UI description file independent of its format.
+// If strict is true additional attributes are errors.
+// The keys of the first level map are the names of the windows, containers, ...
+// The keys of the second level map are the attributes of the keyword map.
+// Mandatory key for keyword maps is: "keyword"
+// The key "type" is expected for most keywords but not for all.
+func UIDescription(uiDescr map[string]map[string]any, strict bool) error {
+	_, err := validateRecursiveMap(uiDescr, strict, nil)
+	return err
+}
+
+// ---------------------------------------------------------------------------
+// AttributeValidator(s): func(v any, strict bool, parent []string) (any, error)
+//
+
+func StringValidator(minLen, maxLen int, regex *regexp.Regexp) ui.AttributeValidator {
 	return func(v any, strict bool, parent []string) (any, error) {
 		rv := reflect.ValueOf(v)
 		if rv.Kind() != reflect.String {
@@ -29,7 +48,7 @@ func StringValidator(minLen, maxLen int, regex *regexp.Regexp) func(v any, stric
 		return s, nil
 	}
 }
-func ExactStringValidator(expected string) func(v any, strict bool, parent []string) (any, error) {
+func ExactStringValidator(expected string) ui.AttributeValidator {
 	return func(v any, strict bool, parent []string) (any, error) {
 		rv := reflect.ValueOf(v)
 		if rv.Kind() != reflect.String {
@@ -46,7 +65,7 @@ func ExactStringValidator(expected string) func(v any, strict bool, parent []str
 	}
 }
 
-func IntValidator(minVal, maxVal int64) func(v any, strict bool, parent []string) (any, error) {
+func IntValidator(minVal, maxVal int64) ui.AttributeValidator {
 	return func(v any, strict bool, parent []string) (any, error) {
 		var i int64
 		rv := reflect.ValueOf(v)
@@ -72,7 +91,7 @@ func IntValidator(minVal, maxVal int64) func(v any, strict bool, parent []string
 	}
 }
 
-func FloatValidator(minVal, maxVal float64) func(v any, strict bool, parent []string) (any, error) {
+func FloatValidator(minVal, maxVal float64) ui.AttributeValidator {
 	return func(v any, strict bool, parent []string) (any, error) {
 		var f float64
 		rv := reflect.ValueOf(v)
@@ -103,4 +122,133 @@ func BoolValidator() func(v any, strict bool, parent []string) (any, error) {
 		}
 		return v, nil
 	}
+}
+
+func ChildrenValidator(minLen, maxLen int) ui.AttributeValidator {
+	return func(v any, strict bool, parent []string) (any, error) {
+		rv := reflect.ValueOf(v)
+		if rv.Kind() != reflect.Map {
+			return v, fmt.Errorf("expecting a map value, got %s", rv.Kind())
+		}
+
+		m, ok := v.(map[string]map[string]any)
+		if !ok {
+			return v, fmt.Errorf("expecting a map[string]map[string]any value, got %T", v)
+		}
+
+		if len(m) < minLen {
+			return v, fmt.Errorf("expecting at least %d map elements, got %d", minLen, len(m))
+		}
+		if len(m) > maxLen {
+			return v, fmt.Errorf("expecting at most %d map elements, got %d", maxLen, len(m))
+		}
+
+		return validateRecursiveMap(m, strict, parent)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+//
+
+func validateRecursiveMap(m map[string]map[string]any, strict bool, parent []string) (any, error) {
+	var errs []error
+
+	for name, keywordMap := range m {
+		keywordMap[ui.KeyName] = name
+		fullName := append(parent, name)
+		keyword, typ, err := getKeywordType(keywordMap, fullName)
+		if err != nil {
+			errs = append(errs, err)
+		} else {
+			errs = append(errs, validateKeyword(keyword, fullName, typ, keywordMap, strict))
+		}
+	}
+	return m, errors.Join(errs...)
+}
+
+func validateKeyword(
+	keyword string, fullName []string, typ string,
+	valueMap map[string]any,
+	strict bool,
+) error {
+	keywordTypeValidationData, ok := ui.KeywordValidData(keyword, typ)
+	if !ok && typ != "" { // try empty type; will error later if not supported
+		keywordTypeValidationData, ok = ui.KeywordValidData(keyword, "")
+	}
+	if !ok {
+		return fmt.Errorf("for %q: the combination of keyword %q and type %q is not supported",
+			ui.DisplayName(fullName), keyword, typ)
+	}
+
+	return validateAttributes(fullName, valueMap, keywordTypeValidationData.Attributes, strict)
+}
+
+func validateAttributes(
+	fullName []string,
+	valueMap map[string]any,
+	attributes map[string]ui.AttributeValueType,
+	strict bool,
+) error {
+
+	validatedAttributes := make(map[string]bool, len(attributes))
+	errs := make([]error, len(attributes))
+
+	for attrName, attribute := range attributes {
+		if vv, ok := valueMap[attrName]; ok {
+			validatedAttributes[attrName] = true
+			vv, err := attribute.Validate(vv, strict, fullName)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("for %q, attribute %q: %v",
+					ui.DisplayName(fullName), attrName, err.Error()))
+			}
+			valueMap[attrName] = vv
+		} else if attribute.Required {
+			errs = append(errs, fmt.Errorf("for %q, is attribute %q Required",
+				ui.DisplayName(fullName), attrName))
+		}
+	}
+
+	if len(validatedAttributes) != len(valueMap) {
+		keysTooMuch := make([]string, 0, len(valueMap)-len(validatedAttributes))
+
+		for k := range valueMap {
+			_, ok := validatedAttributes[k]
+			if !ok {
+				keysTooMuch = append(keysTooMuch, k)
+			}
+		}
+
+		err := fmt.Errorf("for %q: these attributes aren't recognized: %s", ui.DisplayName(fullName), keysTooMuch)
+		if strict {
+			errs = append(errs, err)
+		} else {
+			log.Printf("WARNING: %v", err)
+		}
+	}
+	return errors.Join(errs...)
+}
+
+func getKeywordType(keywordMap map[string]any, fullName []string) (keyword, typ string, err error) {
+	rkeyword := reflect.ValueOf(keywordMap[ui.KeyKeyword])
+	if rkeyword.Kind() != reflect.String {
+		return "", "",
+			fmt.Errorf("for %q: expecting the keyword to be a string, got a %s",
+				ui.DisplayName(fullName), rkeyword.Kind())
+	}
+	keyword = rkeyword.String()
+
+	typ = "" // this is the intentional default
+	atype, ok := keywordMap[ui.KeyType]
+	if ok {
+		rtype := reflect.ValueOf(atype)
+		if rtype.Kind() != reflect.String {
+			return "", "",
+				fmt.Errorf("for %q: expecting the type attribute to be a string, got a %s",
+					ui.DisplayName(fullName), rtype.Kind())
+		}
+		typ = rtype.String()
+	}
+
+	return keyword, typ, nil
 }

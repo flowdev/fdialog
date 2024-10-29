@@ -2,44 +2,15 @@ package run
 
 import (
 	"fmt"
-	"github.com/flowdev/fdialog/ui"
+	"fyne.io/fyne/v2"
 	"log"
 	"os"
 	"os/signal"
 	"strings"
-	"sync/atomic"
 	"syscall"
 
-	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/app"
-	"github.com/flowdev/fdialog/parse"
+	"github.com/flowdev/fdialog/ui"
 )
-
-var fapp fyne.App // needed for exiting cleanly in actions
-var exitCode = new(atomic.Int32)
-
-func RegisterAll() error {
-	// Keywords:
-	err := ui.RegisterKeyword(parse.KeywordWindow, "win", Window)
-	if err != nil {
-		return err
-	}
-	err = ui.RegisterKeyword(parse.KeywordAction, "act", Action)
-	if err != nil {
-		return err
-	}
-	err = ui.RegisterKeyword(parse.KeywordLink, "lnk", Link)
-	if err != nil {
-		return err
-	}
-
-	// Actions:
-	err = ui.RegisterAction("exit", Exit)
-	if err != nil {
-		return err
-	}
-	return nil
-}
 
 // UIDescription runs a whole UI description and returns any error encountered.
 func UIDescription(uiDescr map[string]map[string]any) error {
@@ -47,12 +18,14 @@ func UIDescription(uiDescr map[string]map[string]any) error {
 	if mainWin == nil {
 		return fmt.Errorf("unable to find main window in UI description")
 	}
-	if mainWin[parse.KeyKeyword] != parse.KeywordWindow {
-		return fmt.Errorf(`command with name 'main' is not a window but a:  %q`, mainWin[parse.KeyKeyword])
+	if mainWin[ui.KeyKeyword] != ui.KeywordWindow {
+		return fmt.Errorf(`command with name 'main' is not a window but a:  %q`, mainWin[ui.KeyKeyword])
 	}
-	fapp = app.NewWithID("org.flowdev.fdialog")
+	if err := ui.NewApp("org.flowdev.fdialog"); err != nil {
+		return err
+	}
 
-	win, ok := ui.KeywordRunFunc(parse.KeywordWindow)
+	win, ok := ui.KeywordRunFunc(ui.KeywordWindow)
 	if !ok {
 		return fmt.Errorf(`unable to get run function for keyword 'window'`)
 	}
@@ -61,11 +34,11 @@ func UIDescription(uiDescr map[string]map[string]any) error {
 	if err != nil {
 		return err
 	}
-	fapp.Run()
+	ui.RunApp()
 	return nil
 }
 
-// Window runs a window description including all of its children.
+// Window runs a Window description including all of its children.
 // In the case of the main window it will run the whole UI.
 // The fyne.Window parameter isn't currently used but might be used in the future for a parent window.
 func Window(winDescr map[string]any, fullName []string, _ fyne.Window, uiDescr map[string]map[string]any) error {
@@ -73,7 +46,7 @@ func Window(winDescr map[string]any, fullName []string, _ fyne.Window, uiDescr m
 	if _, ok := winDescr["title"]; ok {
 		title = winDescr["title"].(string)
 	}
-	win := fapp.NewWindow(title)
+	win := ui.NewWindow(title)
 
 	width := float64(0)
 	height := float64(0)
@@ -97,8 +70,8 @@ func Window(winDescr map[string]any, fullName []string, _ fyne.Window, uiDescr m
 		win.SetFixedSize(true)
 	}
 
-	if _, ok := winDescr[parse.KeyChildren]; ok {
-		err := Children(winDescr[parse.KeyChildren], fullName, win, uiDescr)
+	if _, ok := winDescr[ui.KeyChildren]; ok {
+		err := Children(winDescr[ui.KeyChildren], fullName, win, uiDescr)
 		if err != nil {
 			return err
 		}
@@ -107,10 +80,7 @@ func Window(winDescr map[string]any, fullName []string, _ fyne.Window, uiDescr m
 	if ui.SameFullName(fullName, "main") {
 		// Exit the app nicely with the correct exit code ...
 		interceptor := func() {
-			fapp.Quit()
-			code := int(exitCode.Load())
-			log.Printf("INFO: exiting app as requested from main window with code: %d", code)
-			os.Exit(code)
+			ui.ExitApp(-1)
 		}
 		win.SetCloseIntercept(interceptor) // ... when the main window is closed or
 
@@ -147,7 +117,7 @@ func Children(achildren any, parent []string, win fyne.Window, uiDescr map[strin
 }
 
 func Keyword(keywordDescr map[string]any, fullName []string, win fyne.Window, uiDescr map[string]map[string]any) error {
-	keyword := keywordDescr[parse.KeyKeyword]
+	keyword := keywordDescr[ui.KeyKeyword]
 	keywordFunc, ok := ui.KeywordRunFunc(keyword.(string))
 	if !ok {
 		return fmt.Errorf(`for %q: unknown keyword %q`, ui.DisplayName(fullName), keyword)
@@ -162,7 +132,7 @@ func Link(linkDescr map[string]any, fullName []string, win fyne.Window, uiDescr 
 	n := len(dnames)
 	tree := uiDescr // start at the top
 	for i := 0; i < n-1; i++ {
-		dchildren := tree[dnames[i]][parse.KeyChildren]
+		dchildren := tree[dnames[i]][ui.KeyChildren]
 		if dchildren == nil {
 			return fmt.Errorf("for %q: no children found for link destination %q",
 				fullName, strings.Join(dnames[:i+1], "."))
@@ -176,7 +146,7 @@ func Link(linkDescr map[string]any, fullName []string, win fyne.Window, uiDescr 
 
 func Action(actionDescr map[string]any, fullName []string, win fyne.Window, uiDescr map[string]map[string]any) error {
 	_ = uiDescr // currently not used but might change with more actions
-	action := actionDescr[parse.KeyType]
+	action := actionDescr[ui.KeyType]
 	runFunc, ok := ui.ActionRunFunc(action.(string))
 	if !ok {
 		return fmt.Errorf(`for %q: unknown action %q`, ui.DisplayName(fullName), action)
@@ -192,20 +162,4 @@ func Exit(exitDescr map[string]any, fullName []string, _ fyne.Window, _ map[stri
 	log.Printf("INFO: exiting app as requested at position %q with code: %d", ui.DisplayName(fullName), code)
 	os.Exit(code)
 	return nil // just for the compiler :)
-}
-
-// ---------------------------------------------------------------------------
-// Helpers
-
-func ExitApp(code int) {
-	fapp.Quit()
-	if code >= 0 {
-		os.Exit(code)
-	}
-	os.Exit(int(exitCode.Load()))
-}
-
-// StoreExitCode stores the given code as exit code for ending the app.
-func StoreExitCode(code int32) {
-	exitCode.Store(code)
 }

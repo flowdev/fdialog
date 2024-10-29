@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/antlr4-go/antlr/v4"
 	"github.com/flowdev/fdialog/parse/uidl"
+	"github.com/flowdev/fdialog/ui"
 	"io"
 	"strconv"
 )
@@ -97,11 +98,11 @@ func convertCommands(antlrCommands []uidl.ICommandContext, errColl ErrorCollecto
 			continue
 		}
 		attrMap := convertAttributes(command.Attributes().AllAttribute(), errColl)
-		attrMap[KeyKeyword] = keyword.GetText()
+		attrMap[ui.KeyKeyword] = keyword.GetText()
 		commandMap[strName] = attrMap
 
 		if command.CommandBody() != nil {
-			attrMap[KeyChildren] = convertCommands(command.CommandBody().Commands().AllCommand(), errColl)
+			attrMap[ui.KeyChildren] = convertCommands(command.CommandBody().Commands().AllCommand(), errColl)
 		}
 	}
 

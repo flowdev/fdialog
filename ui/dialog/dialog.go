@@ -3,22 +3,182 @@ package dialog
 import (
 	"errors"
 	"fmt"
+	"github.com/flowdev/fdialog/run"
 	"github.com/flowdev/fdialog/ui"
+	"github.com/flowdev/fdialog/valid"
 	"log"
+	"math"
 	"os"
 	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/dialog"
-	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/storage"
-
-	"github.com/flowdev/fdialog/parse"
-	"github.com/flowdev/fdialog/run"
 )
 
+const KeywordDialog = "dialog"
+
 func RegisterAll() error {
-	err := ui.RegisterKeyword(parse.KeywordDialog, "dlg", runDialog)
+	// -----------------------------------------------------------------------
+	// Register Validators
+	//
+
+	err := ui.RegisterValidKeyword(KeywordDialog, "info", ui.ValidAttributesType{
+		Attributes: map[string]ui.AttributeValueType{
+			ui.KeyKeyword: {
+				Required: true,
+				Validate: valid.ExactStringValidator(KeywordDialog),
+			},
+			ui.KeyName: {
+				Required: true,
+				Validate: valid.StringValidator(1, 0, ui.NameRegex),
+			},
+			ui.KeyType: {
+				Required: true,
+				Validate: valid.ExactStringValidator("info"),
+			},
+			"title": {
+				Validate: valid.StringValidator(1, 0, nil),
+			},
+			"message": {
+				Required: true,
+				Validate: valid.StringValidator(1, 0, nil),
+			},
+			"buttonText": {
+				Validate: valid.StringValidator(1, 0, nil),
+			},
+			"width": {
+				Validate: valid.FloatValidator(50.0, math.MaxFloat32),
+			},
+			"height": {
+				Validate: valid.FloatValidator(80.0, math.MaxFloat32),
+			},
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	err = ui.RegisterValidKeyword(KeywordDialog, "error", ui.ValidAttributesType{
+		Attributes: map[string]ui.AttributeValueType{
+			ui.KeyKeyword: {
+				Required: true,
+				Validate: valid.ExactStringValidator(KeywordDialog),
+			},
+			ui.KeyName: {
+				Required: true,
+				Validate: valid.StringValidator(1, 0, ui.NameRegex),
+			},
+			ui.KeyType: {
+				Required: true,
+				Validate: valid.ExactStringValidator("error"),
+			},
+			"message": {
+				Required: true,
+				Validate: valid.StringValidator(1, 0, nil),
+			},
+			"buttonText": {
+				Validate: valid.StringValidator(1, 0, nil),
+			},
+			"width": {
+				Validate: valid.FloatValidator(50.0, math.MaxFloat32),
+			},
+			"height": {
+				Validate: valid.FloatValidator(80.0, math.MaxFloat32),
+			},
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	err = ui.RegisterValidKeyword(KeywordDialog, "confirmation", ui.ValidAttributesType{
+		Attributes: map[string]ui.AttributeValueType{
+			ui.KeyKeyword: {
+				Required: true,
+				Validate: valid.ExactStringValidator(KeywordDialog),
+			},
+			ui.KeyName: {
+				Required: true,
+				Validate: valid.StringValidator(1, 0, ui.NameRegex),
+			},
+			ui.KeyType: {
+				Required: true,
+				Validate: valid.ExactStringValidator("confirmation"),
+			},
+			"title": {
+				Validate: valid.StringValidator(1, 0, nil),
+			},
+			"message": {
+				Required: true,
+				Validate: valid.StringValidator(1, 0, nil),
+			},
+			"dismissText": {
+				Validate: valid.StringValidator(1, 0, nil),
+			},
+			"confirmText": {
+				Validate: valid.StringValidator(1, 0, nil),
+			},
+			"width": {
+				Validate: valid.FloatValidator(50.0, math.MaxFloat32),
+			},
+			"height": {
+				Validate: valid.FloatValidator(80.0, math.MaxFloat32),
+			},
+			ui.KeyChildren: {
+				Required: true,
+				Validate: valid.ChildrenValidator(2, 2),
+			},
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	err = ui.RegisterValidKeyword(KeywordDialog, "openFile", ui.ValidAttributesType{
+		Attributes: map[string]ui.AttributeValueType{
+			ui.KeyKeyword: {
+				Required: true,
+				Validate: valid.ExactStringValidator(KeywordDialog),
+			},
+			ui.KeyName: {
+				Required: true,
+				Validate: valid.StringValidator(1, 0, ui.NameRegex),
+			},
+			ui.KeyType: {
+				Required: true,
+				Validate: valid.ExactStringValidator("openFile"),
+			},
+			"extensions": {
+				Validate: valid.StringValidator(2, 0, nil),
+			},
+			"dismissText": {
+				Validate: valid.StringValidator(1, 0, nil),
+			},
+			"confirmText": {
+				Validate: valid.StringValidator(1, 0, nil),
+			},
+			"width": {
+				Validate: valid.FloatValidator(50.0, math.MaxFloat32),
+			},
+			"height": {
+				Validate: valid.FloatValidator(80.0, math.MaxFloat32),
+			},
+			//ui.KeyChildren: {
+			//	Required: true,
+			//	Validate: valid.ChildrenValidator(2, 2),
+			//},
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	// -----------------------------------------------------------------------
+	// Register Runners
+	//
+
+	err = ui.RegisterRunKeyword(KeywordDialog, "dlg", runDialog)
 	if err != nil {
 		return err
 	}
@@ -27,7 +187,7 @@ func RegisterAll() error {
 
 func runDialog(dialogDescr map[string]any, fullName []string, win fyne.Window, uiDescr map[string]map[string]any) error {
 	var err error
-	dlg := dialogDescr[parse.KeyType]
+	dlg := dialogDescr[ui.KeyType]
 
 	switch dlg {
 	case "info":
@@ -39,7 +199,7 @@ func runDialog(dialogDescr map[string]any, fullName []string, win fyne.Window, u
 	case "openFile":
 		err = runOpenFile(dialogDescr, fullName, win, uiDescr)
 	default:
-		err = fmt.Errorf(`for %q: unknown dialog type %q`, fullName, dlg)
+		err = fmt.Errorf(`for %q: unknown dialog type %q`, ui.DisplayName(fullName), dlg)
 	}
 	return err
 }
@@ -58,11 +218,11 @@ func runOpenFile(
 		}
 		if frd == nil {
 			fmt.Println("<CLOSED>")
-			run.ExitApp(1)
+			ui.ExitApp(1)
 		}
 		fmt.Println("file to open:", strings.TrimPrefix(frd.URI().String(), "file://"))
 
-		run.ExitApp(0)
+		ui.ExitApp(0)
 	}, win)
 
 	ofDialog.SetOnClosed(func() {
@@ -117,7 +277,7 @@ func runConfirmation(
 	uiDescr map[string]map[string]any,
 ) error {
 
-	callback, err := confirmCallback(cnfDescr[parse.KeyChildren].(map[string]map[string]any), fullName, win, uiDescr)
+	callback, err := confirmCallback(cnfDescr[ui.KeyChildren].(map[string]map[string]any), fullName, win, uiDescr)
 	if err != nil {
 		return err
 	}
@@ -157,12 +317,16 @@ func runConfirmation(
 		cnfSize := fyne.NewSize(float32(width), float32(height))
 		cnf.Resize(cnfSize)
 	}
-	escapeKey := &desktop.CustomShortcut{KeyName: fyne.KeyEscape}
-	win.Canvas().AddShortcut(escapeKey, func(shortcut fyne.Shortcut) {
-		log.Println("We tapped Escape")
+	win.Canvas().SetOnTypedKey(func(keyEvent *fyne.KeyEvent) {
+		switch keyEvent.Name {
+		case fyne.KeyReturn, fyne.KeyEnter, fyne.KeySpace:
+			callback(true)
+		case fyne.KeyEscape:
+			callback(false)
+		}
 	})
 
-	run.StoreExitCode(1) // closing the window => dismissed
+	ui.StoreExitCode(1) // closing the window => dismissed
 	cnf.Show()
 	return nil
 }
@@ -176,20 +340,22 @@ func confirmCallback(
 
 	actConfirm := childrenDescr["confirm"]
 	if actConfirm == nil {
-		return nil, fmt.Errorf("for %q: confirm action is missing", fullName)
+		return nil, fmt.Errorf("for %q: confirm action is missing", ui.DisplayName(fullName))
 	}
-	keyword := actConfirm[parse.KeyKeyword].(string)
-	if keyword != parse.KeywordAction {
-		return nil, fmt.Errorf("for %q: confirm action is not an action but a %q", fullName, keyword)
+	keyword := actConfirm[ui.KeyKeyword].(string)
+	if keyword != ui.KeywordAction {
+		return nil, fmt.Errorf("for %q: confirm action is not an action but a %q",
+			ui.DisplayName(fullName), keyword)
 	}
 
 	actDismiss := childrenDescr["dismiss"]
 	if actDismiss == nil {
-		return nil, fmt.Errorf("for %q: dismiss action is missing", fullName)
+		return nil, fmt.Errorf("for %q: dismiss action is missing", ui.DisplayName(fullName))
 	}
-	keyword = actDismiss[parse.KeyKeyword].(string)
-	if keyword != parse.KeywordAction {
-		return nil, fmt.Errorf("for %q: dismiss action is not an action but a %q", fullName, keyword)
+	keyword = actDismiss[ui.KeyKeyword].(string)
+	if keyword != ui.KeywordAction {
+		return nil, fmt.Errorf("for %q: dismiss action is not an action but a %q",
+			ui.DisplayName(fullName), keyword)
 	}
 	return func(confirmed bool) {
 		if confirmed {
@@ -238,7 +404,7 @@ func runError(errorDescr map[string]any, fullName []string, win fyne.Window) err
 		errorDialog.Resize(infoSize)
 	}
 
-	run.StoreExitCode(0) // error has been noted; so all is OK
+	ui.StoreExitCode(0) // error has been noted; so all is OK
 	errorDialog.Show()
 	return nil
 }
@@ -280,7 +446,7 @@ func runInfo(infoDescr map[string]any, fullName []string, win fyne.Window) error
 		info.Resize(infoSize)
 	}
 
-	run.StoreExitCode(0) // info has been noted; so all is OK
+	ui.StoreExitCode(0) // info has been noted; so all is OK
 	info.Show()
 	return nil
 }

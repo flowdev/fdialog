@@ -1,6 +1,7 @@
 package cobracmd
 
 import (
+	"github.com/flowdev/fdialog/valid"
 	"io"
 	"log"
 	"os"
@@ -57,10 +58,16 @@ func doRun(_ *cobra.Command, _ []string) {
 		rd = os.Stdin
 	}
 
-	uiDescr, err := parse.UIDescription(rd, runCmdData.fileName, runCmdData.format, !runCmdData.lenient)
+	uiDescr, err := parse.UIDescription(rd, runCmdData.fileName, runCmdData.format)
 	if err != nil {
 		log.Printf("ERROR: Unable to parse UI description:\n%v", err)
 		os.Exit(12)
+	}
+	err = valid.UIDescription(uiDescr, !runCmdData.lenient)
+	if err != nil {
+		log.Printf("ERROR: Validating UI description from file %q in format %q:\n%v",
+			runCmdData.fileName, runCmdData.format, err)
+		os.Exit(13)
 	}
 	err = run.UIDescription(uiDescr)
 	if err != nil {

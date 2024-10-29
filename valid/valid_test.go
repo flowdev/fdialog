@@ -1,13 +1,15 @@
-package parse_test
+package valid_test
 
 import (
+	"github.com/flowdev/fdialog/uimain"
+	"github.com/flowdev/fdialog/valid"
 	"strings"
 	"testing"
-
-	"github.com/flowdev/fdialog/parse"
 )
 
 func TestValidate(t *testing.T) {
+	_ = uimain.RegisterEverything()
+
 	specs := []struct {
 		name             string
 		givenUiDescr     map[string]map[string]any
@@ -395,7 +397,7 @@ func TestValidate(t *testing.T) {
 				"act2": {
 					"keyword": "action",
 					"type":    "exit",
-					"code":    int64(127),
+					"code":    int64(125),
 				},
 			},
 			givenStrict:      true,
@@ -416,13 +418,13 @@ func TestValidate(t *testing.T) {
 
 	for _, spec := range specs {
 		t.Run(spec.name, func(tt *testing.T) {
-			err := parse.Validate(spec.givenUiDescr, spec.givenStrict)
+			err := valid.UIDescription(spec.givenUiDescr, spec.givenStrict)
 			var actualErrCount int
 			if err != nil {
 				actualErrCount = strings.Count(err.Error(), "\n") + 1
 			}
 			if actualErrCount != spec.expectedErrCount {
-				tt.Errorf("Validate() expectedErrCount %v, actual errors: %v", spec.expectedErrCount, err)
+				tt.Errorf("UIDescription() expectedErrCount %v, actual errors: %v", spec.expectedErrCount, err)
 			}
 		})
 	}

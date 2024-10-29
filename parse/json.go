@@ -43,7 +43,7 @@ func cleanAllChildren(data map[string]map[string]any) error {
 }
 
 func cleanKeyword(data map[string]any, fullName []string) error {
-	if rawChildren, ok := data[KeyChildren]; ok {
+	if rawChildren, ok := data[ui.KeyChildren]; ok {
 		mapChildren, ok := rawChildren.(map[string]any)
 		if !ok {
 			return fmt.Errorf("for %q: expected attribute children to contain a map[string]any, got %T",
@@ -62,7 +62,7 @@ func cleanKeyword(data map[string]any, fullName []string) error {
 		if err := cleanAllChildren(cleanChildren); err != nil {
 			return err
 		}
-		data[KeyChildren] = cleanChildren
+		data[ui.KeyChildren] = cleanChildren
 	}
 	return nil
 }
