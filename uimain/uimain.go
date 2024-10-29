@@ -1,8 +1,8 @@
 package uimain
 
 import (
-	"github.com/flowdev/fdialog/dialog"
 	"github.com/flowdev/fdialog/run"
+	"github.com/flowdev/fdialog/ui/dialog"
 )
 
 func RegisterEverything() error {

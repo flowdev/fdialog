@@ -2,7 +2,7 @@ package run
 
 import (
 	"fmt"
-	"github.com/flowdev/fdialog/uibase"
+	"github.com/flowdev/fdialog/ui"
 	"log"
 	"os"
 	"os/signal"
@@ -19,15 +19,22 @@ var fapp fyne.App // needed for exiting cleanly in actions
 var exitCode = new(atomic.Int32)
 
 func RegisterAll() error {
-	err := uibase.RegisterKeyword(parse.KeywordWindow, "win", Window)
+	// Keywords:
+	err := ui.RegisterKeyword(parse.KeywordWindow, "win", Window)
 	if err != nil {
 		return err
 	}
-	err = uibase.RegisterKeyword(parse.KeywordAction, "act", Action)
+	err = ui.RegisterKeyword(parse.KeywordAction, "act", Action)
 	if err != nil {
 		return err
 	}
-	err = uibase.RegisterKeyword(parse.KeywordLink, "lnk", Link)
+	err = ui.RegisterKeyword(parse.KeywordLink, "lnk", Link)
+	if err != nil {
+		return err
+	}
+
+	// Actions:
+	err = ui.RegisterAction("exit", Exit)
 	if err != nil {
 		return err
 	}
@@ -36,7 +43,7 @@ func RegisterAll() error {
 
 // UIDescription runs a whole UI description and returns any error encountered.
 func UIDescription(uiDescr map[string]map[string]any) error {
-	mainWin := uiDescr[uibase.WinMain]
+	mainWin := uiDescr[ui.WinMain]
 	if mainWin == nil {
 		return fmt.Errorf("unable to find main window in UI description")
 	}
@@ -45,12 +52,12 @@ func UIDescription(uiDescr map[string]map[string]any) error {
 	}
 	fapp = app.NewWithID("org.flowdev.fdialog")
 
-	win, ok := uibase.KeywordFunc(parse.KeywordWindow)
+	win, ok := ui.KeywordRunFunc(parse.KeywordWindow)
 	if !ok {
 		return fmt.Errorf(`unable to get run function for keyword 'window'`)
 	}
 
-	err := win(mainWin, uibase.WinMain, nil, uiDescr)
+	err := win(mainWin, ui.WinMain, nil, uiDescr)
 	if err != nil {
 		return err
 	}
@@ -141,7 +148,7 @@ func Children(achildren any, parent string, win fyne.Window, uiDescr map[string]
 
 func Keyword(keywordDescr map[string]any, fullName string, win fyne.Window, uiDescr map[string]map[string]any) error {
 	keyword := keywordDescr[parse.KeyKeyword]
-	keywordFunc, ok := uibase.KeywordFunc(keyword.(string))
+	keywordFunc, ok := ui.KeywordRunFunc(keyword.(string))
 	if !ok {
 		return fmt.Errorf(`for %q: unknown keyword %q`, fullName, keyword)
 	}

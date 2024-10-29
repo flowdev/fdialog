@@ -3,7 +3,7 @@ package dialog
 import (
 	"errors"
 	"fmt"
-	"github.com/flowdev/fdialog/uibase"
+	"github.com/flowdev/fdialog/ui"
 	"log"
 	"os"
 	"strings"
@@ -18,7 +18,7 @@ import (
 )
 
 func RegisterAll() error {
-	err := uibase.RegisterKeyword(parse.KeywordDialog, "dlg", runDialog)
+	err := ui.RegisterKeyword(parse.KeywordDialog, "dlg", runDialog)
 	if err != nil {
 		return err
 	}
