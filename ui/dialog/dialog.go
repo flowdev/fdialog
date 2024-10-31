@@ -3,17 +3,17 @@ package dialog
 import (
 	"errors"
 	"fmt"
-	"github.com/flowdev/fdialog/run"
-	"github.com/flowdev/fdialog/ui"
-	"github.com/flowdev/fdialog/valid"
 	"log"
 	"math"
-	"os"
 	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/storage"
+
+	"github.com/flowdev/fdialog/run"
+	"github.com/flowdev/fdialog/ui"
+	"github.com/flowdev/fdialog/valid"
 )
 
 const KeywordDialog = "dialog"
@@ -53,6 +53,10 @@ func RegisterAll() error {
 			"height": {
 				Validate: valid.FloatValidator(80.0, math.MaxFloat32),
 			},
+			ui.KeyChildren: {
+				Required: false,
+				Validate: valid.ChildrenValidator(0, 1),
+			},
 		},
 	})
 	if err != nil {
@@ -85,6 +89,10 @@ func RegisterAll() error {
 			},
 			"height": {
 				Validate: valid.FloatValidator(80.0, math.MaxFloat32),
+			},
+			ui.KeyChildren: {
+				Required: false,
+				Validate: valid.ChildrenValidator(0, 1),
 			},
 		},
 	})
@@ -185,15 +193,15 @@ func RegisterAll() error {
 	return nil
 }
 
-func runDialog(dialogDescr map[string]any, fullName []string, win fyne.Window, uiDescr map[string]map[string]any) error {
+func runDialog(dialogDescr ui.AttributesDescr, fullName []string, win fyne.Window, uiDescr ui.CommandsDescr) error {
 	var err error
 	dlg := dialogDescr[ui.KeyType]
 
 	switch dlg {
 	case "info":
-		err = runInfo(dialogDescr, fullName, win)
+		err = runInfo(dialogDescr, fullName, win, uiDescr)
 	case "error":
-		err = runError(dialogDescr, fullName, win)
+		err = runError(dialogDescr, fullName, win, uiDescr)
 	case "confirmation":
 		err = runConfirmation(dialogDescr, fullName, win, uiDescr)
 	case "openFile":
@@ -204,11 +212,203 @@ func runDialog(dialogDescr map[string]any, fullName []string, win fyne.Window, u
 	return err
 }
 
-func runOpenFile(
-	ofDescr map[string]any,
+func runInfo(infoDescr ui.AttributesDescr, fullName []string, win fyne.Window, uiDescr ui.CommandsDescr) error {
+	_ = fullName // currently not used but might change
+
+	value := infoDescr["title"]
+	title := ""
+	if value != nil {
+		title = value.(string)
+	}
+	message := infoDescr["message"].(string) // message is required
+	info := dialog.NewInformation(title, message, win)
+	if children, ok := infoDescr[ui.KeyChildren]; ok {
+		callback, err := messageCallback(children.(ui.CommandsDescr), fullName, win, uiDescr)
+		if err != nil {
+			return err
+		}
+		if callback != nil {
+			info.SetOnClosed(callback)
+		}
+	}
+
+	value = infoDescr["buttonText"]
+	if value != nil {
+		info.SetDismissText(value.(string))
+	}
+
+	width, height := run.GetSize(infoDescr)
+	if width > 0 && height > 0 {
+		info.Resize(fyne.NewSize(width, height))
+	}
+
+	win.Canvas().SetOnTypedKey(func(keyEvent *fyne.KeyEvent) {
+		switch keyEvent.Name {
+		case fyne.KeyReturn, fyne.KeyEnter, fyne.KeySpace, fyne.KeyEscape:
+			win.Close()
+		}
+	})
+
+	ui.StoreExitCode(0) // info has been noted; so all is OK
+	info.Show()
+	return nil
+}
+
+func runError(errorDescr ui.AttributesDescr, fullName []string, win fyne.Window, uiDescr ui.CommandsDescr) error {
+	_ = fullName // currently not used but might change
+
+	message := errorDescr["message"].(string) // message is required
+	errorDialog := dialog.NewError(errors.New(message), win)
+	if children, ok := errorDescr[ui.KeyChildren]; ok {
+		callback, err := messageCallback(children.(ui.CommandsDescr), fullName, win, uiDescr)
+		if err != nil {
+			return err
+		}
+		if callback != nil {
+			errorDialog.SetOnClosed(callback)
+		}
+	}
+
+	value := errorDescr["buttonText"]
+	if value != nil {
+		errorDialog.SetDismissText(value.(string))
+	}
+
+	width, height := run.GetSize(errorDescr)
+	if width > 0 && height > 0 {
+		errorDialog.Resize(fyne.NewSize(width, height))
+	}
+
+	win.Canvas().SetOnTypedKey(func(keyEvent *fyne.KeyEvent) {
+		switch keyEvent.Name {
+		case fyne.KeyReturn, fyne.KeyEnter, fyne.KeySpace, fyne.KeyEscape:
+			win.Close()
+		}
+	})
+
+	ui.StoreExitCode(0) // error has been noted; so all is OK
+	errorDialog.Show()
+	return nil
+}
+
+func messageCallback(
+	childrenDescr ui.CommandsDescr,
 	fullName []string,
 	win fyne.Window,
-	uiDescr map[string]map[string]any,
+	uiDescr ui.CommandsDescr,
+) (func(), error) {
+
+	actClose := childrenDescr["close"]
+	if actClose == nil { // action is optional
+		return nil, nil
+	}
+	keyword := actClose[ui.KeyKeyword].(string)
+	if keyword != ui.KeywordAction {
+		return nil, fmt.Errorf("for %q: close action is not an action but a %q",
+			ui.DisplayName(fullName), keyword)
+	}
+
+	return func() {
+		err := run.Action(actClose, append(fullName, "close"), win, uiDescr)
+		if err != nil {
+			log.Printf("ERROR: Can't run close action: %v", err)
+		}
+	}, nil
+}
+
+func runConfirmation(
+	cnfDescr ui.AttributesDescr,
+	fullName []string,
+	win fyne.Window,
+	uiDescr ui.CommandsDescr,
+) error {
+
+	callback, err := confirmCallback(cnfDescr[ui.KeyChildren].(ui.CommandsDescr), fullName, win, uiDescr)
+	if err != nil {
+		return err
+	}
+
+	value := cnfDescr["title"]
+	title := ""
+	if value != nil {
+		title = value.(string)
+	}
+	message := cnfDescr["message"].(string) // message is required
+	cnf := dialog.NewConfirm(title, message, callback, win)
+
+	value = cnfDescr["confirmText"]
+	if value != nil {
+		cnf.SetConfirmText(value.(string))
+	}
+	value = cnfDescr["dismissText"]
+	if value != nil {
+		cnf.SetDismissText(value.(string))
+	}
+
+	width, height := run.GetSize(cnfDescr)
+	if width > 0 && height > 0 {
+		cnf.Resize(fyne.NewSize(width, height))
+	}
+	win.Canvas().SetOnTypedKey(func(keyEvent *fyne.KeyEvent) {
+		switch keyEvent.Name {
+		case fyne.KeyReturn, fyne.KeyEnter, fyne.KeySpace:
+			callback(true)
+		case fyne.KeyEscape:
+			callback(false)
+		}
+	})
+
+	ui.StoreExitCode(1) // closing the window => dismissed
+	cnf.Show()
+	return nil
+}
+
+func confirmCallback(
+	childrenDescr ui.CommandsDescr,
+	fullName []string,
+	win fyne.Window,
+	uiDescr ui.CommandsDescr,
+) (func(bool), error) {
+
+	actConfirm := childrenDescr["confirm"]
+	if actConfirm == nil {
+		return nil, fmt.Errorf("for %q: confirm action is missing", ui.DisplayName(fullName))
+	}
+	keyword := actConfirm[ui.KeyKeyword].(string)
+	if keyword != ui.KeywordAction {
+		return nil, fmt.Errorf("for %q: confirm action is not an action but a %q",
+			ui.DisplayName(fullName), keyword)
+	}
+
+	actDismiss := childrenDescr["dismiss"]
+	if actDismiss == nil {
+		return nil, fmt.Errorf("for %q: dismiss action is missing", ui.DisplayName(fullName))
+	}
+	keyword = actDismiss[ui.KeyKeyword].(string)
+	if keyword != ui.KeywordAction {
+		return nil, fmt.Errorf("for %q: dismiss action is not an action but a %q",
+			ui.DisplayName(fullName), keyword)
+	}
+	return func(confirmed bool) {
+		if confirmed {
+			err := run.Action(actConfirm, append(fullName, "confirm"), win, uiDescr)
+			if err != nil {
+				log.Printf("ERROR: Can't run confirm action: %v", err)
+			}
+		} else {
+			err := run.Action(actDismiss, append(fullName, "dismiss"), win, uiDescr)
+			if err != nil {
+				log.Printf("ERROR: Can't run dismiss action: %v", err)
+			}
+		}
+	}, nil
+}
+
+func runOpenFile(
+	ofDescr ui.AttributesDescr,
+	fullName []string,
+	win fyne.Window,
+	uiDescr ui.CommandsDescr,
 ) error {
 	_, _ = fullName, uiDescr
 	ofDialog := dialog.NewFileOpen(func(frd fyne.URIReadCloser, err error) {
@@ -247,206 +447,11 @@ func runOpenFile(
 		ofDialog.SetDismissText(value.(string))
 	}
 
-	width := float64(0)
-	height := float64(0)
-	if _, ok := ofDescr["width"]; ok {
-		width = ofDescr["width"].(float64)
-	}
-	if _, ok := ofDescr["height"]; ok {
-		height = ofDescr["height"].(float64)
-	}
-	if width > 0 && height <= 0 {
-		height = width * 0.5 // wide dialogs look good
-	}
-	if width <= 0 && height > 0 {
-		width = height * 2 // wide dialogs look good
-	}
+	width, height := run.GetSize(ofDescr)
 	if width > 0 && height > 0 {
-		ofSize := fyne.NewSize(float32(width), float32(height))
-		ofDialog.Resize(ofSize)
+		ofDialog.Resize(fyne.NewSize(width, height))
 	}
 
 	ofDialog.Show()
-	return nil
-}
-
-func runConfirmation(
-	cnfDescr map[string]any,
-	fullName []string,
-	win fyne.Window,
-	uiDescr map[string]map[string]any,
-) error {
-
-	callback, err := confirmCallback(cnfDescr[ui.KeyChildren].(map[string]map[string]any), fullName, win, uiDescr)
-	if err != nil {
-		return err
-	}
-
-	value := cnfDescr["title"]
-	title := ""
-	if value != nil {
-		title = value.(string)
-	}
-	message := cnfDescr["message"].(string) // message is required
-	cnf := dialog.NewConfirm(title, message, callback, win)
-
-	value = cnfDescr["confirmText"]
-	if value != nil {
-		cnf.SetConfirmText(value.(string))
-	}
-	value = cnfDescr["dismissText"]
-	if value != nil {
-		cnf.SetDismissText(value.(string))
-	}
-
-	width := float64(0)
-	height := float64(0)
-	if _, ok := cnfDescr["width"]; ok {
-		width = cnfDescr["width"].(float64)
-	}
-	if _, ok := cnfDescr["height"]; ok {
-		height = cnfDescr["height"].(float64)
-	}
-	if width > 0 && height <= 0 {
-		height = width * 0.5 // wide dialogs look good
-	}
-	if width <= 0 && height > 0 {
-		width = height * 2 // wide dialogs look good
-	}
-	if width > 0 && height > 0 {
-		cnfSize := fyne.NewSize(float32(width), float32(height))
-		cnf.Resize(cnfSize)
-	}
-	win.Canvas().SetOnTypedKey(func(keyEvent *fyne.KeyEvent) {
-		switch keyEvent.Name {
-		case fyne.KeyReturn, fyne.KeyEnter, fyne.KeySpace:
-			callback(true)
-		case fyne.KeyEscape:
-			callback(false)
-		}
-	})
-
-	ui.StoreExitCode(1) // closing the window => dismissed
-	cnf.Show()
-	return nil
-}
-
-func confirmCallback(
-	childrenDescr map[string]map[string]any,
-	fullName []string,
-	win fyne.Window,
-	uiDescr map[string]map[string]any,
-) (func(bool), error) {
-
-	actConfirm := childrenDescr["confirm"]
-	if actConfirm == nil {
-		return nil, fmt.Errorf("for %q: confirm action is missing", ui.DisplayName(fullName))
-	}
-	keyword := actConfirm[ui.KeyKeyword].(string)
-	if keyword != ui.KeywordAction {
-		return nil, fmt.Errorf("for %q: confirm action is not an action but a %q",
-			ui.DisplayName(fullName), keyword)
-	}
-
-	actDismiss := childrenDescr["dismiss"]
-	if actDismiss == nil {
-		return nil, fmt.Errorf("for %q: dismiss action is missing", ui.DisplayName(fullName))
-	}
-	keyword = actDismiss[ui.KeyKeyword].(string)
-	if keyword != ui.KeywordAction {
-		return nil, fmt.Errorf("for %q: dismiss action is not an action but a %q",
-			ui.DisplayName(fullName), keyword)
-	}
-	return func(confirmed bool) {
-		if confirmed {
-			err := run.Action(actConfirm, append(fullName, "confirm"), win, uiDescr)
-			if err != nil {
-				log.Printf("ERROR: Can't run confirm action: %v", err)
-			}
-		} else {
-			err := run.Action(actDismiss, append(fullName, "dismiss"), win, uiDescr)
-			if err != nil {
-				log.Printf("ERROR: Can't run dismiss action: %v", err)
-			}
-		}
-	}, nil
-}
-
-func runError(errorDescr map[string]any, fullName []string, win fyne.Window) error {
-	_ = fullName                              // currently not used but might change
-	message := errorDescr["message"].(string) // message is required
-	errorDialog := dialog.NewError(errors.New(message), win)
-	errorDialog.SetOnClosed(func() {
-		os.Exit(0) // error has been noted
-	})
-
-	value := errorDescr["buttonText"]
-	if value != nil {
-		errorDialog.SetDismissText(value.(string))
-	}
-
-	width := float64(0)
-	height := float64(0)
-	if _, ok := errorDescr["width"]; ok {
-		width = errorDescr["width"].(float64)
-	}
-	if _, ok := errorDescr["height"]; ok {
-		height = errorDescr["height"].(float64)
-	}
-	if width > 0 && height <= 0 {
-		height = width * 0.5 // wide dialogs look good
-	}
-	if width <= 0 && height > 0 {
-		width = height * 2 // wide dialogs look good
-	}
-	if width > 0 && height > 0 {
-		infoSize := fyne.NewSize(float32(width), float32(height))
-		errorDialog.Resize(infoSize)
-	}
-
-	ui.StoreExitCode(0) // error has been noted; so all is OK
-	errorDialog.Show()
-	return nil
-}
-
-func runInfo(infoDescr map[string]any, fullName []string, win fyne.Window) error {
-	_ = fullName // currently not used but might change
-	value := infoDescr["title"]
-	title := ""
-	if value != nil {
-		title = value.(string)
-	}
-	message := infoDescr["message"].(string) // message is required
-	info := dialog.NewInformation(title, message, win)
-	info.SetOnClosed(func() {
-		os.Exit(0) // info has been noted
-	})
-
-	value = infoDescr["buttonText"]
-	if value != nil {
-		info.SetDismissText(value.(string))
-	}
-
-	width := float64(0)
-	height := float64(0)
-	if _, ok := infoDescr["width"]; ok {
-		width = infoDescr["width"].(float64)
-	}
-	if _, ok := infoDescr["height"]; ok {
-		height = infoDescr["height"].(float64)
-	}
-	if width > 0 && height <= 0 {
-		height = width * 0.5 // wide dialogs look good
-	}
-	if width <= 0 && height > 0 {
-		width = height * 2 // wide dialogs look good
-	}
-	if width > 0 && height > 0 {
-		infoSize := fyne.NewSize(float32(width), float32(height))
-		info.Resize(infoSize)
-	}
-
-	ui.StoreExitCode(0) // info has been noted; so all is OK
-	info.Show()
 	return nil
 }

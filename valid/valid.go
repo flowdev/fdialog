@@ -17,9 +17,21 @@ import (
 // The keys of the second level map are the attributes of the keyword map.
 // Mandatory key for keyword maps is: "keyword"
 // The key "type" is expected for most keywords but not for all.
-func UIDescription(uiDescr map[string]map[string]any, strict bool) error {
+func UIDescription(uiDescr ui.CommandsDescr, strict bool) error {
+	ensureLongKeywords(uiDescr)
 	_, err := validateRecursiveMap(uiDescr, strict, nil)
 	return err
+}
+
+func ensureLongKeywords(descr ui.CommandsDescr) {
+	for _, attributesDescr := range descr {
+		ui.EnsureLongKeyword(attributesDescr)
+		if achildren, ok := attributesDescr[ui.KeyChildren]; ok {
+			if children, ok := achildren.(ui.CommandsDescr); ok {
+				ensureLongKeywords(children)
+			}
+		}
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -131,7 +143,7 @@ func ChildrenValidator(minLen, maxLen int) ui.AttributeValidator {
 			return v, fmt.Errorf("expecting a map value, got %s", rv.Kind())
 		}
 
-		m, ok := v.(map[string]map[string]any)
+		m, ok := v.(ui.CommandsDescr)
 		if !ok {
 			return v, fmt.Errorf("expecting a map[string]map[string]any value, got %T", v)
 		}
@@ -151,7 +163,7 @@ func ChildrenValidator(minLen, maxLen int) ui.AttributeValidator {
 // Helpers
 //
 
-func validateRecursiveMap(m map[string]map[string]any, strict bool, parent []string) (any, error) {
+func validateRecursiveMap(m ui.CommandsDescr, strict bool, parent []string) (any, error) {
 	var errs []error
 
 	for name, keywordMap := range m {
@@ -169,7 +181,7 @@ func validateRecursiveMap(m map[string]map[string]any, strict bool, parent []str
 
 func validateKeyword(
 	keyword string, fullName []string, typ string,
-	valueMap map[string]any,
+	valueMap ui.AttributesDescr,
 	strict bool,
 ) error {
 	keywordTypeValidationData, ok := ui.KeywordValidData(keyword, typ)
@@ -186,7 +198,7 @@ func validateKeyword(
 
 func validateAttributes(
 	fullName []string,
-	valueMap map[string]any,
+	valueMap ui.AttributesDescr,
 	attributes map[string]ui.AttributeValueType,
 	strict bool,
 ) error {
@@ -229,7 +241,7 @@ func validateAttributes(
 	return errors.Join(errs...)
 }
 
-func getKeywordType(keywordMap map[string]any, fullName []string) (keyword, typ string, err error) {
+func getKeywordType(keywordMap ui.AttributesDescr, fullName []string) (keyword, typ string, err error) {
 	rkeyword := reflect.ValueOf(keywordMap[ui.KeyKeyword])
 	if rkeyword.Kind() != reflect.String {
 		return "", "",

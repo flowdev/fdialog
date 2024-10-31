@@ -29,11 +29,15 @@ const WinMain = "main"
 // ---------------------------------------------------------------------------
 //  Run Types & Data
 
+type AttributesDescr map[string]any
+
+type CommandsDescr map[string]AttributesDescr
+
 type RunFunction func(
-	detailDescr map[string]any,
+	detailDescr AttributesDescr,
 	fullName []string,
 	win fyne.Window,
-	completeDescr map[string]map[string]any,
+	completeDescr CommandsDescr,
 ) error
 
 var keywordShortToLong = make(map[string]string, 64)
@@ -55,7 +59,7 @@ type ValidKeywordType struct {
 
 type ValidAttributesType struct {
 	Attributes map[string]AttributeValueType
-	Validate   func(attrs map[string]any) error
+	Validate   func(attrs AttributesDescr) error
 }
 
 type AttributeValidator func(v any, strict bool, parent []string) (any, error)
@@ -93,7 +97,7 @@ func RegisterRunKeyword(longKW, shortKW string, runFunc RunFunction) error {
 	keywordMap[longKW] = runFunc
 
 	if shortKW != "" && shortKW != longKW {
-		if _, ok := keywordMap[shortKW]; ok {
+		if _, ok := keywordShortToLong[shortKW]; ok {
 			return fmt.Errorf("keyword with short name %q exists already", shortKW)
 		}
 		keywordLongToShort[longKW] = shortKW
@@ -140,9 +144,14 @@ func RegisterValidKeyword(keyword, typ string, validKWMap ValidAttributesType) e
 
 // KeywordValidData returns the validation data for a registered
 // keyword, type combination.
+// The keyword might be the shortened variant.
 // It returns `false` if nothing was found.
 func KeywordValidData(keyword, typ string) (ValidAttributesType, bool) {
-	validFunc, ok := validKeywords[ValidKeywordType{Keyword: keyword, Type: typ}]
+	longKW, ok := keywordShortToLong[keyword]
+	if !ok {
+		longKW = keyword
+	}
+	validFunc, ok := validKeywords[ValidKeywordType{Keyword: longKW, Type: typ}]
 	return validFunc, ok
 }
 
@@ -165,7 +174,15 @@ func FullNameForID(id string) ([]string, bool) {
 // ---------------------------------------------------------------------------
 //  Helpers
 
-func SameFullName(a []string, b ...string) bool {
+func EnsureLongKeyword(descr AttributesDescr) {
+	if shortKW, ok := descr[KeyKeyword].(string); ok {
+		if longKW, ok := keywordShortToLong[shortKW]; ok {
+			descr[KeyKeyword] = longKW
+		}
+	}
+}
+
+func FullNameIs(a []string, b ...string) bool {
 	if len(a) != len(b) {
 		return false
 	}

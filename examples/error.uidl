@@ -1,11 +1,13 @@
 #!/usr/bin/env -S fdialog run --file
 version 1
 
-window main(width=400.0, height=300.0) {
+window main(width=400, height=300) {
     dialog error(
         type="error",
         message="Don't do that again!",
         buttonText="OK, please don't yell.",
-        width=400.0, height=300.0
-    )
+        width=400, height=300
+    ) {
+        action close(type="exit", code=0)
+    }
 }

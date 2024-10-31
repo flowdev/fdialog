@@ -48,7 +48,7 @@ func (ael *AntlrErrorListener) CombinedError() error {
 	return errors.Join(ael.errs...)
 }
 
-func ParseUIDL(input io.Reader, _ string) (map[string]map[string]any, error) {
+func ParseUIDL(input io.Reader, _ string) (ui.CommandsDescr, error) {
 	inputStr, err := io.ReadAll(input)
 	if err != nil {
 		return nil, err
@@ -65,7 +65,7 @@ func ParseUIDL(input io.Reader, _ string) (map[string]map[string]any, error) {
 	return convertUIDL(antlrParser.Uidl(), ael), ael.CombinedError()
 }
 
-func convertUIDL(antlrUIDL uidl.IUidlContext, errColl ErrorCollector) map[string]map[string]any {
+func convertUIDL(antlrUIDL uidl.IUidlContext, errColl ErrorCollector) ui.CommandsDescr {
 	version := antlrUIDL.Version().Natural()
 	errCtx := errorContext(version.GetSymbol())
 
@@ -83,8 +83,8 @@ func convertUIDL(antlrUIDL uidl.IUidlContext, errColl ErrorCollector) map[string
 }
 
 // convertCommands converts all commands to a map.
-func convertCommands(antlrCommands []uidl.ICommandContext, errColl ErrorCollector) map[string]map[string]any {
-	commandMap := make(map[string]map[string]any, len(antlrCommands))
+func convertCommands(antlrCommands []uidl.ICommandContext, errColl ErrorCollector) ui.CommandsDescr {
+	commandMap := make(ui.CommandsDescr, len(antlrCommands))
 
 	for _, command := range antlrCommands {
 		keyword := command.Identifier(0)
@@ -109,8 +109,8 @@ func convertCommands(antlrCommands []uidl.ICommandContext, errColl ErrorCollecto
 	return commandMap
 }
 
-func convertAttributes(attributes []uidl.IAttributeContext, errColl ErrorCollector) map[string]any {
-	attrMap := make(map[string]any, len(attributes)+2) // space for keyword + children
+func convertAttributes(attributes []uidl.IAttributeContext, errColl ErrorCollector) ui.AttributesDescr {
+	attrMap := make(ui.AttributesDescr, len(attributes)+2) // space for keyword + children
 
 	for _, attribute := range attributes {
 		name := attribute.Identifier()
@@ -216,11 +216,11 @@ func parseCommand(pd *gparselib.ParseData, ctx any) (*gparselib.ParseData, any) 
 		keyword := pd.SubResults[0].Value.(string)
 		command := commandValue{
 			name:         pd.SubResults[2].Value.(string),
-			attributeMap: pd.SubResults[4].Value.(map[string]any),
+			attributeMap: pd.SubResults[4].Value.(ui.AttributesDescr),
 		}
 		achildren := pd.SubResults[5].Value
 		if achildren != nil {
-			children := achildren.(map[string]map[string]any)
+			children := achildren.(ui.CommandsDescr)
 			command.attributeMap[KeyChildren] = children
 		}
 		command.attributeMap[KeyKeyword] = keyword
@@ -235,7 +235,7 @@ func parseCommands(pd *gparselib.ParseData, ctx any) (*gparselib.ParseData, any)
 	return gparselib.ParseMulti0(pd, ctx, parseCommand,
 		func(pd *gparselib.ParseData, ctx any) (*gparselib.ParseData, any) {
 			// convert all commands to a map
-			commandMap := make(map[string]map[string]any, len(pd.SubResults))
+			commandMap := make(ui.CommandsDescr, len(pd.SubResults))
 
 			for _, subResult := range pd.SubResults {
 				command := subResult.Value.(commandValue)
@@ -288,7 +288,7 @@ func parseAttributes(pd *gparselib.ParseData, ctx any) (*gparselib.ParseData, an
 	})
 	pManyAttributes := gparselib.NewParseMulti0Plugin(pCommaAttribute,
 		func(pd *gparselib.ParseData, ctx any) (*gparselib.ParseData, any) {
-			attrMap := make(map[string]any, len(pd.SubResults)+1) // there will be one more attribute later
+			attrMap := make(ui.AttributesDescr, len(pd.SubResults)+1) // there will be one more attribute later
 
 			for _, subResult := range pd.SubResults { // copy over for the type
 				attr := subResult.Value.(attributeValue)
@@ -314,7 +314,7 @@ func parseAttributes(pd *gparselib.ParseData, ctx any) (*gparselib.ParseData, an
 		parseSpaceComment,
 	}, func(pd *gparselib.ParseData, ctx any) (*gparselib.ParseData, any) {
 		firstAttr := pd.SubResults[2].Value.(attributeValue)
-		attrMap := pd.SubResults[3].Value.(map[string]any)
+		attrMap := pd.SubResults[3].Value.(ui.AttributesDescr)
 		if _, ok := attrMap[firstAttr.key]; ok {
 			pd.AddError(pd.SubResults[2].Pos,
 				fmt.Sprintf("duplicate attribute key: %q", firstAttr.key),
@@ -511,7 +511,7 @@ func parseSpaceComment(pd *gparselib.ParseData, ctx any) (*gparselib.ParseData, 
 
 type commandValue struct {
 	name         string
-	attributeMap map[string]any
+	attributeMap ui.AttributesDescr
 }
 
 type attributeValue struct {

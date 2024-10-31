@@ -33,7 +33,7 @@ func ExitApp(code int) {
 	if code < 0 {
 		code = int(exitCode.Load())
 	}
-	log.Printf("INFO: exiting app as requested with code: %d", code)
+	log.Printf("INFO: exiting app with code: %d", code)
 	os.Exit(code)
 }
 

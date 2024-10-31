@@ -1,10 +1,12 @@
 package valid_test
 
 import (
-	"github.com/flowdev/fdialog/uimain"
-	"github.com/flowdev/fdialog/valid"
 	"strings"
 	"testing"
+
+	"github.com/flowdev/fdialog/ui"
+	"github.com/flowdev/fdialog/uimain"
+	"github.com/flowdev/fdialog/valid"
 )
 
 func TestValidate(t *testing.T) {
@@ -12,18 +14,18 @@ func TestValidate(t *testing.T) {
 
 	specs := []struct {
 		name             string
-		givenUiDescr     map[string]map[string]any
+		givenUiDescr     ui.CommandsDescr
 		givenStrict      bool
 		expectedErrCount int
 	}{
 		{
 			name:             "empty",
-			givenUiDescr:     map[string]map[string]any{},
+			givenUiDescr:     ui.CommandsDescr{},
 			givenStrict:      true,
 			expectedErrCount: 0,
 		}, {
 			name: "oneMinimalInfo",
-			givenUiDescr: map[string]map[string]any{
+			givenUiDescr: ui.CommandsDescr{
 				"info1": {
 					"keyword": "dialog",
 					"type":    "info",
@@ -34,7 +36,7 @@ func TestValidate(t *testing.T) {
 			expectedErrCount: 0,
 		}, {
 			name: "oneMaximalInfo",
-			givenUiDescr: map[string]map[string]any{
+			givenUiDescr: ui.CommandsDescr{
 				"info2": {
 					"keyword":    "dialog",
 					"type":       "info",
@@ -49,7 +51,7 @@ func TestValidate(t *testing.T) {
 			expectedErrCount: 0,
 		}, {
 			name: "oneMaximalError",
-			givenUiDescr: map[string]map[string]any{
+			givenUiDescr: ui.CommandsDescr{
 				"error1": {
 					"keyword":    "dialog",
 					"type":       "error",
@@ -63,7 +65,7 @@ func TestValidate(t *testing.T) {
 			expectedErrCount: 0,
 		}, {
 			name: "oneMaximalConfirmation",
-			givenUiDescr: map[string]map[string]any{
+			givenUiDescr: ui.CommandsDescr{
 				"confirm1": {
 					"keyword":     "dialog",
 					"type":        "confirmation",
@@ -73,7 +75,7 @@ func TestValidate(t *testing.T) {
 					"confirmText": "Yes, please.",
 					"width":       float64(240),
 					"height":      float64(200),
-					"children": map[string]map[string]any{
+					"children": ui.CommandsDescr{
 						"confirm": {
 							"keyword": "action",
 							"type":    "exit",
@@ -91,7 +93,7 @@ func TestValidate(t *testing.T) {
 			expectedErrCount: 0,
 		}, {
 			name: "twoInfos",
-			givenUiDescr: map[string]map[string]any{
+			givenUiDescr: ui.CommandsDescr{
 				"info3": {
 					"keyword": "dialog",
 					"type":    "info",
@@ -107,7 +109,7 @@ func TestValidate(t *testing.T) {
 			expectedErrCount: 0,
 		}, {
 			name: "infoErrorConfirmation",
-			givenUiDescr: map[string]map[string]any{
+			givenUiDescr: ui.CommandsDescr{
 				"info5": {
 					"keyword": "dialog",
 					"type":    "info",
@@ -122,7 +124,7 @@ func TestValidate(t *testing.T) {
 					"keyword": "dialog",
 					"type":    "confirmation",
 					"message": "Please confirm (no. two)",
-					"children": map[string]map[string]any{
+					"children": ui.CommandsDescr{
 						"confirm": {
 							"keyword": "action",
 							"type":    "exit",
@@ -140,14 +142,14 @@ func TestValidate(t *testing.T) {
 			expectedErrCount: 0,
 		}, {
 			name: "allMissing",
-			givenUiDescr: map[string]map[string]any{
+			givenUiDescr: ui.CommandsDescr{
 				"": {},
 			},
 			givenStrict:      true,
 			expectedErrCount: 1,
 		}, {
 			name: "typeMissing",
-			givenUiDescr: map[string]map[string]any{
+			givenUiDescr: ui.CommandsDescr{
 				"dialog1": {
 					"keyword": "dialog",
 				},
@@ -156,7 +158,7 @@ func TestValidate(t *testing.T) {
 			expectedErrCount: 1,
 		}, {
 			name: "wrongKeyword",
-			givenUiDescr: map[string]map[string]any{
+			givenUiDescr: ui.CommandsDescr{
 				"dialog1": {
 					"keyword": "dialogue",
 					"type":    "info",
@@ -166,7 +168,7 @@ func TestValidate(t *testing.T) {
 			expectedErrCount: 1,
 		}, {
 			name: "wrongName",
-			givenUiDescr: map[string]map[string]any{
+			givenUiDescr: ui.CommandsDescr{
 				"dia.log1": {
 					"keyword": "dialog",
 					"type":    "info",
@@ -177,7 +179,7 @@ func TestValidate(t *testing.T) {
 			expectedErrCount: 1,
 		}, {
 			name: "wrongType",
-			givenUiDescr: map[string]map[string]any{
+			givenUiDescr: ui.CommandsDescr{
 				"dialog1": {
 					"keyword": "dialog",
 					"type":    "inf",
@@ -187,7 +189,7 @@ func TestValidate(t *testing.T) {
 			expectedErrCount: 1,
 		}, {
 			name: "infoMessageMissing",
-			givenUiDescr: map[string]map[string]any{
+			givenUiDescr: ui.CommandsDescr{
 				"info6": {
 					"keyword": "dialog",
 					"type":    "info",
@@ -197,7 +199,7 @@ func TestValidate(t *testing.T) {
 			expectedErrCount: 1,
 		}, {
 			name: "wrongInfo",
-			givenUiDescr: map[string]map[string]any{
+			givenUiDescr: ui.CommandsDescr{
 				"": {
 					"keyword":    "dialog",
 					"type":       "info",
@@ -212,7 +214,7 @@ func TestValidate(t *testing.T) {
 			expectedErrCount: 6,
 		}, {
 			name: "wrongError",
-			givenUiDescr: map[string]map[string]any{
+			givenUiDescr: ui.CommandsDescr{
 				"": {
 					"keyword":    "dialog",
 					"type":       "error",
@@ -226,7 +228,7 @@ func TestValidate(t *testing.T) {
 			expectedErrCount: 5,
 		}, {
 			name: "wrongConfirmation",
-			givenUiDescr: map[string]map[string]any{
+			givenUiDescr: ui.CommandsDescr{
 				"": {
 					"keyword":     "dialog",
 					"type":        "confirmation",
@@ -242,7 +244,7 @@ func TestValidate(t *testing.T) {
 			expectedErrCount: 8,
 		}, {
 			name: "errorWithTitle",
-			givenUiDescr: map[string]map[string]any{
+			givenUiDescr: ui.CommandsDescr{
 				"error3": {
 					"keyword":    "dialog",
 					"type":       "error",
@@ -257,7 +259,7 @@ func TestValidate(t *testing.T) {
 			expectedErrCount: 0,
 		}, {
 			name: "infoWithExtraAttrs",
-			givenUiDescr: map[string]map[string]any{
+			givenUiDescr: ui.CommandsDescr{
 				"error4": {
 					"keyword":           "dialog",
 					"type":              "info",
@@ -273,7 +275,7 @@ func TestValidate(t *testing.T) {
 			expectedErrCount: 0,
 		}, {
 			name: "minimalWindow",
-			givenUiDescr: map[string]map[string]any{
+			givenUiDescr: ui.CommandsDescr{
 				"win1": {
 					"keyword": "window",
 				},
@@ -282,13 +284,13 @@ func TestValidate(t *testing.T) {
 			expectedErrCount: 0,
 		}, {
 			name: "windowWithConfirmation",
-			givenUiDescr: map[string]map[string]any{
+			givenUiDescr: ui.CommandsDescr{
 				"main": {
 					"keyword": "window",
 					"title":   "Confirmation",
 					"width":   float64(400),
 					"height":  float64(200),
-					"children": map[string]map[string]any{
+					"children": ui.CommandsDescr{
 						"confirm3": {
 							"keyword":     "dialog",
 							"type":        "confirmation",
@@ -297,7 +299,7 @@ func TestValidate(t *testing.T) {
 							"confirmText": "Yes, please.",
 							"width":       float64(400),
 							"height":      float64(200),
-							"children": map[string]map[string]any{
+							"children": ui.CommandsDescr{
 								"confirm": {
 									"keyword": "action",
 									"type":    "exit",
@@ -317,13 +319,13 @@ func TestValidate(t *testing.T) {
 			expectedErrCount: 0,
 		}, {
 			name: "windowWithNestedConfirmationError",
-			givenUiDescr: map[string]map[string]any{
+			givenUiDescr: ui.CommandsDescr{
 				"main": {
 					"keyword": "window",
 					"title":   "Confirmation",
 					"width":   float64(400),
 					"height":  float64(200),
-					"children": map[string]map[string]any{
+					"children": ui.CommandsDescr{
 						"confirm3": {
 							"keyword":     "dialog",
 							"type":        "confirmation",
@@ -332,7 +334,7 @@ func TestValidate(t *testing.T) {
 							"confirmText": "Yes, please.",
 							"width":       float64(400),
 							"height":      float64(200),
-							"children": map[string]map[string]any{
+							"children": ui.CommandsDescr{
 								"confirm": {
 									"keyword": "action",
 									"type":    "ext",
@@ -352,7 +354,7 @@ func TestValidate(t *testing.T) {
 			expectedErrCount: 2,
 		}, {
 			name: "minimalLink",
-			givenUiDescr: map[string]map[string]any{
+			givenUiDescr: ui.CommandsDescr{
 				"link1": {
 					"keyword":     "link",
 					"destination": "info1",
@@ -362,7 +364,7 @@ func TestValidate(t *testing.T) {
 			expectedErrCount: 0,
 		}, {
 			name: "maximalLink",
-			givenUiDescr: map[string]map[string]any{
+			givenUiDescr: ui.CommandsDescr{
 				"link2": {
 					"keyword":     "link",
 					"type":        "local",
@@ -373,7 +375,7 @@ func TestValidate(t *testing.T) {
 			expectedErrCount: 0,
 		}, {
 			name: "wrongLink",
-			givenUiDescr: map[string]map[string]any{
+			givenUiDescr: ui.CommandsDescr{
 				"link3": {
 					"keyword":     "link",
 					"destination": "main:info1",
@@ -383,7 +385,7 @@ func TestValidate(t *testing.T) {
 			expectedErrCount: 1,
 		}, {
 			name: "minimalAction",
-			givenUiDescr: map[string]map[string]any{
+			givenUiDescr: ui.CommandsDescr{
 				"act1": {
 					"keyword": "action",
 					"type":    "exit",
@@ -393,7 +395,7 @@ func TestValidate(t *testing.T) {
 			expectedErrCount: 0,
 		}, {
 			name: "maximalAction",
-			givenUiDescr: map[string]map[string]any{
+			givenUiDescr: ui.CommandsDescr{
 				"act2": {
 					"keyword": "action",
 					"type":    "exit",
@@ -404,7 +406,7 @@ func TestValidate(t *testing.T) {
 			expectedErrCount: 0,
 		}, {
 			name: "wrongAction",
-			givenUiDescr: map[string]map[string]any{
+			givenUiDescr: ui.CommandsDescr{
 				"act2": {
 					"keyword": "action",
 					"type":    "exit",

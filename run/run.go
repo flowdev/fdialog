@@ -2,18 +2,19 @@ package run
 
 import (
 	"fmt"
-	"fyne.io/fyne/v2"
 	"log"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
 
+	"fyne.io/fyne/v2"
+
 	"github.com/flowdev/fdialog/ui"
 )
 
 // UIDescription runs a whole UI description and returns any error encountered.
-func UIDescription(uiDescr map[string]map[string]any) error {
+func UIDescription(uiDescr ui.CommandsDescr) error {
 	mainWin := uiDescr[ui.WinMain]
 	if mainWin == nil {
 		return fmt.Errorf("unable to find main window in UI description")
@@ -21,7 +22,12 @@ func UIDescription(uiDescr map[string]map[string]any) error {
 	if mainWin[ui.KeyKeyword] != ui.KeywordWindow {
 		return fmt.Errorf(`command with name 'main' is not a window but a:  %q`, mainWin[ui.KeyKeyword])
 	}
-	if err := ui.NewApp("org.flowdev.fdialog"); err != nil {
+	appID := "org.flowdev.fdialog"
+	if aid, ok := mainWin["appId"]; ok {
+		appID = aid.(string)
+	}
+	log.Printf("INFO: Creating app with ID %q", appID)
+	if err := ui.NewApp(appID); err != nil {
 		return err
 	}
 
@@ -41,48 +47,34 @@ func UIDescription(uiDescr map[string]map[string]any) error {
 // Window runs a Window description including all of its children.
 // In the case of the main window it will run the whole UI.
 // The fyne.Window parameter isn't currently used but might be used in the future for a parent window.
-func Window(winDescr map[string]any, fullName []string, _ fyne.Window, uiDescr map[string]map[string]any) error {
+func Window(winDescr ui.AttributesDescr, fullName []string, _ fyne.Window, uiDescr ui.CommandsDescr) error {
 	title := ""
 	if _, ok := winDescr["title"]; ok {
 		title = winDescr["title"].(string)
 	}
 	win := ui.NewWindow(title)
 
-	width := float64(0)
-	height := float64(0)
-	if _, ok := winDescr["width"]; ok {
-		width = winDescr["width"].(float64)
-	}
-	if _, ok := winDescr["height"]; ok {
-		height = winDescr["height"].(float64)
-	}
-	if width > 0 && height <= 0 {
-		height = width * 0.5 // wide windows look good
-	}
-	if width <= 0 && height > 0 {
-		width = height * 2 // wide windows look good
-	}
+	width, height := GetSize(winDescr)
 	var winSize fyne.Size
 	if width > 0 && height > 0 {
 		// TODO: after the real fix with Fyne 2.6 we can use the real values
-		winSize = fyne.NewSize(float32(width+1.0), float32(height+1.0))
+		winSize = fyne.NewSize(width+1.0, height+1.0)
 		win.Resize(winSize)
 		win.SetFixedSize(true)
 	}
-
-	if _, ok := winDescr[ui.KeyChildren]; ok {
-		err := Children(winDescr[ui.KeyChildren], fullName, win, uiDescr)
-		if err != nil {
-			return err
+	win.Canvas().SetOnTypedKey(func(keyEvent *fyne.KeyEvent) {
+		if keyEvent.Name == fyne.KeyEscape {
+			win.Close()
 		}
-	}
+	})
 
-	if ui.SameFullName(fullName, "main") {
+	if ui.FullNameIs(fullName, "main") {
 		// Exit the app nicely with the correct exit code ...
 		interceptor := func() {
+			win.Close()
 			ui.ExitApp(-1)
 		}
-		win.SetCloseIntercept(interceptor) // ... when the main window is closed or
+		win.SetOnClosed(interceptor) // ... when the main window is closed or
 
 		// ... when a terminating signal is received.
 		signalChan := make(chan os.Signal, 1)
@@ -94,17 +86,23 @@ func Window(winDescr map[string]any, fullName []string, _ fyne.Window, uiDescr m
 		}()
 	}
 
+	if children, ok := winDescr[ui.KeyChildren]; ok {
+		if err := Children(children, fullName, win, uiDescr); err != nil {
+			return err
+		}
+	}
+
 	win.SetTitle(title)
 	win.Show()
 	if width > 0 && height > 0 { // TODO: after the real fix with Fyne 2.6 we can remove this workaround
-		winSize = fyne.NewSize(float32(width), float32(height))
+		winSize = fyne.NewSize(width, height)
 		win.Resize(winSize)
 	}
 	return nil
 }
 
-func Children(achildren any, parent []string, win fyne.Window, uiDescr map[string]map[string]any) error {
-	childDescr := achildren.(map[string]map[string]any) // type validation has happened already :)
+func Children(achildren any, parent []string, win fyne.Window, uiDescr ui.CommandsDescr) error {
+	childDescr := achildren.(ui.CommandsDescr) // type validation has happened already :)
 
 	for name, keywordDescr := range childDescr {
 		fullName := append(parent, name)
@@ -116,7 +114,7 @@ func Children(achildren any, parent []string, win fyne.Window, uiDescr map[strin
 	return nil
 }
 
-func Keyword(keywordDescr map[string]any, fullName []string, win fyne.Window, uiDescr map[string]map[string]any) error {
+func Keyword(keywordDescr ui.AttributesDescr, fullName []string, win fyne.Window, uiDescr ui.CommandsDescr) error {
 	keyword := keywordDescr[ui.KeyKeyword]
 	keywordFunc, ok := ui.KeywordRunFunc(keyword.(string))
 	if !ok {
@@ -125,7 +123,7 @@ func Keyword(keywordDescr map[string]any, fullName []string, win fyne.Window, ui
 	return keywordFunc(keywordDescr, fullName, win, uiDescr)
 }
 
-func Link(linkDescr map[string]any, fullName []string, win fyne.Window, uiDescr map[string]map[string]any) error {
+func Link(linkDescr ui.AttributesDescr, fullName []string, win fyne.Window, uiDescr ui.CommandsDescr) error {
 	dest := linkDescr["destination"].(string) // has been validated already :)
 	dnames := strings.Split(dest, ".")
 
@@ -137,14 +135,14 @@ func Link(linkDescr map[string]any, fullName []string, win fyne.Window, uiDescr 
 			return fmt.Errorf("for %q: no children found for link destination %q",
 				fullName, strings.Join(dnames[:i+1], "."))
 		}
-		tree = dchildren.(map[string]map[string]any)
+		tree = dchildren.(ui.CommandsDescr)
 	}
 	dkwMap := tree[dnames[n-1]] // the last name always exists or the link wouldn't be valid
 
 	return Keyword(dkwMap, ui.FullName(dest), win, uiDescr)
 }
 
-func Action(actionDescr map[string]any, fullName []string, win fyne.Window, uiDescr map[string]map[string]any) error {
+func Action(actionDescr ui.AttributesDescr, fullName []string, win fyne.Window, uiDescr ui.CommandsDescr) error {
 	_ = uiDescr // currently not used but might change with more actions
 	action := actionDescr[ui.KeyType]
 	runFunc, ok := ui.ActionRunFunc(action.(string))
@@ -154,12 +152,29 @@ func Action(actionDescr map[string]any, fullName []string, win fyne.Window, uiDe
 	return runFunc(actionDescr, fullName, win, uiDescr)
 }
 
-func Exit(exitDescr map[string]any, fullName []string, _ fyne.Window, _ map[string]map[string]any) error {
-	code := 0 // intentional default
+func Exit(exitDescr ui.AttributesDescr, fullName []string, _ fyne.Window, _ ui.CommandsDescr) error {
+	code := -1 // intentional default
 	if exitDescr["code"] != nil {
 		code = int(exitDescr["code"].(int64))
 	}
-	log.Printf("INFO: exiting app as requested at position %q with code: %d", ui.DisplayName(fullName), code)
-	os.Exit(code)
+	ui.ExitApp(code)
 	return nil // just for the compiler :)
+}
+
+func GetSize(descr ui.AttributesDescr) (width, height float32) {
+	width = float32(0)
+	height = float32(0)
+	if v, ok := descr["width"]; ok {
+		width = float32(v.(float64))
+	}
+	if v, ok := descr["height"]; ok {
+		height = float32(v.(float64))
+	}
+	if width > 0 && height <= 0 {
+		height = width * 0.5 // default is wider than high
+	}
+	if width <= 0 && height > 0 {
+		width = height * 2 // default is wider than high
+	}
+	return width, height
 }

@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/fdialog.iml" filepath="$PROJECT_DIR$/.idea/fdialog.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../../ole108/parcomb/.idea/parcomb.iml" filepath="$PROJECT_DIR$/../../ole108/parcomb/.idea/parcomb.iml" />
     </modules>
   </component>
 </project>
