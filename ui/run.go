@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"log"
@@ -15,12 +14,12 @@ var exitCode = new(atomic.Int32)
 // ---------------------------------------------------------------------------
 // Helpers
 
-func NewApp(appid string) error {
+func NewApp(appid string) {
 	if fapp != nil {
-		return fmt.Errorf("app with ID %q is already running", fapp.UniqueID())
+		log.Printf("ERROR: app with ID %q is already running", fapp.UniqueID())
+		return
 	}
 	fapp = app.NewWithID(appid)
-	return nil
 }
 
 func RunApp() {

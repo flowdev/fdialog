@@ -3,6 +3,7 @@ package ui
 import (
 	"errors"
 	"fmt"
+	"log"
 	"regexp"
 	"strings"
 
@@ -15,6 +16,7 @@ const (
 	KeyName     = "name"
 	KeyChildren = "children"
 	KeyType     = "type" // type is used like an ordinary attribute, but it has special semantics
+	KeyID       = "id"
 )
 
 // Basic keywords:
@@ -35,10 +37,10 @@ type CommandsDescr map[string]AttributesDescr
 
 type RunFunction func(
 	detailDescr AttributesDescr,
-	fullName []string,
+	fullName string,
 	win fyne.Window,
 	completeDescr CommandsDescr,
-) error
+)
 
 var keywordShortToLong = make(map[string]string, 64)
 var keywordLongToShort = make(map[string]string, 64)
@@ -47,7 +49,11 @@ var keywordMap = make(map[string]RunFunction, 64)
 var actionMap = make(map[string]RunFunction, 32)
 
 // idMap maps an ID to a full name path.
-var idMap = make(map[string][]string, 32)
+var idMap = make(map[string]string, 32)
+
+// valueMap maps a fullName to an input value
+// fullNames are the display names with '.' inside.
+var valueMap = make(map[string]any)
 
 // ---------------------------------------------------------------------------
 //  Validation Types & Data
@@ -59,10 +65,10 @@ type ValidKeywordType struct {
 
 type ValidAttributesType struct {
 	Attributes map[string]AttributeValueType
-	Validate   func(attrs AttributesDescr) error
+	Validate   func(attrs AttributesDescr) bool
 }
 
-type AttributeValidator func(v any, strict bool, parent []string) (any, error)
+type AttributeValidator func(v any, strict bool, parent string) (any, bool)
 type AttributeValueType struct {
 	Required bool
 	Validate AttributeValidator
@@ -106,9 +112,9 @@ func RegisterRunKeyword(longKW, shortKW string, runFunc RunFunction) error {
 	return nil
 }
 
-// KeywordRunFunc returns the run function for a registered keyword.
+// RunFuncForKeyword returns the run function for a registered keyword.
 // It returns `false` if nothing was found.
-func KeywordRunFunc(keyword string) (runFunc RunFunction, ok bool) {
+func RunFuncForKeyword(keyword string) (runFunc RunFunction, ok bool) {
 	runFunc, ok = keywordMap[keyword]
 	return runFunc, ok
 }
@@ -156,7 +162,7 @@ func KeywordValidData(keyword, typ string) (ValidAttributesType, bool) {
 }
 
 // RegisterID registers an ID as a shortcut for the fullName.
-func RegisterID(id string, fullName []string) error {
+func RegisterID(id string, fullName string) error {
 	if _, ok := idMap[id]; ok {
 		return fmt.Errorf("ID %q already exists", id)
 	}
@@ -164,40 +170,67 @@ func RegisterID(id string, fullName []string) error {
 	return nil
 }
 
-// FullNameForID returns the fullName for an ID.
+// FullNameForID returns the full display name for an ID.
 // It returns `false` if nothing was found.
-func FullNameForID(id string) ([]string, bool) {
+func FullNameForID(id string) (string, bool) {
 	fullName, ok := idMap[id]
 	return fullName, ok
+}
+
+func GetValueByID(id string) (any, bool) {
+	v, ok := valueMap[idMap[id]]
+	return v, ok
+}
+
+func GetValueByFullName(fullName string) (any, bool) {
+	v, ok := valueMap[fullName]
+	return v, ok
+}
+
+func StoreValueByID(value any, id string, parent string) {
+	if name, ok := FullNameForID(id); ok {
+		valueMap[name] = value
+		return
+	}
+	log.Printf(`ERROR: for %q: unknown ID: %q`, parent, id)
+}
+
+func StoreValueByFullName(value any, fullName string) {
+	valueMap[fullName] = value
 }
 
 // ---------------------------------------------------------------------------
 //  Helpers
 
-func EnsureLongKeyword(descr AttributesDescr) {
+// PreprocessAttributesDescription prepares an attributes description for
+// validation and running. Specifically it:
+//   - converts known short keywords to their long counterparts and
+//   - registers all IDs.
+//
+// `false` is returned if an error occurs.
+func PreprocessAttributesDescription(descr AttributesDescr, fullName string) bool {
+	var err error
 	if shortKW, ok := descr[KeyKeyword].(string); ok {
 		if longKW, ok := keywordShortToLong[shortKW]; ok {
 			descr[KeyKeyword] = longKW
 		}
 	}
-}
-
-func FullNameIs(a []string, b ...string) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i, s := range a {
-		if s != b[i] {
-			return false
+	if id, ok := descr[KeyID].(string); ok {
+		err = RegisterID(id, fullName)
+		if err != nil {
+			log.Printf("ERROR: for %q: %v", fullName, err)
 		}
 	}
-	return true
+	return err == nil
 }
 
-func DisplayName(fullName []string) string {
-	return strings.Join(fullName, ".")
+func SplitName(fullName string) []string {
+	return strings.Split(fullName, ".")
 }
 
-func FullName(displayName string) []string {
-	return strings.Split(displayName, ".")
+func FullNameFor(parent, name string) string {
+	if parent == "" {
+		return name
+	}
+	return parent + "." + name
 }

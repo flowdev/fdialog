@@ -172,10 +172,10 @@ func RegisterAll() error {
 			"height": {
 				Validate: valid.FloatValidator(80.0, math.MaxFloat32),
 			},
-			//ui.KeyChildren: {
-			//	Required: true,
-			//	Validate: valid.ChildrenValidator(2, 2),
-			//},
+			ui.KeyChildren: {
+				Required: true,
+				Validate: valid.ChildrenValidator(2, 2),
+			},
 		},
 	})
 	if err != nil {
@@ -193,26 +193,24 @@ func RegisterAll() error {
 	return nil
 }
 
-func runDialog(dialogDescr ui.AttributesDescr, fullName []string, win fyne.Window, uiDescr ui.CommandsDescr) error {
-	var err error
+func runDialog(dialogDescr ui.AttributesDescr, fullName string, win fyne.Window, uiDescr ui.CommandsDescr) {
 	dlg := dialogDescr[ui.KeyType]
 
 	switch dlg {
 	case "info":
-		err = runInfo(dialogDescr, fullName, win, uiDescr)
+		runInfo(dialogDescr, fullName, win, uiDescr)
 	case "error":
-		err = runError(dialogDescr, fullName, win, uiDescr)
+		runError(dialogDescr, fullName, win, uiDescr)
 	case "confirmation":
-		err = runConfirmation(dialogDescr, fullName, win, uiDescr)
+		runConfirmation(dialogDescr, fullName, win, uiDescr)
 	case "openFile":
-		err = runOpenFile(dialogDescr, fullName, win, uiDescr)
+		runOpenFile(dialogDescr, fullName, win, uiDescr)
 	default:
-		err = fmt.Errorf(`for %q: unknown dialog type %q`, ui.DisplayName(fullName), dlg)
+		log.Printf(`ERROR: for %q: unknown dialog type %q`, fullName, dlg)
 	}
-	return err
 }
 
-func runInfo(infoDescr ui.AttributesDescr, fullName []string, win fyne.Window, uiDescr ui.CommandsDescr) error {
+func runInfo(infoDescr ui.AttributesDescr, fullName string, win fyne.Window, uiDescr ui.CommandsDescr) {
 	_ = fullName // currently not used but might change
 
 	value := infoDescr["title"]
@@ -223,13 +221,8 @@ func runInfo(infoDescr ui.AttributesDescr, fullName []string, win fyne.Window, u
 	message := infoDescr["message"].(string) // message is required
 	info := dialog.NewInformation(title, message, win)
 	if children, ok := infoDescr[ui.KeyChildren]; ok {
-		callback, err := messageCallback(children.(ui.CommandsDescr), fullName, win, uiDescr)
-		if err != nil {
-			return err
-		}
-		if callback != nil {
-			info.SetOnClosed(callback)
-		}
+		callback := closeCallback(children.(ui.CommandsDescr), fullName, win, uiDescr)
+		info.SetOnClosed(callback)
 	}
 
 	value = infoDescr["buttonText"]
@@ -249,24 +242,17 @@ func runInfo(infoDescr ui.AttributesDescr, fullName []string, win fyne.Window, u
 		}
 	})
 
-	ui.StoreExitCode(0) // info has been noted; so all is OK
 	info.Show()
-	return nil
 }
 
-func runError(errorDescr ui.AttributesDescr, fullName []string, win fyne.Window, uiDescr ui.CommandsDescr) error {
+func runError(errorDescr ui.AttributesDescr, fullName string, win fyne.Window, uiDescr ui.CommandsDescr) {
 	_ = fullName // currently not used but might change
 
 	message := errorDescr["message"].(string) // message is required
 	errorDialog := dialog.NewError(errors.New(message), win)
 	if children, ok := errorDescr[ui.KeyChildren]; ok {
-		callback, err := messageCallback(children.(ui.CommandsDescr), fullName, win, uiDescr)
-		if err != nil {
-			return err
-		}
-		if callback != nil {
-			errorDialog.SetOnClosed(callback)
-		}
+		callback := closeCallback(children.(ui.CommandsDescr), fullName, win, uiDescr)
+		errorDialog.SetOnClosed(callback)
 	}
 
 	value := errorDescr["buttonText"]
@@ -288,48 +274,31 @@ func runError(errorDescr ui.AttributesDescr, fullName []string, win fyne.Window,
 
 	ui.StoreExitCode(0) // error has been noted; so all is OK
 	errorDialog.Show()
-	return nil
 }
 
-func messageCallback(
-	childrenDescr ui.CommandsDescr,
-	fullName []string,
-	win fyne.Window,
-	uiDescr ui.CommandsDescr,
-) (func(), error) {
-
-	actClose := childrenDescr["close"]
+func closeCallback(childDescr ui.CommandsDescr, fullName string, win fyne.Window, uiDescr ui.CommandsDescr) func() {
+	defaultCallback := func() {
+		return
+	}
+	actClose := childDescr["close"]
 	if actClose == nil { // action is optional
-		return nil, nil
+		return defaultCallback
 	}
 	keyword := actClose[ui.KeyKeyword].(string)
 	if keyword != ui.KeywordAction {
-		return nil, fmt.Errorf("for %q: close action is not an action but a %q",
-			ui.DisplayName(fullName), keyword)
+		log.Printf("ERROR: for %q: close action is not an action but a %q", fullName, keyword)
+		return defaultCallback
 	}
 
 	return func() {
-		err := run.Action(actClose, append(fullName, "close"), win, uiDescr)
-		if err != nil {
-			log.Printf("ERROR: Can't run close action: %v", err)
-		}
-	}, nil
+		run.Action(actClose, ui.FullNameFor(fullName, "close"), win, uiDescr)
+	}
 }
 
-func runConfirmation(
-	cnfDescr ui.AttributesDescr,
-	fullName []string,
-	win fyne.Window,
-	uiDescr ui.CommandsDescr,
-) error {
-
-	callback, err := confirmCallback(cnfDescr[ui.KeyChildren].(ui.CommandsDescr), fullName, win, uiDescr)
-	if err != nil {
-		return err
-	}
-
-	value := cnfDescr["title"]
+func runConfirmation(cnfDescr ui.AttributesDescr, fullName string, win fyne.Window, uiDescr ui.CommandsDescr) {
+	callback := confirmCallback(cnfDescr[ui.KeyChildren].(ui.CommandsDescr), fullName, win, uiDescr)
 	title := ""
+	value := cnfDescr["title"]
 	if value != nil {
 		title = value.(string)
 	}
@@ -358,76 +327,66 @@ func runConfirmation(
 		}
 	})
 
-	ui.StoreExitCode(1) // closing the window => dismissed
 	cnf.Show()
-	return nil
 }
 
 func confirmCallback(
 	childrenDescr ui.CommandsDescr,
-	fullName []string,
+	fullName string,
 	win fyne.Window,
 	uiDescr ui.CommandsDescr,
-) (func(bool), error) {
+) func(bool) {
+	defaultCallback := func(_ bool) {
+		return
+	}
 
 	actConfirm := childrenDescr["confirm"]
 	if actConfirm == nil {
-		return nil, fmt.Errorf("for %q: confirm action is missing", ui.DisplayName(fullName))
+		log.Printf("ERROR: for %q: confirm action is missing", fullName)
+		return defaultCallback
 	}
 	keyword := actConfirm[ui.KeyKeyword].(string)
 	if keyword != ui.KeywordAction {
-		return nil, fmt.Errorf("for %q: confirm action is not an action but a %q",
-			ui.DisplayName(fullName), keyword)
+		log.Printf("ERROR: for %q: confirm action is not an action but a %q", fullName, keyword)
+		return defaultCallback
 	}
 
 	actDismiss := childrenDescr["dismiss"]
 	if actDismiss == nil {
-		return nil, fmt.Errorf("for %q: dismiss action is missing", ui.DisplayName(fullName))
+		log.Printf("ERROR: for %q: dismiss action is missing", fullName)
+		return defaultCallback
 	}
 	keyword = actDismiss[ui.KeyKeyword].(string)
 	if keyword != ui.KeywordAction {
-		return nil, fmt.Errorf("for %q: dismiss action is not an action but a %q",
-			ui.DisplayName(fullName), keyword)
+		log.Printf("ERROR: for %q: dismiss action is not an action but a %q", fullName, keyword)
+		return defaultCallback
 	}
+
 	return func(confirmed bool) {
 		if confirmed {
-			err := run.Action(actConfirm, append(fullName, "confirm"), win, uiDescr)
-			if err != nil {
-				log.Printf("ERROR: Can't run confirm action: %v", err)
-			}
+			run.Action(actConfirm, ui.FullNameFor(fullName, "confirm"), win, uiDescr)
 		} else {
-			err := run.Action(actDismiss, append(fullName, "dismiss"), win, uiDescr)
-			if err != nil {
-				log.Printf("ERROR: Can't run dismiss action: %v", err)
-			}
+			run.Action(actDismiss, ui.FullNameFor(fullName, "dismiss"), win, uiDescr)
 		}
-	}, nil
+	}
 }
 
-func runOpenFile(
-	ofDescr ui.AttributesDescr,
-	fullName []string,
-	win fyne.Window,
-	uiDescr ui.CommandsDescr,
-) error {
+func runOpenFile(ofDescr ui.AttributesDescr, fullName string, win fyne.Window, uiDescr ui.CommandsDescr) {
 	_, _ = fullName, uiDescr
+
+	callback := confirmCallback(ofDescr[ui.KeyChildren].(ui.CommandsDescr), fullName, win, uiDescr)
 	ofDialog := dialog.NewFileOpen(func(frd fyne.URIReadCloser, err error) {
 		if err != nil {
 			dialog.ShowError(err, win)
 			return
 		}
 		if frd == nil {
-			fmt.Println("<CLOSED>")
-			ui.ExitApp(1)
+			callback(false)
+			return
 		}
 		fmt.Println("file to open:", strings.TrimPrefix(frd.URI().String(), "file://"))
-
-		ui.ExitApp(0)
+		callback(true)
 	}, win)
-
-	ofDialog.SetOnClosed(func() {
-		fmt.Println("dialog closed, exiting?")
-	})
 
 	extAttr := ofDescr["extensions"]
 	if extAttr != nil {
@@ -452,6 +411,11 @@ func runOpenFile(
 		ofDialog.Resize(fyne.NewSize(width, height))
 	}
 
+	win.Canvas().SetOnTypedKey(func(keyEvent *fyne.KeyEvent) {
+		if keyEvent.Name == fyne.KeyEscape {
+			win.Close()
+		}
+	})
+
 	ofDialog.Show()
-	return nil
 }

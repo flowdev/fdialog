@@ -1,7 +1,6 @@
 package run
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -14,43 +13,41 @@ import (
 )
 
 // UIDescription runs a whole UI description and returns any error encountered.
-func UIDescription(uiDescr ui.CommandsDescr) error {
+func UIDescription(uiDescr ui.CommandsDescr) {
 	mainWin := uiDescr[ui.WinMain]
 	if mainWin == nil {
-		return fmt.Errorf("unable to find main window in UI description")
+		log.Printf("unable to find main window in UI description")
 	}
 	if mainWin[ui.KeyKeyword] != ui.KeywordWindow {
-		return fmt.Errorf(`command with name 'main' is not a window but a:  %q`, mainWin[ui.KeyKeyword])
+		log.Printf(`command with name 'main' is not a window but a:  %q`, mainWin[ui.KeyKeyword])
 	}
 	appID := "org.flowdev.fdialog"
 	if aid, ok := mainWin["appId"]; ok {
 		appID = aid.(string)
 	}
 	log.Printf("INFO: Creating app with ID %q", appID)
-	if err := ui.NewApp(appID); err != nil {
-		return err
-	}
+	ui.NewApp(appID)
 
-	win, ok := ui.KeywordRunFunc(ui.KeywordWindow)
+	win, ok := ui.RunFuncForKeyword(ui.KeywordWindow)
 	if !ok {
-		return fmt.Errorf(`unable to get run function for keyword 'window'`)
+		log.Printf(`unable to get run function for keyword 'window'`)
 	}
 
-	err := win(mainWin, []string{ui.WinMain}, nil, uiDescr)
-	if err != nil {
-		return err
-	}
+	win(mainWin, ui.WinMain, nil, uiDescr)
 	ui.RunApp()
-	return nil
 }
+
+// ---------------------------------------------------------------------------
+// Keywords
+//
 
 // Window runs a Window description including all of its children.
 // In the case of the main window it will run the whole UI.
 // The fyne.Window parameter isn't currently used but might be used in the future for a parent window.
-func Window(winDescr ui.AttributesDescr, fullName []string, _ fyne.Window, uiDescr ui.CommandsDescr) error {
+func Window(winDescr ui.AttributesDescr, fullName string, _ fyne.Window, uiDescr ui.CommandsDescr) {
 	title := ""
-	if _, ok := winDescr["title"]; ok {
-		title = winDescr["title"].(string)
+	if atitle, ok := winDescr["title"]; ok {
+		title = atitle.(string)
 	}
 	win := ui.NewWindow(title)
 
@@ -62,13 +59,12 @@ func Window(winDescr ui.AttributesDescr, fullName []string, _ fyne.Window, uiDes
 		win.Resize(winSize)
 		win.SetFixedSize(true)
 	}
-	win.Canvas().SetOnTypedKey(func(keyEvent *fyne.KeyEvent) {
-		if keyEvent.Name == fyne.KeyEscape {
-			win.Close()
-		}
-	})
 
-	if ui.FullNameIs(fullName, "main") {
+	if fullName == ui.WinMain {
+		if code, ok := winDescr["exitCode"]; ok { // set the correct exit code
+			ui.StoreExitCode(int32(code.(int64)))
+		}
+
 		// Exit the app nicely with the correct exit code ...
 		interceptor := func() {
 			win.Close()
@@ -87,9 +83,7 @@ func Window(winDescr ui.AttributesDescr, fullName []string, _ fyne.Window, uiDes
 	}
 
 	if children, ok := winDescr[ui.KeyChildren]; ok {
-		if err := Children(children, fullName, win, uiDescr); err != nil {
-			return err
-		}
+		Children(children, fullName, win, uiDescr)
 	}
 
 	win.SetTitle(title)
@@ -98,32 +92,27 @@ func Window(winDescr ui.AttributesDescr, fullName []string, _ fyne.Window, uiDes
 		winSize = fyne.NewSize(width, height)
 		win.Resize(winSize)
 	}
-	return nil
 }
 
-func Children(achildren any, parent []string, win fyne.Window, uiDescr ui.CommandsDescr) error {
+func Children(achildren any, parent string, win fyne.Window, uiDescr ui.CommandsDescr) {
 	childDescr := achildren.(ui.CommandsDescr) // type validation has happened already :)
 
 	for name, keywordDescr := range childDescr {
-		fullName := append(parent, name)
-		err := Keyword(keywordDescr, fullName, win, uiDescr)
-		if err != nil {
-			return err
-		}
+		Keyword(keywordDescr, ui.FullNameFor(parent, name), win, uiDescr)
 	}
-	return nil
 }
 
-func Keyword(keywordDescr ui.AttributesDescr, fullName []string, win fyne.Window, uiDescr ui.CommandsDescr) error {
+func Keyword(keywordDescr ui.AttributesDescr, fullName string, win fyne.Window, uiDescr ui.CommandsDescr) {
 	keyword := keywordDescr[ui.KeyKeyword]
-	keywordFunc, ok := ui.KeywordRunFunc(keyword.(string))
+	keywordFunc, ok := ui.RunFuncForKeyword(keyword.(string))
 	if !ok {
-		return fmt.Errorf(`for %q: unknown keyword %q`, ui.DisplayName(fullName), keyword)
+		log.Printf(`ERROR: for %q: unknown keyword %q`, fullName, keyword)
+		return
 	}
-	return keywordFunc(keywordDescr, fullName, win, uiDescr)
+	keywordFunc(keywordDescr, fullName, win, uiDescr)
 }
 
-func Link(linkDescr ui.AttributesDescr, fullName []string, win fyne.Window, uiDescr ui.CommandsDescr) error {
+func Link(linkDescr ui.AttributesDescr, fullName string, win fyne.Window, uiDescr ui.CommandsDescr) {
 	dest := linkDescr["destination"].(string) // has been validated already :)
 	dnames := strings.Split(dest, ".")
 
@@ -132,34 +121,46 @@ func Link(linkDescr ui.AttributesDescr, fullName []string, win fyne.Window, uiDe
 	for i := 0; i < n-1; i++ {
 		dchildren := tree[dnames[i]][ui.KeyChildren]
 		if dchildren == nil {
-			return fmt.Errorf("for %q: no children found for link destination %q",
+			log.Printf("ERROR: for %q: no children found for link destination %q",
 				fullName, strings.Join(dnames[:i+1], "."))
+			return
 		}
 		tree = dchildren.(ui.CommandsDescr)
 	}
 	dkwMap := tree[dnames[n-1]] // the last name always exists or the link wouldn't be valid
 
-	return Keyword(dkwMap, ui.FullName(dest), win, uiDescr)
+	Keyword(dkwMap, dest, win, uiDescr)
 }
 
-func Action(actionDescr ui.AttributesDescr, fullName []string, win fyne.Window, uiDescr ui.CommandsDescr) error {
-	_ = uiDescr // currently not used but might change with more actions
+func Action(actionDescr ui.AttributesDescr, fullName string, win fyne.Window, uiDescr ui.CommandsDescr) {
 	action := actionDescr[ui.KeyType]
 	runFunc, ok := ui.ActionRunFunc(action.(string))
 	if !ok {
-		return fmt.Errorf(`for %q: unknown action %q`, ui.DisplayName(fullName), action)
+		log.Printf(`ERROR: for %q: unknown action %q`, fullName, action)
+		return
 	}
-	return runFunc(actionDescr, fullName, win, uiDescr)
+	runFunc(actionDescr, fullName, win, uiDescr)
 }
 
-func Exit(exitDescr ui.AttributesDescr, fullName []string, _ fyne.Window, _ ui.CommandsDescr) error {
+// ---------------------------------------------------------------------------
+// Actions
+//
+
+func Exit(exitDescr ui.AttributesDescr, _ string, _ fyne.Window, _ ui.CommandsDescr) {
 	code := -1 // intentional default
 	if exitDescr["code"] != nil {
 		code = int(exitDescr["code"].(int64))
 	}
 	ui.ExitApp(code)
-	return nil // just for the compiler :)
 }
+
+func Close(_ ui.AttributesDescr, _ string, win fyne.Window, _ ui.CommandsDescr) {
+	win.Close()
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+//
 
 func GetSize(descr ui.AttributesDescr) (width, height float32) {
 	width = float32(0)

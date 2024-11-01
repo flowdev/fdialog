@@ -1,7 +1,6 @@
 package valid_test
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/flowdev/fdialog/ui"
@@ -13,16 +12,16 @@ func TestValidate(t *testing.T) {
 	_ = uimain.RegisterEverything()
 
 	specs := []struct {
-		name             string
-		givenUiDescr     ui.CommandsDescr
-		givenStrict      bool
-		expectedErrCount int
+		name         string
+		givenUiDescr ui.CommandsDescr
+		givenStrict  bool
+		expectedOK   bool
 	}{
 		{
-			name:             "empty",
-			givenUiDescr:     ui.CommandsDescr{},
-			givenStrict:      true,
-			expectedErrCount: 0,
+			name:         "empty",
+			givenUiDescr: ui.CommandsDescr{},
+			givenStrict:  true,
+			expectedOK:   true,
 		}, {
 			name: "oneMinimalInfo",
 			givenUiDescr: ui.CommandsDescr{
@@ -32,8 +31,8 @@ func TestValidate(t *testing.T) {
 					"message": "Message for you.",
 				},
 			},
-			givenStrict:      true,
-			expectedErrCount: 0,
+			givenStrict: true,
+			expectedOK:  true,
 		}, {
 			name: "oneMaximalInfo",
 			givenUiDescr: ui.CommandsDescr{
@@ -47,8 +46,8 @@ func TestValidate(t *testing.T) {
 					"height":     float64(200),
 				},
 			},
-			givenStrict:      true,
-			expectedErrCount: 0,
+			givenStrict: true,
+			expectedOK:  true,
 		}, {
 			name: "oneMaximalError",
 			givenUiDescr: ui.CommandsDescr{
@@ -61,8 +60,8 @@ func TestValidate(t *testing.T) {
 					"height":     float64(200),
 				},
 			},
-			givenStrict:      true,
-			expectedErrCount: 0,
+			givenStrict: true,
+			expectedOK:  true,
 		}, {
 			name: "oneMaximalConfirmation",
 			givenUiDescr: ui.CommandsDescr{
@@ -89,8 +88,8 @@ func TestValidate(t *testing.T) {
 					},
 				},
 			},
-			givenStrict:      true,
-			expectedErrCount: 0,
+			givenStrict: true,
+			expectedOK:  true,
 		}, {
 			name: "twoInfos",
 			givenUiDescr: ui.CommandsDescr{
@@ -105,8 +104,8 @@ func TestValidate(t *testing.T) {
 					"message": "Info no. two",
 				},
 			},
-			givenStrict:      true,
-			expectedErrCount: 0,
+			givenStrict: true,
+			expectedOK:  true,
 		}, {
 			name: "infoErrorConfirmation",
 			givenUiDescr: ui.CommandsDescr{
@@ -138,15 +137,15 @@ func TestValidate(t *testing.T) {
 					},
 				},
 			},
-			givenStrict:      true,
-			expectedErrCount: 0,
+			givenStrict: true,
+			expectedOK:  true,
 		}, {
 			name: "allMissing",
 			givenUiDescr: ui.CommandsDescr{
 				"": {},
 			},
-			givenStrict:      true,
-			expectedErrCount: 1,
+			givenStrict: true,
+			expectedOK:  false,
 		}, {
 			name: "typeMissing",
 			givenUiDescr: ui.CommandsDescr{
@@ -154,8 +153,8 @@ func TestValidate(t *testing.T) {
 					"keyword": "dialog",
 				},
 			},
-			givenStrict:      true,
-			expectedErrCount: 1,
+			givenStrict: true,
+			expectedOK:  false,
 		}, {
 			name: "wrongKeyword",
 			givenUiDescr: ui.CommandsDescr{
@@ -164,8 +163,8 @@ func TestValidate(t *testing.T) {
 					"type":    "info",
 				},
 			},
-			givenStrict:      true,
-			expectedErrCount: 1,
+			givenStrict: true,
+			expectedOK:  false,
 		}, {
 			name: "wrongName",
 			givenUiDescr: ui.CommandsDescr{
@@ -175,8 +174,8 @@ func TestValidate(t *testing.T) {
 					"message": "Your info",
 				},
 			},
-			givenStrict:      true,
-			expectedErrCount: 1,
+			givenStrict: true,
+			expectedOK:  false,
 		}, {
 			name: "wrongType",
 			givenUiDescr: ui.CommandsDescr{
@@ -185,8 +184,8 @@ func TestValidate(t *testing.T) {
 					"type":    "inf",
 				},
 			},
-			givenStrict:      true,
-			expectedErrCount: 1,
+			givenStrict: true,
+			expectedOK:  false,
 		}, {
 			name: "infoMessageMissing",
 			givenUiDescr: ui.CommandsDescr{
@@ -195,8 +194,8 @@ func TestValidate(t *testing.T) {
 					"type":    "info",
 				},
 			},
-			givenStrict:      true,
-			expectedErrCount: 1,
+			givenStrict: true,
+			expectedOK:  false,
 		}, {
 			name: "wrongInfo",
 			givenUiDescr: ui.CommandsDescr{
@@ -210,8 +209,8 @@ func TestValidate(t *testing.T) {
 					"height":     float64(79),
 				},
 			},
-			givenStrict:      true,
-			expectedErrCount: 6,
+			givenStrict: true,
+			expectedOK:  false,
 		}, {
 			name: "wrongError",
 			givenUiDescr: ui.CommandsDescr{
@@ -224,8 +223,8 @@ func TestValidate(t *testing.T) {
 					"height":     float64(79),
 				},
 			},
-			givenStrict:      true,
-			expectedErrCount: 5,
+			givenStrict: true,
+			expectedOK:  false,
 		}, {
 			name: "wrongConfirmation",
 			givenUiDescr: ui.CommandsDescr{
@@ -240,8 +239,8 @@ func TestValidate(t *testing.T) {
 					"height":      float64(79),
 				},
 			},
-			givenStrict:      true,
-			expectedErrCount: 8,
+			givenStrict: true,
+			expectedOK:  false,
 		}, {
 			name: "errorWithTitle",
 			givenUiDescr: ui.CommandsDescr{
@@ -255,8 +254,8 @@ func TestValidate(t *testing.T) {
 					"height":     float64(200),
 				},
 			},
-			givenStrict:      false,
-			expectedErrCount: 0,
+			givenStrict: false,
+			expectedOK:  true,
 		}, {
 			name: "infoWithExtraAttrs",
 			givenUiDescr: ui.CommandsDescr{
@@ -271,8 +270,8 @@ func TestValidate(t *testing.T) {
 					"myMadeUpAttribute": "bla",
 				},
 			},
-			givenStrict:      false,
-			expectedErrCount: 0,
+			givenStrict: false,
+			expectedOK:  true,
 		}, {
 			name: "minimalWindow",
 			givenUiDescr: ui.CommandsDescr{
@@ -280,8 +279,8 @@ func TestValidate(t *testing.T) {
 					"keyword": "window",
 				},
 			},
-			givenStrict:      true,
-			expectedErrCount: 0,
+			givenStrict: true,
+			expectedOK:  true,
 		}, {
 			name: "windowWithConfirmation",
 			givenUiDescr: ui.CommandsDescr{
@@ -315,8 +314,8 @@ func TestValidate(t *testing.T) {
 					},
 				},
 			},
-			givenStrict:      true,
-			expectedErrCount: 0,
+			givenStrict: true,
+			expectedOK:  true,
 		}, {
 			name: "windowWithNestedConfirmationError",
 			givenUiDescr: ui.CommandsDescr{
@@ -350,8 +349,8 @@ func TestValidate(t *testing.T) {
 					},
 				},
 			},
-			givenStrict:      true,
-			expectedErrCount: 2,
+			givenStrict: true,
+			expectedOK:  false,
 		}, {
 			name: "minimalLink",
 			givenUiDescr: ui.CommandsDescr{
@@ -360,8 +359,8 @@ func TestValidate(t *testing.T) {
 					"destination": "info1",
 				},
 			},
-			givenStrict:      true,
-			expectedErrCount: 0,
+			givenStrict: true,
+			expectedOK:  true,
 		}, {
 			name: "maximalLink",
 			givenUiDescr: ui.CommandsDescr{
@@ -371,8 +370,8 @@ func TestValidate(t *testing.T) {
 					"destination": "main.info1",
 				},
 			},
-			givenStrict:      true,
-			expectedErrCount: 0,
+			givenStrict: true,
+			expectedOK:  true,
 		}, {
 			name: "wrongLink",
 			givenUiDescr: ui.CommandsDescr{
@@ -381,8 +380,8 @@ func TestValidate(t *testing.T) {
 					"destination": "main:info1",
 				},
 			},
-			givenStrict:      true,
-			expectedErrCount: 1,
+			givenStrict: true,
+			expectedOK:  false,
 		}, {
 			name: "minimalAction",
 			givenUiDescr: ui.CommandsDescr{
@@ -391,8 +390,8 @@ func TestValidate(t *testing.T) {
 					"type":    "exit",
 				},
 			},
-			givenStrict:      true,
-			expectedErrCount: 0,
+			givenStrict: true,
+			expectedOK:  true,
 		}, {
 			name: "maximalAction",
 			givenUiDescr: ui.CommandsDescr{
@@ -402,8 +401,8 @@ func TestValidate(t *testing.T) {
 					"code":    int64(125),
 				},
 			},
-			givenStrict:      true,
-			expectedErrCount: 0,
+			givenStrict: true,
+			expectedOK:  true,
 		}, {
 			name: "wrongAction",
 			givenUiDescr: ui.CommandsDescr{
@@ -413,20 +412,16 @@ func TestValidate(t *testing.T) {
 					"code":    int64(-1),
 				},
 			},
-			givenStrict:      true,
-			expectedErrCount: 1,
+			givenStrict: true,
+			expectedOK:  false,
 		},
 	}
 
 	for _, spec := range specs {
 		t.Run(spec.name, func(tt *testing.T) {
-			err := valid.UIDescription(spec.givenUiDescr, spec.givenStrict)
-			var actualErrCount int
-			if err != nil {
-				actualErrCount = strings.Count(err.Error(), "\n") + 1
-			}
-			if actualErrCount != spec.expectedErrCount {
-				tt.Errorf("UIDescription() expectedErrCount %v, actual errors: %v", spec.expectedErrCount, err)
+			ok := valid.UIDescription(spec.givenUiDescr, spec.givenStrict)
+			if ok != spec.expectedOK {
+				tt.Errorf("UIDescription() expectedOK %v, actual OK: %v", spec.expectedOK, ok)
 			}
 		})
 	}

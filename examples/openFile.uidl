@@ -8,5 +8,8 @@ window main(title="Open File", width=500, height=400) {
         dismissText="Go back",
         extensions=".jpg,.jpeg",
         width=500, height=400
-    )
+    ) {
+        action confirm(type="exit", code=0)
+        action dismiss(type="exit", code=1)
+    }
 }

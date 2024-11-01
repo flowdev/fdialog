@@ -7,9 +7,9 @@ import (
 	"io"
 )
 
-// ParseJSON parses (H)JSON from a Reader and gives the content back suitable for validation.
+// JSON parses (H)JSON from a Reader and gives the content back suitable for validation.
 // An error is returned if the stream can't be unmarshalled or a data type doesn't match.
-func ParseJSON(input io.Reader, name string) (ui.CommandsDescr, error) {
+func JSON(input io.Reader, name string) (ui.CommandsDescr, error) {
 	data := make(ui.CommandsDescr)
 	inputData, err := io.ReadAll(input)
 	if err != nil {
@@ -25,7 +25,7 @@ func ParseJSON(input io.Reader, name string) (ui.CommandsDescr, error) {
 		return nil, fmt.Errorf("error parsing JSON file %v: %w", name, err)
 	}
 
-	err = cleanAllChildren(data)
+	err = cleanAllChildren(data, "")
 	if err != nil {
 		return nil, fmt.Errorf("error cleaning JSON data from file %v: %w", name, err)
 	}
@@ -33,21 +33,21 @@ func ParseJSON(input io.Reader, name string) (ui.CommandsDescr, error) {
 	return data, nil
 }
 
-func cleanAllChildren(data ui.CommandsDescr) error {
-	for keyword, value := range data {
-		if err := cleanKeyword(value, []string{keyword}); err != nil {
+func cleanAllChildren(data ui.CommandsDescr, parent string) error {
+	for name, value := range data {
+		if err := cleanCommand(value, ui.FullNameFor(parent, name)); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func cleanKeyword(data ui.AttributesDescr, fullName []string) error {
+func cleanCommand(data ui.AttributesDescr, fullName string) error {
 	if rawChildren, ok := data[ui.KeyChildren]; ok {
 		mapChildren, ok := rawChildren.(ui.AttributesDescr)
 		if !ok {
 			return fmt.Errorf("for %q: expected attribute children to contain a map[string]any, got %T",
-				ui.DisplayName(fullName), rawChildren)
+				fullName, rawChildren)
 		}
 
 		cleanChildren := make(ui.CommandsDescr, len(mapChildren))
@@ -55,11 +55,11 @@ func cleanKeyword(data ui.AttributesDescr, fullName []string) error {
 			cleanChild, ok := avalue.(ui.AttributesDescr)
 			if !ok {
 				return fmt.Errorf("for %q: expected value of keyword to be a map[string]any, got %T",
-					ui.DisplayName(append(fullName, key)), avalue)
+					ui.FullNameFor(fullName, key), avalue)
 			}
 			cleanChildren[key] = cleanChild
 		}
-		if err := cleanAllChildren(cleanChildren); err != nil {
+		if err := cleanAllChildren(cleanChildren, fullName); err != nil {
 			return err
 		}
 		data[ui.KeyChildren] = cleanChildren

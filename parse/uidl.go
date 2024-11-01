@@ -48,7 +48,7 @@ func (ael *AntlrErrorListener) CombinedError() error {
 	return errors.Join(ael.errs...)
 }
 
-func ParseUIDL(input io.Reader, _ string) (ui.CommandsDescr, error) {
+func UIDL(input io.Reader, _ string) (ui.CommandsDescr, error) {
 	inputStr, err := io.ReadAll(input)
 	if err != nil {
 		return nil, err

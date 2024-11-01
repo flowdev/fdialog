@@ -47,6 +47,12 @@ func RegisterBase() error {
 			"height": {
 				Validate: valid.FloatValidator(80.0, math.MaxFloat32),
 			},
+			"appId": {
+				Validate: valid.StringValidator(1, 0, nil),
+			},
+			"exitCode": {
+				Validate: valid.IntValidator(0, 125),
+			},
 			ui.KeyChildren: {
 				Validate: valid.ChildrenValidator(0, math.MaxInt),
 			},
@@ -122,6 +128,10 @@ func RegisterBase() error {
 
 	// Actions:
 	err = ui.RegisterAction("exit", run.Exit)
+	if err != nil {
+		return err
+	}
+	err = ui.RegisterAction("close", run.Close)
 	if err != nil {
 		return err
 	}

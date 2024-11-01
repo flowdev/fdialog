@@ -22,8 +22,8 @@ var runCmdData = struct {
 // runCmd represents the run command
 var runCmd = &cobra.Command{
 	Use:   "run",
-	Short: "display and run a description for a UI",
-	Long: `Display And Run a Description For a User Interface
+	Short: "run a description for a UI",
+	Long: `Run a Description For a User Interface And Display the Resulting GUI
 
 If no file or URL is given, the UI description is read from standard input.`,
 	Args: cobra.NoArgs,
@@ -40,7 +40,7 @@ func init() {
 	runCmd.MarkFlagsMutuallyExclusive("file", "url")
 	runCmd.Flags().StringVarP(&runCmdData.format, "format", "t", "uidl",
 		"format of the UI description (valid values are: 'json' or 'uidl')")
-	runCmd.Flags().BoolVarP(&runCmdData.lenient, "lenient", "l", true,
+	runCmd.Flags().BoolVarP(&runCmdData.lenient, "lenient", "l", false,
 		"if flag is given, additional attributes in the UI description are only warned about")
 }
 
@@ -63,15 +63,8 @@ func doRun(_ *cobra.Command, _ []string) {
 		log.Printf("ERROR: Unable to parse UI description:\n%v", err)
 		os.Exit(12)
 	}
-	err = valid.UIDescription(uiDescr, !runCmdData.lenient)
-	if err != nil {
-		log.Printf("ERROR: Validating UI description from file %q in format %q:\n%v",
-			runCmdData.fileName, runCmdData.format, err)
+	if ok := valid.UIDescription(uiDescr, !runCmdData.lenient); !ok {
 		os.Exit(13)
 	}
-	err = run.UIDescription(uiDescr)
-	if err != nil {
-		log.Printf("ERROR: Unable to run UI description: %v", err)
-		os.Exit(14)
-	}
+	run.UIDescription(uiDescr)
 }

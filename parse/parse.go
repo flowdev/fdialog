@@ -16,9 +16,9 @@ func UIDescription(input io.Reader, name string, format string) (ui.CommandsDesc
 
 	switch format {
 	case "json":
-		uiDescr, err = ParseJSON(input, name)
+		uiDescr, err = JSON(input, name)
 	case "uidl":
-		uiDescr, err = ParseUIDL(input, name)
+		uiDescr, err = UIDL(input, name)
 	default:
 		err = fmt.Errorf("unknown UI description format: %s", format)
 	}
