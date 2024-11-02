@@ -53,7 +53,7 @@ var idMap = make(map[string]string, 32)
 
 // valueMap maps a fullName to an input value
 // fullNames are the display names with '.' inside.
-var valueMap = make(map[string]any)
+var valueMap = make(map[string]map[string]any)
 
 // ---------------------------------------------------------------------------
 //  Validation Types & Data
@@ -177,26 +177,49 @@ func FullNameForID(id string) (string, bool) {
 	return fullName, ok
 }
 
-func GetValueByID(id string) (any, bool) {
-	v, ok := valueMap[idMap[id]]
+func GetValueByID(id, group string) (any, bool) {
+	grpMap, ok := valueMap[group]
+	if !ok {
+		return nil, false
+	}
+	v, ok := grpMap[idMap[id]]
 	return v, ok
 }
 
-func GetValueByFullName(fullName string) (any, bool) {
-	v, ok := valueMap[fullName]
+func GetValueByFullName(fullName, group string) (any, bool) {
+	grpMap, ok := valueMap[group]
+	if !ok {
+		return nil, false
+	}
+	v, ok := grpMap[fullName]
 	return v, ok
 }
 
-func StoreValueByID(value any, id string, parent string) {
+func GetValueGroup(group string) (map[string]any, bool) {
+	grpMap, ok := valueMap[group]
+	return grpMap, ok
+}
+
+func StoreValueByID(value any, id, group string, parent string) {
 	if name, ok := FullNameForID(id); ok {
-		valueMap[name] = value
+		grpMap, ok := valueMap[group]
+		if !ok {
+			grpMap = make(map[string]any)
+			valueMap[group] = grpMap
+		}
+		grpMap[name] = value
 		return
 	}
 	log.Printf(`ERROR: for %q: unknown ID: %q`, parent, id)
 }
 
-func StoreValueByFullName(value any, fullName string) {
-	valueMap[fullName] = value
+func StoreValueByFullName(value any, fullName, group string) {
+	grpMap, ok := valueMap[group]
+	if !ok {
+		grpMap = make(map[string]any)
+		valueMap[group] = grpMap
+	}
+	grpMap[fullName] = value
 }
 
 // ---------------------------------------------------------------------------
