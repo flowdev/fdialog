@@ -213,12 +213,7 @@ func GetValueGroup(group string) (map[string]any, bool) {
 
 func StoreValueByID(value any, id, group string, parent string) {
 	if name, ok := FullNameForID(id); ok {
-		grpMap, ok := valueMap[group]
-		if !ok {
-			grpMap = make(map[string]any)
-			valueMap[group] = grpMap
-		}
-		grpMap[name] = value
+		StoreValueByFullName(value, name, group)
 		return
 	}
 	log.Printf(`ERROR: for %q: unknown ID: %q`, parent, id)
