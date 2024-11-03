@@ -1,22 +1,25 @@
 package run
 
 import (
+	"fyne.io/fyne/v2"
+	"github.com/valyala/fastjson"
 	"log"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
 
-	"fyne.io/fyne/v2"
-
 	"github.com/flowdev/fdialog/ui"
 )
 
+var jsonArena = &fastjson.ArenaPool{}
+
 // UIDescription runs a whole UI description and returns any error encountered.
 func UIDescription(uiDescr ui.CommandsDescr) {
-	mainWin := uiDescr[ui.WinMain]
-	if mainWin == nil {
-		log.Printf("unable to find main window in UI description")
+	mainWin, ok := uiDescr.Get(ui.WinMain)
+	if !ok {
+		log.Printf("FATAL: unable to find main window in UI description")
+		return
 	}
 	if mainWin[ui.KeyKeyword] != ui.KeywordWindow {
 		log.Printf(`command with name 'main' is not a window but a:  %q`, mainWin[ui.KeyKeyword])
@@ -97,7 +100,7 @@ func Window(winDescr ui.AttributesDescr, fullName string, _ fyne.Window, uiDescr
 func Children(achildren any, parent string, win fyne.Window, uiDescr ui.CommandsDescr) {
 	childDescr := achildren.(ui.CommandsDescr) // type validation has happened already :)
 
-	for name, keywordDescr := range childDescr {
+	for name, keywordDescr := range childDescr.All() {
 		Keyword(keywordDescr, ui.FullNameFor(parent, name), win, uiDescr)
 	}
 }
@@ -114,22 +117,34 @@ func Keyword(keywordDescr ui.AttributesDescr, fullName string, win fyne.Window, 
 
 func Link(linkDescr ui.AttributesDescr, fullName string, win fyne.Window, uiDescr ui.CommandsDescr) {
 	dest := linkDescr["destination"].(string) // has been validated already :)
-	dnames := strings.Split(dest, ".")
+	dnames := ui.SplitName(dest)
+	ok := true
 
 	n := len(dnames)
 	tree := uiDescr // start at the top
+	var attrs ui.AttributesDescr
 	for i := 0; i < n-1; i++ {
-		dchildren := tree[dnames[i]][ui.KeyChildren]
-		if dchildren == nil {
+		attrs, ok = tree.Get(dnames[i])
+		if !ok {
+			log.Printf("ERROR: for %q: link destination %q not found",
+				fullName, strings.Join(dnames[:i+1], "."))
+			return
+		}
+		dchildren, ok := attrs[ui.KeyChildren]
+		if !ok || dchildren == nil {
 			log.Printf("ERROR: for %q: no children found for link destination %q",
 				fullName, strings.Join(dnames[:i+1], "."))
 			return
 		}
 		tree = dchildren.(ui.CommandsDescr)
 	}
-	dkwMap := tree[dnames[n-1]] // the last name always exists or the link wouldn't be valid
+	attrs, ok = tree.Get(dnames[n-1]) // the last name always exists or the link wouldn't be valid
+	if !ok {
+		log.Printf("ERROR: for %q: link destination %q not found", fullName, dest)
+		return
+	}
 
-	Keyword(dkwMap, dest, win, uiDescr)
+	Keyword(attrs, dest, win, uiDescr)
 }
 
 func Action(actionDescr ui.AttributesDescr, fullName string, win fyne.Window, uiDescr ui.CommandsDescr) {
@@ -156,6 +171,118 @@ func Exit(exitDescr ui.AttributesDescr, _ string, _ fyne.Window, _ ui.CommandsDe
 
 func Close(_ ui.AttributesDescr, _ string, win fyne.Window, _ ui.CommandsDescr) {
 	win.Close()
+}
+
+func Group(groupDescr ui.AttributesDescr, parent string, win fyne.Window, uiDescr ui.CommandsDescr) {
+	childrenDescr := groupDescr[ui.KeyChildren].(ui.CommandsDescr)
+	for name, attrs := range childrenDescr.All() {
+		if keyword := attrs[ui.KeyKeyword]; keyword.(string) != ui.KeywordAction {
+			log.Printf(`ERROR: for %q: only actions allowed, got: %q`, ui.FullNameFor(parent, name), keyword)
+			continue
+		}
+		Keyword(attrs, name, win, uiDescr)
+	}
+}
+
+func Write(writeDescr ui.AttributesDescr, fullName string, _ fyne.Window, _ ui.CommandsDescr) {
+	group, gok := writeDescr[ui.KeyGroup].(string)
+	id, iok := writeDescr[ui.KeyID].(string)
+	name, nok := writeDescr["fullName"].(string)
+
+	switch {
+	case iok && nok: // read fullName but write ID in output
+		v, ok := ui.GetValueByFullName(name, group)
+		if !ok {
+			log.Printf(`WARNING: for %q: no value found in group %q with full name %q for writing`,
+				fullName, group, name)
+		}
+		writeMap(map[string]any{id: v}, fullName)
+	case iok: // use ID
+		v, ok := ui.GetValueByID(id, group)
+		if !ok {
+			log.Printf(`WARNING: for %q: no value found in group %q with ID %q for writing`,
+				fullName, group, id)
+		}
+		writeMap(map[string]any{id: v}, fullName)
+	case nok: // use fullName
+		v, ok := ui.GetValueByFullName(name, group)
+		if !ok {
+			log.Printf(`WARNING: for %q: no value found in group %q with full name %q for writing`,
+				fullName, group, name)
+		}
+		writeMap(map[string]any{name: v}, fullName)
+	case gok: // write whole group
+		m, ok := ui.GetValueGroup(group)
+		if !ok {
+			log.Printf(`WARNING: for %q: no value found in group %q for writing`, fullName, group)
+		}
+		writeMap(m, fullName)
+	default:
+		log.Printf(`WARNING: for %q: no value found for writing`, fullName)
+	}
+}
+func writeMap(m map[string]any, fullName string) {
+	arena := jsonArena.Get()
+	defer func() {
+		arena.Reset()
+		jsonArena.Put(arena)
+	}()
+	val := writeJSONMap(m, arena, fullName)
+	_, err := os.Stdout.Write(val.MarshalTo(nil))
+	if err != nil {
+		log.Printf(`ERROR: for %q: unable to write to STDOUT: %v`, fullName, err)
+	}
+	_, _ = os.Stdout.WriteString("\n")
+}
+func writeJSONMap(m map[string]any, arena *fastjson.Arena, fullName string) *fastjson.Value {
+	obj := arena.NewObject()
+	for k, v := range m {
+		if id, ok := ui.IDForFullName(k); ok {
+			k = id
+		}
+		obj.Set(k, writeJSONValue(v, arena, fullName))
+	}
+	return obj
+}
+func writeJSONValue(value any, arena *fastjson.Arena, fullName string) *fastjson.Value {
+	switch v := value.(type) {
+	case string:
+		return arena.NewString(v)
+	case int8:
+		return arena.NewNumberInt(int(v))
+	case int16:
+		return arena.NewNumberInt(int(v))
+	case int32:
+		return arena.NewNumberInt(int(v))
+	case int:
+		return arena.NewNumberInt(v)
+	case int64:
+		return arena.NewNumberFloat64(float64(v))
+	case uint8:
+		return arena.NewNumberInt(int(v))
+	case uint16:
+		return arena.NewNumberInt(int(v))
+	case uint32:
+		return arena.NewNumberFloat64(float64(v))
+	case uint:
+		return arena.NewNumberFloat64(float64(v))
+	case uint64:
+		return arena.NewNumberFloat64(float64(v))
+	case float32:
+		return arena.NewNumberFloat64(float64(v))
+	case float64:
+		return arena.NewNumberFloat64(v)
+	case bool:
+		if v {
+			return arena.NewTrue()
+		}
+		return arena.NewFalse()
+	case map[string]any:
+		return writeJSONMap(v, arena, fullName)
+	default:
+		log.Printf(`ERROR: for %q: unable to write unknown data type %T`, fullName, v)
+		return arena.NewNull()
+	}
 }
 
 // ---------------------------------------------------------------------------

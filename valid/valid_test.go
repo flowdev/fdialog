@@ -1,6 +1,7 @@
 package valid_test
 
 import (
+	"github.com/flowdev/fdialog/x/omap"
 	"testing"
 
 	"github.com/flowdev/fdialog/ui"
@@ -19,24 +20,23 @@ func TestValidate(t *testing.T) {
 	}{
 		{
 			name:         "empty",
-			givenUiDescr: ui.CommandsDescr{},
+			givenUiDescr: omap.New[string, ui.AttributesDescr](0),
 			givenStrict:  true,
 			expectedOK:   true,
 		}, {
 			name: "oneMinimalInfo",
-			givenUiDescr: ui.CommandsDescr{
-				"info1": {
+			givenUiDescr: omap.New[string, ui.AttributesDescr](1).Build(
+				"info1", map[string]any{
 					"keyword": "dialog",
 					"type":    "info",
 					"message": "Message for you.",
-				},
-			},
+				}),
 			givenStrict: true,
 			expectedOK:  true,
 		}, {
 			name: "oneMaximalInfo",
-			givenUiDescr: ui.CommandsDescr{
-				"info2": {
+			givenUiDescr: omap.New[string, ui.AttributesDescr](1).Build(
+				"info2", map[string]any{
 					"keyword":    "dialog",
 					"type":       "info",
 					"message":    "Message for you.",
@@ -44,28 +44,26 @@ func TestValidate(t *testing.T) {
 					"buttonText": "Okay...",
 					"width":      float64(240),
 					"height":     float64(200),
-				},
-			},
+				}),
 			givenStrict: true,
 			expectedOK:  true,
 		}, {
 			name: "oneMaximalError",
-			givenUiDescr: ui.CommandsDescr{
-				"error1": {
+			givenUiDescr: omap.New[string, ui.AttributesDescr](1).Build(
+				"error1", map[string]any{
 					"keyword":    "dialog",
 					"type":       "error",
 					"message":    "Error for you.",
 					"buttonText": "Oh, shit...",
 					"width":      float64(240),
 					"height":     float64(200),
-				},
-			},
+				}),
 			givenStrict: true,
 			expectedOK:  true,
 		}, {
 			name: "oneMaximalConfirmation",
-			givenUiDescr: ui.CommandsDescr{
-				"confirm1": {
+			givenUiDescr: omap.New[string, ui.AttributesDescr](1).Build(
+				"confirm1", map[string]any{
 					"keyword":     "dialog",
 					"type":        "confirmation",
 					"title":       "Please Confirm",
@@ -74,132 +72,120 @@ func TestValidate(t *testing.T) {
 					"confirmText": "Yes, please.",
 					"width":       float64(240),
 					"height":      float64(200),
-					"children": ui.CommandsDescr{
-						"confirm": {
+					"children": omap.New[string, ui.AttributesDescr](2).Build(
+						"confirm", map[string]any{
 							"keyword": "action",
 							"type":    "exit",
 							"code":    int64(0),
-						},
-						"dismiss": {
+						}).Build(
+						"dismiss", map[string]any{
 							"keyword": "action",
 							"type":    "exit",
 							"code":    int64(1),
-						},
-					},
-				},
-			},
+						}),
+				}),
 			givenStrict: true,
 			expectedOK:  true,
 		}, {
 			name: "twoInfos",
-			givenUiDescr: ui.CommandsDescr{
-				"info3": {
+			givenUiDescr: omap.New[string, ui.AttributesDescr](2).Build(
+				"info3", map[string]any{
 					"keyword": "dialog",
 					"type":    "info",
 					"message": "Info no. one",
-				},
-				"info4": {
+				}).Build(
+				"info4", map[string]any{
 					"keyword": "dialog",
 					"type":    "info",
 					"message": "Info no. two",
-				},
-			},
+				}),
 			givenStrict: true,
 			expectedOK:  true,
 		}, {
 			name: "infoErrorConfirmation",
-			givenUiDescr: ui.CommandsDescr{
-				"info5": {
+			givenUiDescr: omap.New[string, ui.AttributesDescr](3).Build(
+				"info5", map[string]any{
 					"keyword": "dialog",
 					"type":    "info",
 					"message": "Info no. three (or five?)",
-				},
-				"error2": {
+				}).Build(
+				"error2", map[string]any{
 					"keyword": "dialog",
 					"type":    "error",
 					"message": "Error no. two",
-				},
-				"confirm2": {
+				}).Build(
+				"confirm2", map[string]any{
 					"keyword": "dialog",
 					"type":    "confirmation",
 					"message": "Please confirm (no. two)",
-					"children": ui.CommandsDescr{
-						"confirm": {
+					"children": omap.New[string, ui.AttributesDescr](2).Build(
+						"confirm", map[string]any{
 							"keyword": "action",
 							"type":    "exit",
 							"code":    int64(0),
-						},
-						"dismiss": {
+						}).Build(
+						"dismiss", map[string]any{
 							"keyword": "action",
 							"type":    "exit",
 							"code":    int64(1),
-						},
-					},
-				},
-			},
+						}),
+				}),
 			givenStrict: true,
 			expectedOK:  true,
 		}, {
-			name: "allMissing",
-			givenUiDescr: ui.CommandsDescr{
-				"": {},
-			},
-			givenStrict: true,
-			expectedOK:  false,
+			name:         "allMissing",
+			givenUiDescr: omap.New[string, ui.AttributesDescr](1).Build("", map[string]any{}),
+			givenStrict:  true,
+			expectedOK:   false,
 		}, {
 			name: "typeMissing",
-			givenUiDescr: ui.CommandsDescr{
-				"dialog1": {
+			givenUiDescr: omap.New[string, ui.AttributesDescr](1).Build(
+				"dialog1", map[string]any{
 					"keyword": "dialog",
-				},
-			},
+				}),
 			givenStrict: true,
 			expectedOK:  false,
 		}, {
 			name: "wrongKeyword",
-			givenUiDescr: ui.CommandsDescr{
-				"dialog1": {
+			givenUiDescr: omap.New[string, ui.AttributesDescr](1).Build(
+				"dialog1", map[string]any{
 					"keyword": "dialogue",
 					"type":    "info",
-				},
-			},
+				}),
 			givenStrict: true,
 			expectedOK:  false,
 		}, {
 			name: "wrongName",
-			givenUiDescr: ui.CommandsDescr{
-				"dia.log1": {
+			givenUiDescr: omap.New[string, ui.AttributesDescr](1).Build(
+				"dia.log1", map[string]any{
 					"keyword": "dialog",
 					"type":    "info",
 					"message": "Your info",
-				},
-			},
+				}),
 			givenStrict: true,
 			expectedOK:  false,
 		}, {
 			name: "wrongType",
-			givenUiDescr: ui.CommandsDescr{
-				"dialog1": {
+			givenUiDescr: omap.New[string, ui.AttributesDescr](1).Build(
+				"dialog1", map[string]any{
 					"keyword": "dialog",
 					"type":    "inf",
-				},
-			},
+				}),
 			givenStrict: true,
 			expectedOK:  false,
 		}, {
 			name: "infoMessageMissing",
-			givenUiDescr: ui.CommandsDescr{
-				"info6": {
+			givenUiDescr: omap.New[string, ui.AttributesDescr](1).Build(
+				"info6", map[string]any{
 					"keyword": "dialog",
 					"type":    "info",
-				},
-			},
+				}),
 			givenStrict: true,
 			expectedOK:  false,
 		}, {
 			name: "wrongInfo",
-			givenUiDescr: ui.CommandsDescr{
-				"": {
+			givenUiDescr: omap.New[string, ui.AttributesDescr](1).Build(
+				"", map[string]any{
 					"keyword":    "dialog",
 					"type":       "info",
 					"message":    "",
@@ -207,28 +193,26 @@ func TestValidate(t *testing.T) {
 					"buttonText": "",
 					"width":      float64(49),
 					"height":     float64(79),
-				},
-			},
+				}),
 			givenStrict: true,
 			expectedOK:  false,
 		}, {
 			name: "wrongError",
-			givenUiDescr: ui.CommandsDescr{
-				"": {
+			givenUiDescr: omap.New[string, ui.AttributesDescr](1).Build(
+				"", map[string]any{
 					"keyword":    "dialog",
 					"type":       "error",
 					"message":    "",
 					"buttonText": "",
 					"width":      float64(49),
 					"height":     float64(79),
-				},
-			},
+				}),
 			givenStrict: true,
 			expectedOK:  false,
 		}, {
 			name: "wrongConfirmation",
-			givenUiDescr: ui.CommandsDescr{
-				"": {
+			givenUiDescr: omap.New[string, ui.AttributesDescr](1).Build(
+				"", map[string]any{
 					"keyword":     "dialog",
 					"type":        "confirmation",
 					"title":       "",
@@ -237,14 +221,13 @@ func TestValidate(t *testing.T) {
 					"confirmText": "",
 					"width":       float64(49),
 					"height":      float64(79),
-				},
-			},
+				}),
 			givenStrict: true,
 			expectedOK:  false,
 		}, {
 			name: "errorWithTitle",
-			givenUiDescr: ui.CommandsDescr{
-				"error3": {
+			givenUiDescr: omap.New[string, ui.AttributesDescr](1).Build(
+				"error3", map[string]any{
 					"keyword":    "dialog",
 					"type":       "error",
 					"title":      "Error?",
@@ -252,14 +235,13 @@ func TestValidate(t *testing.T) {
 					"buttonText": "Oh, shit...",
 					"width":      float64(240),
 					"height":     float64(200),
-				},
-			},
+				}),
 			givenStrict: false,
 			expectedOK:  true,
 		}, {
 			name: "infoWithExtraAttrs",
-			givenUiDescr: ui.CommandsDescr{
-				"error4": {
+			givenUiDescr: omap.New[string, ui.AttributesDescr](1).Build(
+				"error4", map[string]any{
 					"keyword":           "dialog",
 					"type":              "info",
 					"titli":             "Info?",
@@ -268,29 +250,27 @@ func TestValidate(t *testing.T) {
 					"with":              float64(240),
 					"heiht":             float64(200),
 					"myMadeUpAttribute": "bla",
-				},
-			},
+				}),
 			givenStrict: false,
 			expectedOK:  true,
 		}, {
 			name: "minimalWindow",
-			givenUiDescr: ui.CommandsDescr{
-				"win1": {
+			givenUiDescr: omap.New[string, ui.AttributesDescr](1).Build(
+				"win1", map[string]any{
 					"keyword": "window",
-				},
-			},
+				}),
 			givenStrict: true,
 			expectedOK:  true,
 		}, {
 			name: "windowWithConfirmation",
-			givenUiDescr: ui.CommandsDescr{
-				"main": {
+			givenUiDescr: omap.New[string, ui.AttributesDescr](1).Build(
+				"main", map[string]any{
 					"keyword": "window",
 					"title":   "Confirmation",
 					"width":   float64(400),
 					"height":  float64(200),
-					"children": ui.CommandsDescr{
-						"confirm3": {
+					"children": omap.New[string, ui.AttributesDescr](1).Build(
+						"confirm3", map[string]any{
 							"keyword":     "dialog",
 							"type":        "confirmation",
 							"message":     "Do you want to confirm?",
@@ -298,34 +278,31 @@ func TestValidate(t *testing.T) {
 							"confirmText": "Yes, please.",
 							"width":       float64(400),
 							"height":      float64(200),
-							"children": ui.CommandsDescr{
-								"confirm": {
+							"children": omap.New[string, ui.AttributesDescr](2).Build(
+								"confirm", map[string]any{
 									"keyword": "action",
 									"type":    "exit",
 									"code":    int64(0),
-								},
-								"dismiss": {
+								}).Build(
+								"dismiss", map[string]any{
 									"keyword": "action",
 									"type":    "exit",
 									"code":    int64(1),
-								},
-							},
-						},
-					},
-				},
-			},
+								}),
+						}),
+				}),
 			givenStrict: true,
 			expectedOK:  true,
 		}, {
 			name: "windowWithNestedConfirmationError",
-			givenUiDescr: ui.CommandsDescr{
-				"main": {
+			givenUiDescr: omap.New[string, ui.AttributesDescr](1).Build(
+				"main", map[string]any{
 					"keyword": "window",
 					"title":   "Confirmation",
 					"width":   float64(400),
 					"height":  float64(200),
-					"children": ui.CommandsDescr{
-						"confirm3": {
+					"children": omap.New[string, ui.AttributesDescr](1).Build(
+						"confirm3", map[string]any{
 							"keyword":     "dialog",
 							"type":        "confirmation",
 							"message":     "Do you want to confirm?",
@@ -333,85 +310,76 @@ func TestValidate(t *testing.T) {
 							"confirmText": "Yes, please.",
 							"width":       float64(400),
 							"height":      float64(200),
-							"children": ui.CommandsDescr{
-								"confirm": {
+							"children": omap.New[string, ui.AttributesDescr](2).Build(
+								"confirm", map[string]any{
 									"keyword": "action",
 									"type":    "ext",
 									"code":    int64(0),
-								},
-								"dismiss": {
+								}).Build(
+								"dismiss", map[string]any{
 									"keyword": "action",
 									"type":    "exit",
 									"code":    int64(128),
-								},
-							},
-						},
-					},
-				},
-			},
+								}),
+						}),
+				}),
 			givenStrict: true,
 			expectedOK:  false,
 		}, {
 			name: "minimalLink",
-			givenUiDescr: ui.CommandsDescr{
-				"link1": {
+			givenUiDescr: omap.New[string, ui.AttributesDescr](1).Build(
+				"link1", map[string]any{
 					"keyword":     "link",
 					"destination": "info1",
-				},
-			},
+				}),
 			givenStrict: true,
 			expectedOK:  true,
 		}, {
 			name: "maximalLink",
-			givenUiDescr: ui.CommandsDescr{
-				"link2": {
+			givenUiDescr: omap.New[string, ui.AttributesDescr](1).Build(
+				"link2", map[string]any{
 					"keyword":     "link",
 					"type":        "local",
 					"destination": "main.info1",
-				},
-			},
+				}),
 			givenStrict: true,
 			expectedOK:  true,
 		}, {
 			name: "wrongLink",
-			givenUiDescr: ui.CommandsDescr{
-				"link3": {
+			givenUiDescr: omap.New[string, ui.AttributesDescr](1).Build(
+				"link3", map[string]any{
 					"keyword":     "link",
 					"destination": "main:info1",
-				},
-			},
+				}),
 			givenStrict: true,
 			expectedOK:  false,
 		}, {
 			name: "minimalAction",
-			givenUiDescr: ui.CommandsDescr{
-				"act1": {
+			givenUiDescr: omap.New[string, ui.AttributesDescr](1).Build(
+				"act1", map[string]any{
 					"keyword": "action",
 					"type":    "exit",
-				},
-			},
+				}),
 			givenStrict: true,
 			expectedOK:  true,
 		}, {
 			name: "maximalAction",
-			givenUiDescr: ui.CommandsDescr{
-				"act2": {
+			givenUiDescr: omap.New[string, ui.AttributesDescr](1).Build(
+				"act2", map[string]any{
 					"keyword": "action",
 					"type":    "exit",
 					"code":    int64(125),
-				},
-			},
+				}),
 			givenStrict: true,
 			expectedOK:  true,
 		}, {
 			name: "wrongAction",
-			givenUiDescr: ui.CommandsDescr{
-				"act2": {
+			givenUiDescr: omap.New[string, ui.AttributesDescr](1).Build(
+				"act2", map[string]any{
 					"keyword": "action",
 					"type":    "exit",
 					"code":    int64(-1),
-				},
-			},
+				}),
 			givenStrict: true,
 			expectedOK:  false,
 		},

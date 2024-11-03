@@ -1,15 +1,18 @@
 #!/usr/bin/env -S FYNE_THEME=dark fdialog run --file
 version 1
 
-window main(title="Open File", width=500, height=400) {
+window main(title="Open File", width=800, height=600, exitCode=1) {
     dialog openFile (
         type="openFile",
         confirmText="Open",
         dismissText="Go back",
         extensions=".jpg,.jpeg",
-        width=500, height=400
+        width=800, height=600,
     ) {
-        action confirm(type="exit", code=0)
+        action confirm(type="group") {
+            action write(type="write", fullName="main.openFile", id="file")
+            action exit(type="exit", code=0)
+        }
         action dismiss(type="exit", code=1)
     }
 }

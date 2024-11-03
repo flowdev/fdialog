@@ -5,6 +5,7 @@ import (
 	"github.com/flowdev/fdialog/ui"
 	"github.com/flowdev/fdialog/ui/dialog"
 	"github.com/flowdev/fdialog/valid"
+	"log"
 	"math"
 )
 
@@ -108,6 +109,83 @@ func RegisterBase() error {
 		return err
 	}
 
+	err = ui.RegisterValidKeyword(ui.KeywordAction, "close", ui.ValidAttributesType{
+		Attributes: map[string]ui.AttributeValueType{
+			ui.KeyKeyword: {
+				Required: true,
+				Validate: valid.ExactStringValidator(ui.KeywordAction),
+			},
+			ui.KeyName: {
+				Required: true,
+				Validate: valid.StringValidator(1, 0, ui.NameRegex),
+			},
+			ui.KeyType: {
+				Required: true,
+				Validate: valid.ExactStringValidator("close"),
+			},
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	err = ui.RegisterValidKeyword(ui.KeywordAction, "group", ui.ValidAttributesType{
+		Attributes: map[string]ui.AttributeValueType{
+			ui.KeyKeyword: {
+				Required: true,
+				Validate: valid.ExactStringValidator(ui.KeywordAction),
+			},
+			ui.KeyName: {
+				Required: true,
+				Validate: valid.StringValidator(1, 0, ui.NameRegex),
+			},
+			ui.KeyType: {
+				Required: true,
+				Validate: valid.ExactStringValidator("group"),
+			},
+			ui.KeyChildren: {
+				Validate: valid.ChildrenValidator(1, math.MaxInt),
+			},
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	err = ui.RegisterValidKeyword(ui.KeywordAction, "write", ui.ValidAttributesType{
+		Attributes: map[string]ui.AttributeValueType{
+			ui.KeyKeyword: {
+				Required: true,
+				Validate: valid.ExactStringValidator(ui.KeywordAction),
+			},
+			ui.KeyName: {
+				Required: true,
+				Validate: valid.StringValidator(1, 0, ui.NameRegex),
+			},
+			ui.KeyType: {
+				Required: true,
+				Validate: valid.ExactStringValidator("write"),
+			},
+			"fullName": {
+				Validate: valid.StringValidator(1, 0, ui.LinkRegex),
+			},
+		},
+		Validate: func(attrs ui.AttributesDescr, parent string) bool {
+			_, ok1 := attrs[ui.KeyGroup].(string)
+			_, ok2 := attrs[ui.KeyID].(string)
+			_, ok3 := attrs["fullName"].(string)
+			ok := ok1 || ok2 || ok3
+			if !ok {
+				log.Printf(`ERROR: for %q: at least one of the attributes "id", "fullName" and "group" is needed`,
+					parent)
+			}
+			return ok
+		},
+	})
+	if err != nil {
+		return err
+	}
+
 	// -----------------------------------------------------------------------
 	// Register Runners
 	//
@@ -132,6 +210,14 @@ func RegisterBase() error {
 		return err
 	}
 	err = ui.RegisterAction("close", run.Close)
+	if err != nil {
+		return err
+	}
+	err = ui.RegisterAction("group", run.Group)
+	if err != nil {
+		return err
+	}
+	err = ui.RegisterAction("write", run.Write)
 	if err != nil {
 		return err
 	}

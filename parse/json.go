@@ -1,68 +1,108 @@
 package parse
 
 import (
+	"errors"
 	"fmt"
 	"github.com/flowdev/fdialog/ui"
-	hjson "github.com/hjson/hjson-go/v4"
+	"github.com/flowdev/fdialog/x/omap"
+	"github.com/valyala/fastjson"
 	"io"
 )
 
-// JSON parses (H)JSON from a Reader and gives the content back suitable for validation.
-// An error is returned if the stream can't be unmarshalled or a data type doesn't match.
+var jsonParser = &fastjson.ParserPool{}
+
+// JSON parses JSON from a Reader and gives the content back suitable
+// for validation.
+// An error is returned if the stream can't be unmarshalled or a data type
+// doesn't match.
+// We are rather strict about the JSON standard as this is meant for fast
+// machine to machine communication.
+// Please use UIDL as a human friendly format.
 func JSON(input io.Reader, name string) (ui.CommandsDescr, error) {
-	data := make(ui.CommandsDescr)
 	inputData, err := io.ReadAll(input)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error reading JSON from %q: %w", name, err)
 	}
-
-	// Decode with default options and check for errors.
-	err = hjson.UnmarshalWithOptions(inputData, data, hjson.DecoderOptions{
-		DisallowUnknownFields: true,
-		DisallowDuplicateKeys: true,
-	})
+	parser := jsonParser.Get()
+	defer jsonParser.Put(parser)
+	val, err := parser.ParseBytes(inputData)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing JSON file %v: %w", name, err)
+		return nil, fmt.Errorf("error parsing JSON from %q: %w", name, err)
 	}
-
-	err = cleanAllChildren(data, "")
+	data, err := convertJSONCommands(val, "")
 	if err != nil {
-		return nil, fmt.Errorf("error cleaning JSON data from file %v: %w", name, err)
+		return nil, fmt.Errorf("error converting JSON data from %q: %w", name, err)
 	}
-
 	return data, nil
 }
 
-func cleanAllChildren(data ui.CommandsDescr, parent string) error {
-	for name, value := range data {
-		if err := cleanCommand(value, ui.FullNameFor(parent, name)); err != nil {
-			return err
-		}
+func convertJSONCommands(val *fastjson.Value, parent string) (ui.CommandsDescr, error) {
+	obj, err := val.Object()
+	if err != nil {
+		return nil, fmt.Errorf("for %q: error converting JSON object: %v", parent, err)
 	}
-	return nil
+	errs := make([]error, 0, 32)
+	data := omap.New[string, ui.AttributesDescr](8)
+	obj.Visit(func(k []byte, v *fastjson.Value) {
+		name := string(k)
+		attrs, err := convertJSONAttributes(v, ui.FullNameFor(parent, name))
+		if err != nil {
+			errs = append(errs, err)
+		} else {
+			if ok := data.Add(name, attrs); !ok {
+				errs = append(errs, fmt.Errorf("for %q: command with name %q exists already", parent, name))
+			}
+		}
+	})
+	if len(errs) == 0 {
+		return data, nil
+	}
+	return data, errors.Join(errs...)
 }
 
-func cleanCommand(data ui.AttributesDescr, fullName string) error {
-	if rawChildren, ok := data[ui.KeyChildren]; ok {
-		mapChildren, ok := rawChildren.(ui.AttributesDescr)
-		if !ok {
-			return fmt.Errorf("for %q: expected attribute children to contain a map[string]any, got %T",
-				fullName, rawChildren)
-		}
-
-		cleanChildren := make(ui.CommandsDescr, len(mapChildren))
-		for key, avalue := range mapChildren {
-			cleanChild, ok := avalue.(ui.AttributesDescr)
-			if !ok {
-				return fmt.Errorf("for %q: expected value of keyword to be a map[string]any, got %T",
-					ui.FullNameFor(fullName, key), avalue)
-			}
-			cleanChildren[key] = cleanChild
-		}
-		if err := cleanAllChildren(cleanChildren, fullName); err != nil {
-			return err
-		}
-		data[ui.KeyChildren] = cleanChildren
+func convertJSONAttributes(val *fastjson.Value, fullName string) (ui.AttributesDescr, error) {
+	obj, err := val.Object()
+	if err != nil {
+		return nil, fmt.Errorf("for %q: error converting object: %w", fullName, err)
 	}
-	return nil
+	errs := make([]error, 0, 32)
+	attrs := make(map[string]any)
+	obj.Visit(func(k []byte, v *fastjson.Value) {
+		name := string(k)
+		attr, err := convertJSONValue(v, ui.FullNameFor(fullName, name))
+		if err != nil {
+			errs = append(errs, err)
+		} else {
+			attrs[name] = attr
+		}
+	})
+	if len(errs) == 0 {
+		return attrs, nil
+	}
+	return attrs, errors.Join(errs...)
+}
+
+func convertJSONValue(val *fastjson.Value, parent string) (any, error) {
+	switch val.Type() {
+	case fastjson.TypeFalse:
+		return false, nil
+	case fastjson.TypeTrue:
+		return true, nil
+	case fastjson.TypeString:
+		return val.StringBytes()
+	case fastjson.TypeObject:
+		return convertJSONCommands(val, parent)
+	case fastjson.TypeNumber:
+		f, err := val.Float64()
+		if err != nil {
+			return nil, fmt.Errorf("for %q: %w", parent, err)
+		}
+		i := int64(f)
+		if float64(i) == f { // use int64 if representation is exact
+			return i, nil
+		}
+		return f, nil
+	default:
+		return nil, fmt.Errorf("for %q: unable to convert JSON data type %s", parent, val.Type().String())
+	}
 }

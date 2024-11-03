@@ -24,10 +24,11 @@ func UIDescription(uiDescr ui.CommandsDescr, strict bool) bool {
 
 func PreprocessUIDescription(descr ui.CommandsDescr, parent string) bool {
 	ok := true
-	for name, attributesDescr := range descr {
+	for name, attrs := range descr.All() {
 		fullName := ui.FullNameFor(parent, name)
-		ok = ok && ui.PreprocessAttributesDescription(attributesDescr, fullName)
-		if children, ok2 := attributesDescr[ui.KeyChildren].(ui.CommandsDescr); ok2 {
+		attrs[ui.KeyName] = name
+		ok = ok && ui.PreprocessAttributesDescription(attrs, fullName)
+		if children, ok2 := attrs[ui.KeyChildren].(ui.CommandsDescr); ok2 {
 			ok = ok && PreprocessUIDescription(children, fullName)
 		}
 	}
@@ -160,23 +161,24 @@ func BoolValidator() ui.AttributeValidator {
 func ChildrenValidator(minLen, maxLen int) ui.AttributeValidator {
 	return func(v any, strict bool, parent string) (any, bool) {
 		rv := reflect.ValueOf(v)
-		if rv.Kind() != reflect.Map {
-			log.Printf("ERROR: for %q: expecting a map value, got %s", parent, rv.Kind())
+		if rv.Kind() != reflect.Ptr {
+			log.Printf("ERROR: for %q: expecting a pointer value, got %s", parent, rv.Kind())
 			return v, false
 		}
 
 		m, ok := v.(ui.CommandsDescr)
 		if !ok {
-			log.Printf("ERROR: for %q: expecting a map[string]map[string]any value, got %T", parent, v)
+			log.Printf("ERROR: for %q: expecting a omap.OrderedMap[string, map[string]any] value, got %T",
+				parent, v)
 			return v, false
 		}
 
-		if len(m) < minLen {
-			log.Printf("ERROR: for %q: expecting at least %d map elements, got %d", parent, minLen, len(m))
+		if m.Len() < minLen {
+			log.Printf("ERROR: for %q: expecting at least %d map elements, got %d", parent, minLen, m.Len())
 			ok = false
 		}
-		if len(m) > maxLen {
-			log.Printf("ERROR: for %q: expecting at most %d map elements, got %d", parent, maxLen, len(m))
+		if m.Len() > maxLen {
+			log.Printf("ERROR: for %q: expecting at most %d map elements, got %d", parent, maxLen, m.Len())
 			ok = false
 		}
 
@@ -191,20 +193,19 @@ func ChildrenValidator(minLen, maxLen int) ui.AttributeValidator {
 
 func validateRecursiveMap(m ui.CommandsDescr, strict bool, parent string) (any, bool) {
 	ok := true
-	for name, keywordMap := range m {
-		keywordMap[ui.KeyName] = name
+	for name, attrs := range m.All() {
 		fullName := ui.FullNameFor(parent, name)
-		keyword, typ, ok2 := getKeywordType(keywordMap, fullName)
+		keyword, typ, ok2 := getKeywordType(attrs, fullName)
 		ok = ok && ok2
-		ok = ok && validateKeyword(keyword, fullName, typ, keywordMap, strict)
+		ok = ok && validateKeyword(keyword, fullName, typ, attrs, strict)
 	}
 	return m, ok
 }
 
 func validateKeyword(keyword string, fullName string, typ string, valueMap ui.AttributesDescr, strict bool) bool {
-	keywordTypeValidationData, ok := ui.KeywordValidData(keyword, typ)
+	commandValidationData, ok := ui.KeywordValidData(keyword, typ)
 	if !ok && typ != "" { // try empty type; will error later if not supported
-		keywordTypeValidationData, ok = ui.KeywordValidData(keyword, "")
+		commandValidationData, ok = ui.KeywordValidData(keyword, "")
 	}
 	if !ok {
 		log.Printf("ERROR: for %q: the combination of keyword %q and type %q is not supported",
@@ -212,14 +213,17 @@ func validateKeyword(keyword string, fullName string, typ string, valueMap ui.At
 		return false
 	}
 
-	return validateAttributes(fullName, valueMap, keywordTypeValidationData.Attributes, strict)
+	if validate := commandValidationData.Validate; validate != nil {
+		ok = validate(valueMap, fullName)
+	}
+	return validateAttributes(valueMap, commandValidationData.Attributes, strict, fullName) && ok
 }
 
 func validateAttributes(
-	fullName string,
 	valueMap ui.AttributesDescr,
 	attributes map[string]ui.AttributeValueType,
 	strict bool,
+	fullName string,
 ) bool {
 	validatedAttributes := make(map[string]bool, len(attributes))
 	ok := true
@@ -238,22 +242,29 @@ func validateAttributes(
 		}
 	}
 
+	validateID := StringValidator(1, 0, ui.NameRegex)
 	if len(validatedAttributes) != len(valueMap) {
 		keysTooMuch := make([]string, 0, len(valueMap)-len(validatedAttributes))
 
-		for k := range valueMap {
+		for k, v := range valueMap {
 			_, ok := validatedAttributes[k]
 			if !ok {
+				if k == ui.KeyID || k == ui.KeyGroup {
+					validateID(v, strict, ui.FullNameFor(fullName, k))
+					continue // id and group are always allowed
+				}
 				keysTooMuch = append(keysTooMuch, k)
 			}
 		}
 
-		err := fmt.Errorf("for %q: these attributes aren't recognized: %s", fullName, keysTooMuch)
-		if strict {
-			log.Println("ERROR:", err)
-			ok = false
-		} else {
-			log.Println("WARNING:", err)
+		if len(keysTooMuch) > 0 {
+			err := fmt.Errorf("for %q: these attributes aren't recognized: %s", fullName, keysTooMuch)
+			if strict {
+				log.Println("ERROR:", err)
+				ok = false
+			} else {
+				log.Println("WARNING:", err)
+			}
 		}
 	}
 	return ok

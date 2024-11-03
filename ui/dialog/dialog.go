@@ -2,7 +2,6 @@ package dialog
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"math"
 	"strings"
@@ -280,7 +279,7 @@ func closeCallback(childDescr ui.CommandsDescr, fullName string, win fyne.Window
 	defaultCallback := func() {
 		return
 	}
-	actClose := childDescr["close"]
+	actClose, _ := childDescr.Get("close")
 	if actClose == nil { // action is optional
 		return defaultCallback
 	}
@@ -340,7 +339,7 @@ func confirmCallback(
 		return
 	}
 
-	actConfirm := childrenDescr["confirm"]
+	actConfirm, _ := childrenDescr.Get("confirm")
 	if actConfirm == nil {
 		log.Printf("ERROR: for %q: confirm action is missing", fullName)
 		return defaultCallback
@@ -351,7 +350,7 @@ func confirmCallback(
 		return defaultCallback
 	}
 
-	actDismiss := childrenDescr["dismiss"]
+	actDismiss, _ := childrenDescr.Get("dismiss")
 	if actDismiss == nil {
 		log.Printf("ERROR: for %q: dismiss action is missing", fullName)
 		return defaultCallback
@@ -374,6 +373,7 @@ func confirmCallback(
 func runOpenFile(ofDescr ui.AttributesDescr, fullName string, win fyne.Window, uiDescr ui.CommandsDescr) {
 	_, _ = fullName, uiDescr
 
+	group, _ := ofDescr[ui.KeyGroup].(string)
 	callback := confirmCallback(ofDescr[ui.KeyChildren].(ui.CommandsDescr), fullName, win, uiDescr)
 	ofDialog := dialog.NewFileOpen(func(frd fyne.URIReadCloser, err error) {
 		if err != nil {
@@ -384,7 +384,8 @@ func runOpenFile(ofDescr ui.AttributesDescr, fullName string, win fyne.Window, u
 			callback(false)
 			return
 		}
-		fmt.Println("file to open:", strings.TrimPrefix(frd.URI().String(), "file://"))
+		fileName := strings.TrimPrefix(frd.URI().String(), "file://")
+		ui.StoreValueByFullName(fileName, fullName, group)
 		callback(true)
 	}, win)
 

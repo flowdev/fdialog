@@ -3,6 +3,7 @@ package ui
 import (
 	"errors"
 	"fmt"
+	"github.com/flowdev/fdialog/x/omap"
 	"log"
 	"regexp"
 	"strings"
@@ -15,8 +16,9 @@ const (
 	KeyKeyword  = "keyword"
 	KeyName     = "name"
 	KeyChildren = "children"
-	KeyType     = "type" // type is used like an ordinary attribute, but it has special semantics
-	KeyID       = "id"
+	KeyType     = "type"  // type is used like an ordinary attribute, but it has special semantics
+	KeyGroup    = "group" // group is allowed everywhere and used for writing JSON objects
+	KeyID       = "id"    // id is allowed everywhere and used for linking and output
 )
 
 // Basic keywords:
@@ -33,7 +35,7 @@ const WinMain = "main"
 
 type AttributesDescr map[string]any
 
-type CommandsDescr map[string]AttributesDescr
+type CommandsDescr = *omap.OrderedMap[string, AttributesDescr]
 
 type RunFunction func(
 	detailDescr AttributesDescr,
@@ -48,8 +50,9 @@ var keywordMap = make(map[string]RunFunction, 64)
 
 var actionMap = make(map[string]RunFunction, 32)
 
-// idMap maps an ID to a full name path.
-var idMap = make(map[string]string, 32)
+// map IDs to full names and vice versa:
+var mapIDToFullName = make(map[string]string, 32)
+var mapFullNameToID = make(map[string]string, 32)
 
 // valueMap maps a fullName to an input value
 // fullNames are the display names with '.' inside.
@@ -63,15 +66,15 @@ type ValidKeywordType struct {
 	Type    string
 }
 
-type ValidAttributesType struct {
-	Attributes map[string]AttributeValueType
-	Validate   func(attrs AttributesDescr) bool
-}
-
 type AttributeValidator func(v any, strict bool, parent string) (any, bool)
 type AttributeValueType struct {
 	Required bool
 	Validate AttributeValidator
+}
+
+type ValidAttributesType struct {
+	Attributes map[string]AttributeValueType
+	Validate   func(attrs AttributesDescr, parent string) bool
 }
 
 // validKeywords is the big map used for keyword validation
@@ -163,18 +166,26 @@ func KeywordValidData(keyword, typ string) (ValidAttributesType, bool) {
 
 // RegisterID registers an ID as a shortcut for the fullName.
 func RegisterID(id string, fullName string) error {
-	if _, ok := idMap[id]; ok {
-		return fmt.Errorf("ID %q already exists", id)
+	if _, ok := mapIDToFullName[id]; ok {
+		return fmt.Errorf("ID %q exists already", id)
 	}
-	idMap[id] = fullName
+	mapIDToFullName[id] = fullName
+	mapFullNameToID[fullName] = id
 	return nil
 }
 
 // FullNameForID returns the full display name for an ID.
 // It returns `false` if nothing was found.
 func FullNameForID(id string) (string, bool) {
-	fullName, ok := idMap[id]
+	fullName, ok := mapIDToFullName[id]
 	return fullName, ok
+}
+
+// IDForFullName returns the registered ID for a full name path.
+// It returns `false` if nothing was found.
+func IDForFullName(fullName string) (string, bool) {
+	id, ok := mapFullNameToID[fullName]
+	return id, ok
 }
 
 func GetValueByID(id, group string) (any, bool) {
@@ -182,7 +193,7 @@ func GetValueByID(id, group string) (any, bool) {
 	if !ok {
 		return nil, false
 	}
-	v, ok := grpMap[idMap[id]]
+	v, ok := grpMap[mapIDToFullName[id]]
 	return v, ok
 }
 

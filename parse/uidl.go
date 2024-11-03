@@ -6,6 +6,7 @@ import (
 	"github.com/antlr4-go/antlr/v4"
 	"github.com/flowdev/fdialog/parse/uidl"
 	"github.com/flowdev/fdialog/ui"
+	"github.com/flowdev/fdialog/x/omap"
 	"io"
 	"strconv"
 )
@@ -84,22 +85,21 @@ func convertUIDL(antlrUIDL uidl.IUidlContext, errColl ErrorCollector) ui.Command
 
 // convertCommands converts all commands to a map.
 func convertCommands(antlrCommands []uidl.ICommandContext, errColl ErrorCollector) ui.CommandsDescr {
-	commandMap := make(ui.CommandsDescr, len(antlrCommands))
+	commandMap := omap.New[string, ui.AttributesDescr](len(antlrCommands))
 
 	for _, command := range antlrCommands {
 		keyword := command.Identifier(0)
 		name := command.Identifier(1)
 		strName := name.GetText()
-		if _, ok := commandMap[strName]; ok {
+		attrMap := convertAttributes(command.Attributes().AllAttribute(), errColl)
+		attrMap[ui.KeyKeyword] = keyword.GetText()
+		if ok := commandMap.Add(strName, attrMap); !ok {
 			errColl.CollectError(
 				fmt.Errorf("%s duplicate command name: %q",
 					errorContext(name.GetSymbol()), strName),
 			)
 			continue
 		}
-		attrMap := convertAttributes(command.Attributes().AllAttribute(), errColl)
-		attrMap[ui.KeyKeyword] = keyword.GetText()
-		commandMap[strName] = attrMap
 
 		if command.CommandBody() != nil {
 			attrMap[ui.KeyChildren] = convertCommands(command.CommandBody().Commands().AllCommand(), errColl)
