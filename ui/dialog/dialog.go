@@ -181,6 +181,81 @@ func RegisterAll() error {
 		return err
 	}
 
+	err = ui.RegisterValidKeyword(KeywordDialog, "saveFile", ui.ValidAttributesType{
+		Attributes: map[string]ui.AttributeValueType{
+			ui.KeyKeyword: {
+				Required: true,
+				Validate: valid.ExactStringValidator(KeywordDialog),
+			},
+			ui.KeyName: {
+				Required: true,
+				Validate: valid.StringValidator(1, 0, ui.NameRegex),
+			},
+			ui.KeyType: {
+				Required: true,
+				Validate: valid.ExactStringValidator("saveFile"),
+			},
+			"extensions": {
+				Validate: valid.StringValidator(2, 0, nil),
+			},
+			"dismissText": {
+				Validate: valid.StringValidator(1, 0, nil),
+			},
+			"confirmText": {
+				Validate: valid.StringValidator(1, 0, nil),
+			},
+			"width": {
+				Validate: valid.FloatValidator(50.0, math.MaxFloat32),
+			},
+			"height": {
+				Validate: valid.FloatValidator(80.0, math.MaxFloat32),
+			},
+			ui.KeyChildren: {
+				Required: true,
+				Validate: valid.ChildrenValidator(2, 2),
+			},
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	err = ui.RegisterValidKeyword(KeywordDialog, "openFolder", ui.ValidAttributesType{
+		Attributes: map[string]ui.AttributeValueType{
+			ui.KeyKeyword: {
+				Required: true,
+				Validate: valid.ExactStringValidator(KeywordDialog),
+			},
+			ui.KeyName: {
+				Required: true,
+				Validate: valid.StringValidator(1, 0, ui.NameRegex),
+			},
+			ui.KeyType: {
+				Required: true,
+				Validate: valid.ExactStringValidator("openFolder"),
+			},
+			"dismissText": {
+				Validate: valid.StringValidator(1, 0, nil),
+			},
+			"confirmText": {
+				Validate: valid.StringValidator(1, 0, nil),
+			},
+			"width": {
+				Validate: valid.FloatValidator(50.0, math.MaxFloat32),
+			},
+			"height": {
+				Validate: valid.FloatValidator(80.0, math.MaxFloat32),
+			},
+			ui.KeyChildren: {
+				Required: true,
+				Validate: valid.ChildrenValidator(2, 2),
+			},
+		},
+	})
+	if err != nil {
+		return err
+	}
+
 	// -----------------------------------------------------------------------
 	// Register Runners
 	//
@@ -204,6 +279,10 @@ func runDialog(dialogDescr ui.AttributesDescr, fullName string, win fyne.Window,
 		runConfirmation(dialogDescr, fullName, win, uiDescr)
 	case "openFile":
 		runOpenFile(dialogDescr, fullName, win, uiDescr)
+	case "saveFile":
+		runSaveFile(dialogDescr, fullName, win, uiDescr)
+	case "openFolder":
+		runOpenFolder(dialogDescr, fullName, win, uiDescr)
 	default:
 		log.Printf(`ERROR: for %q: unknown dialog type %q`, fullName, dlg)
 	}
@@ -397,6 +476,99 @@ func runOpenFile(ofDescr ui.AttributesDescr, fullName string, win fyne.Window, u
 		}
 		ofDialog.SetFilter(storage.NewExtensionFileFilter(extSlice))
 	}
+
+	value := ofDescr["confirmText"]
+	if value != nil {
+		ofDialog.SetConfirmText(value.(string))
+	}
+	value = ofDescr["dismissText"]
+	if value != nil {
+		ofDialog.SetDismissText(value.(string))
+	}
+
+	width, height := run.GetSize(ofDescr)
+	if width > 0 && height > 0 {
+		ofDialog.Resize(fyne.NewSize(width, height))
+	}
+
+	win.Canvas().SetOnTypedKey(func(keyEvent *fyne.KeyEvent) {
+		if keyEvent.Name == fyne.KeyEscape {
+			win.Close()
+		}
+	})
+
+	ofDialog.Show()
+}
+
+func runSaveFile(sfDescr ui.AttributesDescr, fullName string, win fyne.Window, uiDescr ui.CommandsDescr) {
+	group, _ := sfDescr[ui.KeyGroup].(string)
+	callback := confirmCallback(sfDescr[ui.KeyChildren].(ui.CommandsDescr), fullName, win, uiDescr)
+	sfDialog := dialog.NewFileSave(func(fwr fyne.URIWriteCloser, err error) {
+		if err != nil {
+			dialog.ShowError(err, win)
+			callback(false)
+			return
+		}
+		if fwr == nil {
+			callback(false)
+			return
+		}
+
+		fileName := strings.TrimPrefix(fwr.URI().String(), "file://")
+		ui.StoreValueByFullName(fileName, fullName, group)
+		callback(true)
+	}, win)
+
+	extAttr := sfDescr["extensions"]
+	if extAttr != nil {
+		extSlice := strings.Split(extAttr.(string), ",")
+		for i := 0; i < len(extSlice); i++ {
+			extSlice[i] = strings.TrimSpace(extSlice[i])
+		}
+		sfDialog.SetFilter(storage.NewExtensionFileFilter(extSlice))
+	}
+
+	value := sfDescr["confirmText"]
+	if value != nil {
+		sfDialog.SetConfirmText(value.(string))
+	}
+	value = sfDescr["dismissText"]
+	if value != nil {
+		sfDialog.SetDismissText(value.(string))
+	}
+
+	width, height := run.GetSize(sfDescr)
+	if width > 0 && height > 0 {
+		sfDialog.Resize(fyne.NewSize(width, height))
+	}
+
+	win.Canvas().SetOnTypedKey(func(keyEvent *fyne.KeyEvent) {
+		if keyEvent.Name == fyne.KeyEscape {
+			win.Close()
+		}
+	})
+
+	sfDialog.Show()
+}
+
+func runOpenFolder(ofDescr ui.AttributesDescr, fullName string, win fyne.Window, uiDescr ui.CommandsDescr) {
+	_, _ = fullName, uiDescr
+
+	group, _ := ofDescr[ui.KeyGroup].(string)
+	callback := confirmCallback(ofDescr[ui.KeyChildren].(ui.CommandsDescr), fullName, win, uiDescr)
+	ofDialog := dialog.NewFolderOpen(func(fold fyne.ListableURI, err error) {
+		if err != nil {
+			dialog.ShowError(err, win)
+			return
+		}
+		if fold == nil {
+			callback(false)
+			return
+		}
+		folderName := strings.TrimPrefix(fold.String(), "file://")
+		ui.StoreValueByFullName(folderName, fullName, group)
+		callback(true)
+	}, win)
 
 	value := ofDescr["confirmText"]
 	if value != nil {

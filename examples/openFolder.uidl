@@ -1,16 +1,15 @@
 #!/usr/bin/env -S fdialog run --file
 version 1
 
-window main(title="Open File", width=800, height=600, exitCode=1) {
-    dialog openFile (
-        type="openFile",
+window main(title="Open Folder", width=800, height=600, exitCode=1) {
+    dialog openFolder (
+        type="openFolder",
         confirmText="Open",
-        dismissText="Go back",
-        extensions=".jpg,.jpeg",
+        dismissText="Cancel",
         width=800, height=600,
     ) {
         action confirm(type="group") {
-            action write(type="write", fullName="main.openFile", id="file")
+            action write(type="write", fullName="main.openFolder", id="folder")
             action exit(type="exit", code=0)
         }
         action dismiss(type="exit", code=1)
