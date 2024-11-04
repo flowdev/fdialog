@@ -35,7 +35,11 @@ func runPickColor(colorDescr ui.AttributesDescr, fullName string, win fyne.Windo
 			picker.SetColor(c)
 		}
 	}
-	picker.Refresh() // update the picker internal UI
+	picker.Refresh() // update the picker internal UI to prevent nil pointer dereference
+	picker.SetOnClosed(func() {
+		fmt.Println("Close callback called!")
+		//callback(false)
+	})
 
 	value = colorDescr["buttonText"]
 	if value != nil {
