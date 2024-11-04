@@ -2,10 +2,10 @@ module github.com/flowdev/fdialog
 
 go 1.23.1
 
-replace github.com/flowdev/gparselib => /home/ole/go/src/github.com/flowdev/gparselib
+replace fyne.io/fyne/v2 => /home/ole/go/src/github.com/fyne-io/fyne
 
 require (
-	fyne.io/fyne/v2 v2.5.1
+	fyne.io/fyne/v2 v2.5.2
 	github.com/antlr4-go/antlr/v4 v4.13.1
 	github.com/can3p/kleiner v0.0.14
 	github.com/spf13/cobra v1.8.1
@@ -26,8 +26,8 @@ require (
 	github.com/go-gl/gl v0.0.0-20211210172815-726fda9656d6 // indirect
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20240506104042-037f3cc74f2a // indirect
 	github.com/go-resty/resty/v2 v2.15.3 // indirect
-	github.com/go-text/render v0.1.1-0.20240418202334-dd62631dae9b // indirect
-	github.com/go-text/typesetting v0.1.0 // indirect
+	github.com/go-text/render v0.2.0 // indirect
+	github.com/go-text/typesetting v0.2.0 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/google/go-github/v57 v57.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect

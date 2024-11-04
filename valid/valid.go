@@ -243,14 +243,19 @@ func validateAttributes(
 	}
 
 	validateID := StringValidator(1, 0, ui.NameRegex)
+	validateGroup := StringValidator(1, 0, ui.LinkRegex)
 	if len(validatedAttributes) != len(valueMap) {
 		keysTooMuch := make([]string, 0, len(valueMap)-len(validatedAttributes))
 
 		for k, v := range valueMap {
 			_, ok := validatedAttributes[k]
 			if !ok {
-				if k == ui.KeyID || k == ui.KeyGroup {
+				if k == ui.KeyID {
 					validateID(v, strict, ui.FullNameFor(fullName, k))
+					continue // id and group are always allowed
+				}
+				if k == ui.KeyGroup {
+					validateGroup(v, strict, ui.FullNameFor(fullName, k))
 					continue // id and group are always allowed
 				}
 				keysTooMuch = append(keysTooMuch, k)

@@ -82,6 +82,7 @@ var validKeywords = make(map[ValidKeywordType]ValidAttributesType, 64)
 
 var NameRegex = regexp.MustCompile(`^[\pL\pN_]+$`)
 var LinkRegex = regexp.MustCompile(`^[\pL\pN_]+(?:[.][\pL\pN_]+)*$`)
+var ColorRegex = regexp.MustCompile(`^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$`)
 
 // ---------------------------------------------------------------------------
 //  Registration & Access
