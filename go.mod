@@ -2,7 +2,7 @@ module github.com/flowdev/fdialog
 
 go 1.23.1
 
-replace fyne.io/fyne/v2 => /home/ole/go/src/github.com/fyne-io/fyne
+replace fyne.io/fyne/v2 => /home/ole/go/src/github.com/ole108/fyne
 
 require (
 	fyne.io/fyne/v2 v2.5.2

@@ -9,7 +9,7 @@ window main(title="Open Folder", width=800, height=600, exitCode=1) {
         width=800, height=600,
     ) {
         action confirm(type="group") {
-            action write(type="write", fullName="main.openFolder", id="folder")
+            action write(type="write", fullName="main.openFolder", outputKey="folder")
             action exit(type="exit", code=0)
         }
         action dismiss(type="exit", code=1)

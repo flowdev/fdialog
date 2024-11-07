@@ -32,10 +32,6 @@ func RegisterBase() error {
 				Required: true,
 				Validate: valid.ExactStringValidator(ui.KeywordWindow),
 			},
-			ui.KeyName: {
-				Required: true,
-				Validate: valid.StringValidator(1, 0, ui.NameRegex),
-			},
 			ui.KeyType: {
 				Validate: valid.StringValidator(1, 0, ui.NameRegex),
 			},
@@ -69,10 +65,6 @@ func RegisterBase() error {
 				Required: true,
 				Validate: valid.ExactStringValidator(ui.KeywordLink),
 			},
-			ui.KeyName: {
-				Required: true,
-				Validate: valid.StringValidator(1, 0, ui.NameRegex),
-			},
 			ui.KeyType: {
 				Validate: valid.StringValidator(1, 0, ui.NameRegex),
 			},
@@ -91,10 +83,6 @@ func RegisterBase() error {
 			ui.KeyKeyword: {
 				Required: true,
 				Validate: valid.ExactStringValidator(ui.KeywordAction),
-			},
-			ui.KeyName: {
-				Required: true,
-				Validate: valid.StringValidator(1, 0, ui.NameRegex),
 			},
 			ui.KeyType: {
 				Required: true,
@@ -115,10 +103,6 @@ func RegisterBase() error {
 				Required: true,
 				Validate: valid.ExactStringValidator(ui.KeywordAction),
 			},
-			ui.KeyName: {
-				Required: true,
-				Validate: valid.StringValidator(1, 0, ui.NameRegex),
-			},
 			ui.KeyType: {
 				Required: true,
 				Validate: valid.ExactStringValidator("close"),
@@ -134,10 +118,6 @@ func RegisterBase() error {
 			ui.KeyKeyword: {
 				Required: true,
 				Validate: valid.ExactStringValidator(ui.KeywordAction),
-			},
-			ui.KeyName: {
-				Required: true,
-				Validate: valid.StringValidator(1, 0, ui.NameRegex),
 			},
 			ui.KeyType: {
 				Required: true,
@@ -158,10 +138,6 @@ func RegisterBase() error {
 				Required: true,
 				Validate: valid.ExactStringValidator(ui.KeywordAction),
 			},
-			ui.KeyName: {
-				Required: true,
-				Validate: valid.StringValidator(1, 0, ui.NameRegex),
-			},
 			ui.KeyType: {
 				Required: true,
 				Validate: valid.ExactStringValidator("write"),
@@ -169,14 +145,17 @@ func RegisterBase() error {
 			"fullName": {
 				Validate: valid.StringValidator(1, 0, ui.LinkRegex),
 			},
+			ui.KeyOutputKey: valid.ValidateOutputKey,
 		},
 		Validate: func(attrs ui.AttributesDescr, parent string) bool {
-			_, ok1 := attrs[ui.KeyGroup].(string)
-			_, ok2 := attrs[ui.KeyID].(string)
-			_, ok3 := attrs["fullName"].(string)
-			ok := ok1 || ok2 || ok3
+			_, okGroup := attrs[ui.KeyGroup].(string)
+			_, okID := attrs[ui.KeyID].(string)
+			_, okName := attrs["fullName"].(string)
+			_, okOutKey := attrs[ui.KeyOutputKey].(string)
+			ok := okGroup || (okID && okOutKey) || (okName && okOutKey)
 			if !ok {
-				log.Printf(`ERROR: for %q: at least one of the attributes "id", "fullName" and "group" is needed`,
+				log.Printf(`ERROR: for %q: attribute "group" or attributes: `+
+					`"outputKey" and one "id" or "fullName" are required`,
 					parent)
 			}
 			return ok

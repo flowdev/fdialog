@@ -10,6 +10,13 @@ import (
 	"github.com/flowdev/fdialog/ui"
 )
 
+var validateName = StringValidator(1, 0, ui.NameRegex)
+var validateID = StringValidator(1, 0, ui.NameRegex)
+var validateGroup = StringValidator(1, 0, ui.LinkRegex)
+var ValidateOutputKey = ui.AttributeValueType{
+	Validate: StringValidator(1, 0, ui.LinkRegex),
+}
+
 // UIDescription validates the data from a whole UI description file independent of its format.
 // If strict is true additional attributes are errors.
 // The keys of the first level map are the names of the windows, containers, ...
@@ -162,7 +169,7 @@ func ChildrenValidator(minLen, maxLen int) ui.AttributeValidator {
 	return func(v any, strict bool, parent string) (any, bool) {
 		rv := reflect.ValueOf(v)
 		if rv.Kind() != reflect.Ptr {
-			log.Printf("ERROR: for %q: expecting a pointer value, got %s", parent, rv.Kind())
+			log.Printf(`ERROR: for %q: expecting a pointer value for "children", got %s`, parent, rv.Kind())
 			return v, false
 		}
 
@@ -223,47 +230,61 @@ func validateAttributes(
 	valueMap ui.AttributesDescr,
 	attributes map[string]ui.AttributeValueType,
 	strict bool,
-	fullName string,
+	parent string,
 ) bool {
 	validatedAttributes := make(map[string]bool, len(attributes))
 	ok := true
 
 	for attrName, attribute := range attributes {
-		if vv, ok2 := valueMap[attrName]; ok2 {
+		if value, ok2 := valueMap[attrName]; ok2 {
 			validatedAttributes[attrName] = true
-			vv, ok3 := attribute.Validate(vv, strict, ui.FullNameFor(fullName, attrName))
-			if !ok3 {
-				ok = false
+			fullName := parent
+			if attrName != ui.KeyChildren {
+				fullName = ui.FullNameFor(parent, attrName)
 			}
-			valueMap[attrName] = vv
+			v, ok3 := attribute.Validate(value, strict, fullName)
+			ok = ok && ok3
+			valueMap[attrName] = v
 		} else if attribute.Required {
-			log.Printf("for %q, is attribute %q Required", fullName, attrName)
+			log.Printf("for %q: attribute %q is required", parent, attrName)
 			ok = false
 		}
 	}
 
-	validateID := StringValidator(1, 0, ui.NameRegex)
-	validateGroup := StringValidator(1, 0, ui.LinkRegex)
-	if len(validatedAttributes) != len(valueMap) {
-		keysTooMuch := make([]string, 0, len(valueMap)-len(validatedAttributes))
+	if value, ok2 := valueMap[ui.KeyName]; ok2 {
+		validatedAttributes[ui.KeyName] = true
+		fullName := ui.FullNameFor(parent, ui.KeyName)
+		_, ok3 := validateName(value, strict, fullName)
+		ok = ok && ok3
+	} else {
+		log.Printf(`for %q: attribute "name" is required`, parent)
+		ok = false
+	}
 
+	if len(validatedAttributes) != len(valueMap) {
+		unknownKeys := make([]string, 0, len(valueMap)-len(validatedAttributes))
+
+	forLoop:
 		for k, v := range valueMap {
 			_, ok := validatedAttributes[k]
 			if !ok {
-				if k == ui.KeyID {
-					validateID(v, strict, ui.FullNameFor(fullName, k))
-					continue // id and group are always allowed
+				switch k {
+				case ui.KeyID:
+					validateID(v, strict, ui.FullNameFor(parent, k))
+					continue forLoop // id is always allowed
+				case ui.KeyGroup:
+					validateGroup(v, strict, ui.FullNameFor(parent, k))
+					continue forLoop // group is always allowed
+				case ui.KeyName:
+					validateName(v, strict, ui.FullNameFor(parent, k))
+					continue forLoop // name is always required
 				}
-				if k == ui.KeyGroup {
-					validateGroup(v, strict, ui.FullNameFor(fullName, k))
-					continue // id and group are always allowed
-				}
-				keysTooMuch = append(keysTooMuch, k)
+				unknownKeys = append(unknownKeys, k)
 			}
 		}
 
-		if len(keysTooMuch) > 0 {
-			err := fmt.Errorf("for %q: these attributes aren't recognized: %s", fullName, keysTooMuch)
+		if len(unknownKeys) > 0 {
+			err := fmt.Errorf("for %q: these attributes are unknown: %s", parent, unknownKeys)
 			if strict {
 				log.Println("ERROR:", err)
 				ok = false

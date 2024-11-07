@@ -13,12 +13,13 @@ import (
 
 // Reserved attribute names:
 const (
-	KeyKeyword  = "keyword"
-	KeyName     = "name"
-	KeyChildren = "children"
-	KeyType     = "type"  // type is used like an ordinary attribute, but it has special semantics
-	KeyGroup    = "group" // group is allowed everywhere and used for writing JSON objects
-	KeyID       = "id"    // id is allowed everywhere and used for linking and output
+	KeyKeyword   = "keyword"
+	KeyName      = "name"
+	KeyChildren  = "children"
+	KeyType      = "type"      // type is used like an ordinary attribute, but it has special semantics
+	KeyGroup     = "group"     // group is allowed everywhere and used for writing JSON objects
+	KeyID        = "id"        // id is allowed everywhere and used for linking and output
+	KeyOutputKey = "outputKey" // should be enabled for all input keywords and is e.g. in JSON: "outputKey": jsonValue
 )
 
 // Basic keywords:
@@ -49,6 +50,9 @@ var keywordLongToShort = make(map[string]string, 64)
 var keywordMap = make(map[string]RunFunction, 64)
 
 var actionMap = make(map[string]RunFunction, 32)
+
+// ---------------------------------------------------------------------------
+//  Maps For IDs And Values
 
 // map IDs to full names and vice versa:
 var mapIDToFullName = make(map[string]string, 32)
@@ -82,7 +86,7 @@ var validKeywords = make(map[ValidKeywordType]ValidAttributesType, 64)
 
 var NameRegex = regexp.MustCompile(`^[\pL\pN_]+$`)
 var LinkRegex = regexp.MustCompile(`^[\pL\pN_]+(?:[.][\pL\pN_]+)*$`)
-var ColorRegex = regexp.MustCompile(`^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$`)
+var ColorRegex = regexp.MustCompile(`^#(?:[0-9a-f]{6}|[0-9a-f]{8})$`)
 
 // ---------------------------------------------------------------------------
 //  Registration & Access
@@ -212,21 +216,32 @@ func GetValueGroup(group string) (map[string]any, bool) {
 	return grpMap, ok
 }
 
-func StoreValueByID(value any, id, group string, parent string) {
-	if name, ok := FullNameForID(id); ok {
-		StoreValueByFullName(value, name, group)
-		return
-	}
-	log.Printf(`ERROR: for %q: unknown ID: %q`, parent, id)
-}
-
-func StoreValueByFullName(value any, fullName, group string) {
+// StoreValue stores a value in the value map.
+// The group can be used to group multiple values together (e.g. for a form).
+// An empty group is allowed but not encouraged.
+// The key can be either the full path name of the component storing the value
+// or an outputKey as it should appear in the output (e.g. in JSON).
+func StoreValue(value any, outputKey, id, fullName, group string) {
 	grpMap, ok := valueMap[group]
 	if !ok {
 		grpMap = make(map[string]any)
 		valueMap[group] = grpMap
 	}
-	grpMap[fullName] = value
+	if outputKey != "" {
+		grpMap[outputKey] = value
+	} else if id != "" {
+		grpMap[id] = value
+	} else {
+		grpMap[fullName] = value
+	}
+}
+
+func DeleteValueGroup(group string) {
+	delete(valueMap, group)
+}
+
+func DeleteAllValues() {
+	clear(valueMap)
 }
 
 // ---------------------------------------------------------------------------

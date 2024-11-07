@@ -22,10 +22,6 @@ func RegisterAll() error {
 				Required: true,
 				Validate: valid.ExactStringValidator(KeywordDialog),
 			},
-			ui.KeyName: {
-				Required: true,
-				Validate: valid.StringValidator(1, 0, ui.NameRegex),
-			},
 			ui.KeyType: {
 				Required: true,
 				Validate: valid.ExactStringValidator("info"),
@@ -62,10 +58,6 @@ func RegisterAll() error {
 				Required: true,
 				Validate: valid.ExactStringValidator(KeywordDialog),
 			},
-			ui.KeyName: {
-				Required: true,
-				Validate: valid.StringValidator(1, 0, ui.NameRegex),
-			},
 			ui.KeyType: {
 				Required: true,
 				Validate: valid.ExactStringValidator("error"),
@@ -98,10 +90,6 @@ func RegisterAll() error {
 			ui.KeyKeyword: {
 				Required: true,
 				Validate: valid.ExactStringValidator(KeywordDialog),
-			},
-			ui.KeyName: {
-				Required: true,
-				Validate: valid.StringValidator(1, 0, ui.NameRegex),
 			},
 			ui.KeyType: {
 				Required: true,
@@ -142,10 +130,6 @@ func RegisterAll() error {
 				Required: true,
 				Validate: valid.ExactStringValidator(KeywordDialog),
 			},
-			ui.KeyName: {
-				Required: true,
-				Validate: valid.StringValidator(1, 0, ui.NameRegex),
-			},
 			ui.KeyType: {
 				Required: true,
 				Validate: valid.ExactStringValidator("openFile"),
@@ -165,6 +149,7 @@ func RegisterAll() error {
 			"height": {
 				Validate: valid.FloatValidator(80.0, math.MaxFloat32),
 			},
+			ui.KeyOutputKey: valid.ValidateOutputKey,
 			ui.KeyChildren: {
 				Required: true,
 				Validate: valid.ChildrenValidator(2, 2),
@@ -180,10 +165,6 @@ func RegisterAll() error {
 			ui.KeyKeyword: {
 				Required: true,
 				Validate: valid.ExactStringValidator(KeywordDialog),
-			},
-			ui.KeyName: {
-				Required: true,
-				Validate: valid.StringValidator(1, 0, ui.NameRegex),
 			},
 			ui.KeyType: {
 				Required: true,
@@ -204,6 +185,7 @@ func RegisterAll() error {
 			"height": {
 				Validate: valid.FloatValidator(80.0, math.MaxFloat32),
 			},
+			ui.KeyOutputKey: valid.ValidateOutputKey,
 			ui.KeyChildren: {
 				Required: true,
 				Validate: valid.ChildrenValidator(2, 2),
@@ -219,10 +201,6 @@ func RegisterAll() error {
 			ui.KeyKeyword: {
 				Required: true,
 				Validate: valid.ExactStringValidator(KeywordDialog),
-			},
-			ui.KeyName: {
-				Required: true,
-				Validate: valid.StringValidator(1, 0, ui.NameRegex),
 			},
 			ui.KeyType: {
 				Required: true,
@@ -240,6 +218,7 @@ func RegisterAll() error {
 			"height": {
 				Validate: valid.FloatValidator(80.0, math.MaxFloat32),
 			},
+			ui.KeyOutputKey: valid.ValidateOutputKey,
 			ui.KeyChildren: {
 				Required: true,
 				Validate: valid.ChildrenValidator(2, 2),
@@ -255,10 +234,6 @@ func RegisterAll() error {
 			ui.KeyKeyword: {
 				Required: true,
 				Validate: valid.ExactStringValidator(KeywordDialog),
-			},
-			ui.KeyName: {
-				Required: true,
-				Validate: valid.StringValidator(1, 0, ui.NameRegex),
 			},
 			ui.KeyType: {
 				Required: true,
@@ -280,8 +255,9 @@ func RegisterAll() error {
 				Validate: valid.BoolValidator(),
 			},
 			"initialColor": {
-				Validate: valid.StringValidator(4, 9, ui.ColorRegex),
+				Validate: valid.StringValidator(7, 9, ui.ColorRegex),
 			},
+			ui.KeyOutputKey: valid.ValidateOutputKey,
 			ui.KeyChildren: {
 				Required: true,
 				Validate: valid.ChildrenValidator(2, 2),

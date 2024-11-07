@@ -188,29 +188,23 @@ func Write(writeDescr ui.AttributesDescr, fullName string, _ fyne.Window, _ ui.C
 	group, gok := writeDescr[ui.KeyGroup].(string)
 	id, iok := writeDescr[ui.KeyID].(string)
 	name, nok := writeDescr["fullName"].(string)
+	okey, kok := writeDescr[ui.KeyOutputKey].(string)
 
 	switch {
-	case iok && nok: // read fullName but write ID in output
+	case nok && kok: // read fullName and write outputKey
 		v, ok := ui.GetValueByFullName(name, group)
 		if !ok {
 			log.Printf(`WARNING: for %q: no value found in group %q with full name %q for writing`,
 				fullName, group, name)
 		}
-		writeMap(map[string]any{id: v}, fullName)
-	case iok: // use ID
+		writeMap(map[string]any{okey: v}, fullName)
+	case iok && kok: // read ID and write outputKey
 		v, ok := ui.GetValueByID(id, group)
 		if !ok {
 			log.Printf(`WARNING: for %q: no value found in group %q with ID %q for writing`,
 				fullName, group, id)
 		}
-		writeMap(map[string]any{id: v}, fullName)
-	case nok: // use fullName
-		v, ok := ui.GetValueByFullName(name, group)
-		if !ok {
-			log.Printf(`WARNING: for %q: no value found in group %q with full name %q for writing`,
-				fullName, group, name)
-		}
-		writeMap(map[string]any{name: v}, fullName)
+		writeMap(map[string]any{okey: v}, fullName)
 	case gok: // write whole group
 		m, ok := ui.GetValueGroup(group)
 		if !ok {
@@ -222,6 +216,7 @@ func Write(writeDescr ui.AttributesDescr, fullName string, _ fyne.Window, _ ui.C
 	}
 }
 func writeMap(m map[string]any, fullName string) {
+	m = normalizeMap(m, fullName)
 	arena := jsonArena.Get()
 	defer func() {
 		arena.Reset()
@@ -234,12 +229,43 @@ func writeMap(m map[string]any, fullName string) {
 	}
 	_, _ = os.Stdout.WriteString("\n")
 }
+func normalizeMap(m map[string]any, fullName string) map[string]any {
+	m2 := make(map[string]any, len(m))
+	for k, v := range m {
+		if m3, ok := v.(map[string]any); ok {
+			v = normalizeMap(m3, fullName)
+		}
+		keys := ui.SplitName(k)
+		if len(keys) <= 1 {
+			m2[k] = v
+			continue
+		}
+		m4 := m2
+		key := ""
+		ok2 := false
+		for i := 0; i < len(keys)-1; i++ {
+			key = keys[i]
+			if v2, ok := m4[key]; ok {
+				if m4, ok2 = v2.(map[string]any); !ok2 {
+					log.Printf(`ERROR: for %q: key %q is clashing with key %q in map %#v`, fullName, k, key, m)
+					m4 = m2
+					key = k
+					break
+				}
+			} else {
+				tmp := make(map[string]any)
+				m4[key] = tmp
+				m4 = tmp
+			}
+		}
+		key = keys[len(keys)-1]
+		m4[key] = v
+	}
+	return m2
+}
 func writeJSONMap(m map[string]any, arena *fastjson.Arena, fullName string) *fastjson.Value {
 	obj := arena.NewObject()
 	for k, v := range m {
-		if id, ok := ui.IDForFullName(k); ok {
-			k = id
-		}
 		obj.Set(k, writeJSONValue(v, arena, fullName))
 	}
 	return obj

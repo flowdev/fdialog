@@ -10,11 +10,14 @@ import (
 )
 
 func runOpenFile(ofDescr ui.AttributesDescr, fullName string, win fyne.Window, uiDescr ui.CommandsDescr) {
+	outputKey, _ := ofDescr[ui.KeyOutputKey].(string)
+	id, _ := ofDescr[ui.KeyID].(string)
 	group, _ := ofDescr[ui.KeyGroup].(string)
 	callback := confirmCallback(ofDescr[ui.KeyChildren].(ui.CommandsDescr), fullName, win, uiDescr)
 	ofDialog := dialog.NewFileOpen(func(frd fyne.URIReadCloser, err error) {
 		if err != nil {
 			dialog.ShowError(err, win)
+			callback(false)
 			return
 		}
 		if frd == nil {
@@ -22,7 +25,7 @@ func runOpenFile(ofDescr ui.AttributesDescr, fullName string, win fyne.Window, u
 			return
 		}
 		fileName := strings.TrimPrefix(frd.URI().String(), "file://")
-		ui.StoreValueByFullName(fileName, fullName, group)
+		ui.StoreValue(fileName, outputKey, id, fullName, group)
 		callback(true)
 	}, win)
 
@@ -59,6 +62,8 @@ func runOpenFile(ofDescr ui.AttributesDescr, fullName string, win fyne.Window, u
 }
 
 func runSaveFile(sfDescr ui.AttributesDescr, fullName string, win fyne.Window, uiDescr ui.CommandsDescr) {
+	outputKey, _ := sfDescr[ui.KeyOutputKey].(string)
+	id, _ := sfDescr[ui.KeyID].(string)
 	group, _ := sfDescr[ui.KeyGroup].(string)
 	callback := confirmCallback(sfDescr[ui.KeyChildren].(ui.CommandsDescr), fullName, win, uiDescr)
 	sfDialog := dialog.NewFileSave(func(fwr fyne.URIWriteCloser, err error) {
@@ -73,7 +78,7 @@ func runSaveFile(sfDescr ui.AttributesDescr, fullName string, win fyne.Window, u
 		}
 
 		fileName := strings.TrimPrefix(fwr.URI().String(), "file://")
-		ui.StoreValueByFullName(fileName, fullName, group)
+		ui.StoreValue(fileName, outputKey, id, fullName, group)
 		callback(true)
 	}, win)
 
@@ -110,8 +115,10 @@ func runSaveFile(sfDescr ui.AttributesDescr, fullName string, win fyne.Window, u
 }
 
 func runOpenFolder(ofDescr ui.AttributesDescr, fullName string, win fyne.Window, uiDescr ui.CommandsDescr) {
-	callback := confirmCallback(ofDescr[ui.KeyChildren].(ui.CommandsDescr), fullName, win, uiDescr)
+	outputKey, _ := ofDescr[ui.KeyOutputKey].(string)
+	id, _ := ofDescr[ui.KeyID].(string)
 	group, _ := ofDescr[ui.KeyGroup].(string) // group is optional with zero value as default
+	callback := confirmCallback(ofDescr[ui.KeyChildren].(ui.CommandsDescr), fullName, win, uiDescr)
 
 	ofDialog := dialog.NewFolderOpen(func(fold fyne.ListableURI, err error) {
 		if err != nil {
@@ -123,7 +130,7 @@ func runOpenFolder(ofDescr ui.AttributesDescr, fullName string, win fyne.Window,
 			return
 		}
 		folderName := strings.TrimPrefix(fold.String(), "file://")
-		ui.StoreValueByFullName(folderName, fullName, group)
+		ui.StoreValue(folderName, outputKey, id, fullName, group)
 		callback(true)
 	}, win)
 
