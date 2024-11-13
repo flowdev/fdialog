@@ -11,17 +11,14 @@ import (
 )
 
 func runPickColor(colorDescr ui.AttributesDescr, fullName string, win fyne.Window, uiDescr ui.CommandsDescr) {
-	callback := confirmCallback(colorDescr[ui.KeyChildren].(ui.CommandsDescr), fullName, win, uiDescr)
+	callback := run.BooleanCallback(colorDescr[ui.AttrChildren].(ui.CommandsDescr),
+		ui.NameChoose, ui.NameCancel, fullName, win, uiDescr)
 	title, _ := colorDescr["title"].(string) // title is optional with zero value as default
-	outputKey, _ := colorDescr[ui.KeyOutputKey].(string)
-	id, _ := colorDescr[ui.KeyID].(string)
-	group, _ := colorDescr[ui.KeyGroup].(string)
+	outputKey, _ := colorDescr[ui.AttrOutputKey].(string)
+	id, _ := colorDescr[ui.AttrID].(string)
+	group, _ := colorDescr[ui.AttrGroup].(string)
 
 	picker := dialog.NewColorPicker(title, "", func(c color.Color) {
-		if c == nil {
-			callback(false)
-			return
-		}
 		ui.StoreValue(colorToString(c), outputKey, id, fullName, group)
 		callback(true)
 	}, win)
@@ -33,6 +30,9 @@ func runPickColor(colorDescr ui.AttributesDescr, fullName string, win fyne.Windo
 			picker.SetColor(c)
 		}
 	}
+	picker.SetOnClosed(func() {
+		callback(false)
+	})
 	picker.Refresh() // update the picker internal UI to prevent nil pointer dereference
 
 	value = colorDescr["buttonText"]

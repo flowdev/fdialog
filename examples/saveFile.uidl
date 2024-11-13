@@ -9,10 +9,10 @@ window main(title="Save File", width=800, height=600, exitCode=1) {
         extensions=".jpg,.jpeg",
         width=800, height=600,
     ) {
-        action confirm(type="group") {
+        action choose(type="group") {
             action write(type="write", fullName="main.saveFile", outputKey="file")
             action exit(type="exit", code=0)
         }
-        action dismiss(type="exit", code=1)
+        action cancel(type="exit", code=1)
     }
 }

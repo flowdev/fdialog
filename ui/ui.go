@@ -3,23 +3,13 @@ package ui
 import (
 	"errors"
 	"fmt"
-	"github.com/flowdev/fdialog/x/omap"
 	"log"
 	"regexp"
 	"strings"
 
 	"fyne.io/fyne/v2"
-)
 
-// Reserved attribute names:
-const (
-	KeyKeyword   = "keyword"
-	KeyName      = "name"
-	KeyChildren  = "children"
-	KeyType      = "type"      // type is used like an ordinary attribute, but it has special semantics
-	KeyGroup     = "group"     // group is allowed everywhere and used for writing JSON objects
-	KeyID        = "id"        // id is allowed everywhere and used for linking and output
-	KeyOutputKey = "outputKey" // should be enabled for all input keywords and is e.g. in JSON: "outputKey": jsonValue
+	"github.com/flowdev/fdialog/x/omap"
 )
 
 // Basic keywords:
@@ -27,6 +17,26 @@ const (
 	KeywordWindow = "window"
 	KeywordAction = "action"
 	KeywordLink   = "link"
+)
+
+// Typical names of actions:
+const (
+	NameChoose  = "choose"
+	NameConfirm = "confirm"
+	NameSubmit  = "submit"
+	NameCancel  = "cancel"
+	NameDismiss = "dismiss"
+)
+
+// Reserved attribute names:
+const (
+	AttrKeyword   = "keyword"
+	AttrName      = "name"
+	AttrChildren  = "children"
+	AttrType      = "type"      // type is used like an ordinary attribute, but it has special semantics
+	AttrGroup     = "group"     // group is allowed everywhere and used for writing JSON objects
+	AttrID        = "id"        // id is allowed everywhere and used for linking and output
+	AttrOutputKey = "outputKey" // should be enabled for all input keywords and is e.g. in JSON: "outputKey": jsonValue
 )
 
 const WinMain = "main"
@@ -255,12 +265,12 @@ func DeleteAllValues() {
 // `false` is returned if an error occurs.
 func PreprocessAttributesDescription(descr AttributesDescr, fullName string) bool {
 	var err error
-	if shortKW, ok := descr[KeyKeyword].(string); ok {
+	if shortKW, ok := descr[AttrKeyword].(string); ok {
 		if longKW, ok := keywordShortToLong[shortKW]; ok {
-			descr[KeyKeyword] = longKW
+			descr[AttrKeyword] = longKW
 		}
 	}
-	if id, ok := descr[KeyID].(string); ok {
+	if id, ok := descr[AttrID].(string); ok {
 		err = RegisterID(id, fullName)
 		if err != nil {
 			log.Printf("ERROR: for %q: %v", fullName, err)

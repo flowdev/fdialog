@@ -4,6 +4,7 @@ import (
 	"github.com/flowdev/fdialog/run"
 	"github.com/flowdev/fdialog/ui"
 	"github.com/flowdev/fdialog/ui/dialog"
+	"github.com/flowdev/fdialog/ui/widget"
 	"github.com/flowdev/fdialog/valid"
 	"log"
 	"math"
@@ -18,6 +19,10 @@ func RegisterEverything() error {
 	if err != nil {
 		return err
 	}
+	err = widget.RegisterAll()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -28,11 +33,11 @@ func RegisterBase() error {
 
 	err := ui.RegisterValidKeyword(ui.KeywordWindow, "", ui.ValidAttributesType{
 		Attributes: map[string]ui.AttributeValueType{
-			ui.KeyKeyword: {
+			ui.AttrKeyword: {
 				Required: true,
 				Validate: valid.ExactStringValidator(ui.KeywordWindow),
 			},
-			ui.KeyType: {
+			ui.AttrType: {
 				Validate: valid.StringValidator(1, 0, ui.NameRegex),
 			},
 			"title": {
@@ -50,7 +55,7 @@ func RegisterBase() error {
 			"exitCode": {
 				Validate: valid.IntValidator(0, 125),
 			},
-			ui.KeyChildren: {
+			ui.AttrChildren: {
 				Validate: valid.ChildrenValidator(0, math.MaxInt),
 			},
 		},
@@ -61,11 +66,11 @@ func RegisterBase() error {
 
 	err = ui.RegisterValidKeyword(ui.KeywordLink, "", ui.ValidAttributesType{
 		Attributes: map[string]ui.AttributeValueType{
-			ui.KeyKeyword: {
+			ui.AttrKeyword: {
 				Required: true,
 				Validate: valid.ExactStringValidator(ui.KeywordLink),
 			},
-			ui.KeyType: {
+			ui.AttrType: {
 				Validate: valid.StringValidator(1, 0, ui.NameRegex),
 			},
 			"destination": {
@@ -80,11 +85,11 @@ func RegisterBase() error {
 
 	err = ui.RegisterValidKeyword(ui.KeywordAction, "exit", ui.ValidAttributesType{
 		Attributes: map[string]ui.AttributeValueType{
-			ui.KeyKeyword: {
+			ui.AttrKeyword: {
 				Required: true,
 				Validate: valid.ExactStringValidator(ui.KeywordAction),
 			},
-			ui.KeyType: {
+			ui.AttrType: {
 				Required: true,
 				Validate: valid.ExactStringValidator("exit"),
 			},
@@ -99,11 +104,11 @@ func RegisterBase() error {
 
 	err = ui.RegisterValidKeyword(ui.KeywordAction, "close", ui.ValidAttributesType{
 		Attributes: map[string]ui.AttributeValueType{
-			ui.KeyKeyword: {
+			ui.AttrKeyword: {
 				Required: true,
 				Validate: valid.ExactStringValidator(ui.KeywordAction),
 			},
-			ui.KeyType: {
+			ui.AttrType: {
 				Required: true,
 				Validate: valid.ExactStringValidator("close"),
 			},
@@ -115,15 +120,15 @@ func RegisterBase() error {
 
 	err = ui.RegisterValidKeyword(ui.KeywordAction, "group", ui.ValidAttributesType{
 		Attributes: map[string]ui.AttributeValueType{
-			ui.KeyKeyword: {
+			ui.AttrKeyword: {
 				Required: true,
 				Validate: valid.ExactStringValidator(ui.KeywordAction),
 			},
-			ui.KeyType: {
+			ui.AttrType: {
 				Required: true,
 				Validate: valid.ExactStringValidator("group"),
 			},
-			ui.KeyChildren: {
+			ui.AttrChildren: {
 				Validate: valid.ChildrenValidator(1, math.MaxInt),
 			},
 		},
@@ -134,24 +139,24 @@ func RegisterBase() error {
 
 	err = ui.RegisterValidKeyword(ui.KeywordAction, "write", ui.ValidAttributesType{
 		Attributes: map[string]ui.AttributeValueType{
-			ui.KeyKeyword: {
+			ui.AttrKeyword: {
 				Required: true,
 				Validate: valid.ExactStringValidator(ui.KeywordAction),
 			},
-			ui.KeyType: {
+			ui.AttrType: {
 				Required: true,
 				Validate: valid.ExactStringValidator("write"),
 			},
 			"fullName": {
 				Validate: valid.StringValidator(1, 0, ui.LinkRegex),
 			},
-			ui.KeyOutputKey: valid.ValidateOutputKey,
+			ui.AttrOutputKey: valid.ValidateOutputKey,
 		},
 		Validate: func(attrs ui.AttributesDescr, parent string) bool {
-			_, okGroup := attrs[ui.KeyGroup].(string)
-			_, okID := attrs[ui.KeyID].(string)
+			_, okGroup := attrs[ui.AttrGroup].(string)
+			_, okID := attrs[ui.AttrID].(string)
 			_, okName := attrs["fullName"].(string)
-			_, okOutKey := attrs[ui.KeyOutputKey].(string)
+			_, okOutKey := attrs[ui.AttrOutputKey].(string)
 			ok := okGroup || (okID && okOutKey) || (okName && okOutKey)
 			if !ok {
 				log.Printf(`ERROR: for %q: attribute "group" or attributes: `+

@@ -12,8 +12,8 @@ func runInfo(infoDescr ui.AttributesDescr, fullName string, win fyne.Window, uiD
 	title, _ := infoDescr["title"].(string)  // title is optional with zero value as default
 	message := infoDescr["message"].(string) // message is required
 	info := dialog.NewInformation(title, message, win)
-	if children, ok := infoDescr[ui.KeyChildren]; ok {
-		callback := closeCallback(children.(ui.CommandsDescr), fullName, win, uiDescr)
+	if children, ok := infoDescr[ui.AttrChildren]; ok {
+		callback := run.CloseCallback(children.(ui.CommandsDescr), fullName, win, uiDescr)
 		info.SetOnClosed(callback)
 	}
 
@@ -40,8 +40,8 @@ func runInfo(infoDescr ui.AttributesDescr, fullName string, win fyne.Window, uiD
 func runError(errorDescr ui.AttributesDescr, fullName string, win fyne.Window, uiDescr ui.CommandsDescr) {
 	message := errorDescr["message"].(string) // message is required
 	errorDialog := dialog.NewError(errors.New(message), win)
-	if children, ok := errorDescr[ui.KeyChildren]; ok {
-		callback := closeCallback(children.(ui.CommandsDescr), fullName, win, uiDescr)
+	if children, ok := errorDescr[ui.AttrChildren]; ok {
+		callback := run.CloseCallback(children.(ui.CommandsDescr), fullName, win, uiDescr)
 		errorDialog.SetOnClosed(callback)
 	}
 
@@ -67,7 +67,8 @@ func runError(errorDescr ui.AttributesDescr, fullName string, win fyne.Window, u
 }
 
 func runConfirmation(cnfDescr ui.AttributesDescr, fullName string, win fyne.Window, uiDescr ui.CommandsDescr) {
-	callback := confirmCallback(cnfDescr[ui.KeyChildren].(ui.CommandsDescr), fullName, win, uiDescr)
+	callback := run.BooleanCallback(cnfDescr[ui.AttrChildren].(ui.CommandsDescr),
+		ui.NameConfirm, ui.NameDismiss, fullName, win, uiDescr)
 	title, _ := cnfDescr["title"].(string)  // title is optional with zero value as default
 	message := cnfDescr["message"].(string) // message is required
 	cnf := dialog.NewConfirm(title, message, callback, win)

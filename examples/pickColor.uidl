@@ -9,13 +9,11 @@ window main(title="Pick Color", width=500, height=500, exitCode=1) {
         initialColor="#1f8f2f",
         advanced=true,
         width=500, height=500,
-        group="picker", outputKey="color",
     ) {
-        action confirm(type="group") {
-            #action write(type="write", fullName="main.pickColor", outputKey="color")
-            action write(type="write", group="picker")
+        action choose(type="group") {
+            action write(type="write", fullName="main.pickColor", outputKey="color")
             action exit(type="exit", code=0)
         }
-        action dismiss(type="exit", code=1)
+        action cancel(type="exit", code=1)
     }
 }

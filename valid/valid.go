@@ -33,9 +33,9 @@ func PreprocessUIDescription(descr ui.CommandsDescr, parent string) bool {
 	ok := true
 	for name, attrs := range descr.All() {
 		fullName := ui.FullNameFor(parent, name)
-		attrs[ui.KeyName] = name
+		attrs[ui.AttrName] = name
 		ok = ok && ui.PreprocessAttributesDescription(attrs, fullName)
-		if children, ok2 := attrs[ui.KeyChildren].(ui.CommandsDescr); ok2 {
+		if children, ok2 := attrs[ui.AttrChildren].(ui.CommandsDescr); ok2 {
 			ok = ok && PreprocessUIDescription(children, fullName)
 		}
 	}
@@ -181,11 +181,11 @@ func ChildrenValidator(minLen, maxLen int) ui.AttributeValidator {
 		}
 
 		if m.Len() < minLen {
-			log.Printf("ERROR: for %q: expecting at least %d map elements, got %d", parent, minLen, m.Len())
+			log.Printf("ERROR: for %q: expecting at least %d children, got %d", parent, minLen, m.Len())
 			ok = false
 		}
 		if m.Len() > maxLen {
-			log.Printf("ERROR: for %q: expecting at most %d map elements, got %d", parent, maxLen, m.Len())
+			log.Printf("ERROR: for %q: expecting at most %d children, got %d", parent, maxLen, m.Len())
 			ok = false
 		}
 
@@ -239,7 +239,7 @@ func validateAttributes(
 		if value, ok2 := valueMap[attrName]; ok2 {
 			validatedAttributes[attrName] = true
 			fullName := parent
-			if attrName != ui.KeyChildren {
+			if attrName != ui.AttrChildren {
 				fullName = ui.FullNameFor(parent, attrName)
 			}
 			v, ok3 := attribute.Validate(value, strict, fullName)
@@ -251,9 +251,9 @@ func validateAttributes(
 		}
 	}
 
-	if value, ok2 := valueMap[ui.KeyName]; ok2 {
-		validatedAttributes[ui.KeyName] = true
-		fullName := ui.FullNameFor(parent, ui.KeyName)
+	if value, ok2 := valueMap[ui.AttrName]; ok2 {
+		validatedAttributes[ui.AttrName] = true
+		fullName := ui.FullNameFor(parent, ui.AttrName)
 		_, ok3 := validateName(value, strict, fullName)
 		ok = ok && ok3
 	} else {
@@ -269,13 +269,13 @@ func validateAttributes(
 			_, ok := validatedAttributes[k]
 			if !ok {
 				switch k {
-				case ui.KeyID:
+				case ui.AttrID:
 					validateID(v, strict, ui.FullNameFor(parent, k))
 					continue forLoop // id is always allowed
-				case ui.KeyGroup:
+				case ui.AttrGroup:
 					validateGroup(v, strict, ui.FullNameFor(parent, k))
 					continue forLoop // group is always allowed
-				case ui.KeyName:
+				case ui.AttrName:
 					validateName(v, strict, ui.FullNameFor(parent, k))
 					continue forLoop // name is always required
 				}
@@ -297,7 +297,7 @@ func validateAttributes(
 }
 
 func getKeywordType(keywordMap ui.AttributesDescr, fullName string) (keyword, typ string, ok bool) {
-	rkeyword := reflect.ValueOf(keywordMap[ui.KeyKeyword])
+	rkeyword := reflect.ValueOf(keywordMap[ui.AttrKeyword])
 	if rkeyword.Kind() != reflect.String {
 		log.Printf("ERROR: for %q: expecting the keyword to be a string, got a %s", fullName, rkeyword.Kind())
 		return "", "", false
@@ -305,7 +305,7 @@ func getKeywordType(keywordMap ui.AttributesDescr, fullName string) (keyword, ty
 	keyword = rkeyword.String()
 
 	typ = "" // this is the intentional default
-	atype, ok := keywordMap[ui.KeyType]
+	atype, ok := keywordMap[ui.AttrType]
 	if ok {
 		rtype := reflect.ValueOf(atype)
 		if rtype.Kind() != reflect.String {

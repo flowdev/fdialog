@@ -21,8 +21,8 @@ func UIDescription(uiDescr ui.CommandsDescr) {
 		log.Printf("FATAL: unable to find main window in UI description")
 		return
 	}
-	if mainWin[ui.KeyKeyword] != ui.KeywordWindow {
-		log.Printf(`command with name 'main' is not a window but a:  %q`, mainWin[ui.KeyKeyword])
+	if mainWin[ui.AttrKeyword] != ui.KeywordWindow {
+		log.Printf(`command with name 'main' is not a window but a:  %q`, mainWin[ui.AttrKeyword])
 	}
 	appID := "org.flowdev.fdialog"
 	if aid, ok := mainWin["appId"]; ok {
@@ -85,7 +85,7 @@ func Window(winDescr ui.AttributesDescr, fullName string, _ fyne.Window, uiDescr
 		}()
 	}
 
-	if children, ok := winDescr[ui.KeyChildren]; ok {
+	if children, ok := winDescr[ui.AttrChildren]; ok {
 		Children(children, fullName, win, uiDescr)
 	}
 
@@ -106,7 +106,7 @@ func Children(achildren any, parent string, win fyne.Window, uiDescr ui.Commands
 }
 
 func Keyword(keywordDescr ui.AttributesDescr, fullName string, win fyne.Window, uiDescr ui.CommandsDescr) {
-	keyword := keywordDescr[ui.KeyKeyword]
+	keyword := keywordDescr[ui.AttrKeyword]
 	keywordFunc, ok := ui.RunFuncForKeyword(keyword.(string))
 	if !ok {
 		log.Printf(`ERROR: for %q: unknown keyword %q`, fullName, keyword)
@@ -130,7 +130,7 @@ func Link(linkDescr ui.AttributesDescr, fullName string, win fyne.Window, uiDesc
 				fullName, strings.Join(dnames[:i+1], "."))
 			return
 		}
-		dchildren, ok := attrs[ui.KeyChildren]
+		dchildren, ok := attrs[ui.AttrChildren]
 		if !ok || dchildren == nil {
 			log.Printf("ERROR: for %q: no children found for link destination %q",
 				fullName, strings.Join(dnames[:i+1], "."))
@@ -148,7 +148,7 @@ func Link(linkDescr ui.AttributesDescr, fullName string, win fyne.Window, uiDesc
 }
 
 func Action(actionDescr ui.AttributesDescr, fullName string, win fyne.Window, uiDescr ui.CommandsDescr) {
-	action := actionDescr[ui.KeyType]
+	action := actionDescr[ui.AttrType]
 	runFunc, ok := ui.ActionRunFunc(action.(string))
 	if !ok {
 		log.Printf(`ERROR: for %q: unknown action %q`, fullName, action)
@@ -174,9 +174,9 @@ func Close(_ ui.AttributesDescr, _ string, win fyne.Window, _ ui.CommandsDescr) 
 }
 
 func Group(groupDescr ui.AttributesDescr, parent string, win fyne.Window, uiDescr ui.CommandsDescr) {
-	childrenDescr := groupDescr[ui.KeyChildren].(ui.CommandsDescr)
+	childrenDescr := groupDescr[ui.AttrChildren].(ui.CommandsDescr)
 	for name, attrs := range childrenDescr.All() {
-		if keyword := attrs[ui.KeyKeyword]; keyword.(string) != ui.KeywordAction {
+		if keyword := attrs[ui.AttrKeyword]; keyword.(string) != ui.KeywordAction {
 			log.Printf(`ERROR: for %q: only actions allowed, got: %q`, ui.FullNameFor(parent, name), keyword)
 			continue
 		}
@@ -185,10 +185,10 @@ func Group(groupDescr ui.AttributesDescr, parent string, win fyne.Window, uiDesc
 }
 
 func Write(writeDescr ui.AttributesDescr, fullName string, _ fyne.Window, _ ui.CommandsDescr) {
-	group, gok := writeDescr[ui.KeyGroup].(string)
-	id, iok := writeDescr[ui.KeyID].(string)
+	group, gok := writeDescr[ui.AttrGroup].(string)
+	id, iok := writeDescr[ui.AttrID].(string)
 	name, nok := writeDescr["fullName"].(string)
-	okey, kok := writeDescr[ui.KeyOutputKey].(string)
+	okey, kok := writeDescr[ui.AttrOutputKey].(string)
 
 	switch {
 	case nok && kok: // read fullName and write outputKey
@@ -308,6 +308,70 @@ func writeJSONValue(value any, arena *fastjson.Arena, fullName string) *fastjson
 	default:
 		log.Printf(`ERROR: for %q: unable to write unknown data type %T`, fullName, v)
 		return arena.NewNull()
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Callbacks
+
+func BooleanCallback(
+	childrenDescr ui.CommandsDescr,
+	submitName, cancelName string,
+	fullName string,
+	win fyne.Window,
+	uiDescr ui.CommandsDescr,
+) func(bool) {
+	defaultCallback := func(_ bool) {
+		return
+	}
+
+	actConfirm, _ := childrenDescr.Get(submitName)
+	if actConfirm == nil {
+		log.Printf("ERROR: for %q: %q action is missing", fullName, submitName)
+		return defaultCallback
+	}
+	keyword := actConfirm[ui.AttrKeyword].(string)
+	if keyword != ui.KeywordAction {
+		log.Printf("ERROR: for %q: %q action is not an action but a %q", fullName, submitName, keyword)
+		return defaultCallback
+	}
+
+	actDismiss, _ := childrenDescr.Get(cancelName)
+	if actDismiss == nil {
+		log.Printf("ERROR: for %q: %q action is missing", fullName, cancelName)
+		return defaultCallback
+	}
+	keyword = actDismiss[ui.AttrKeyword].(string)
+	if keyword != ui.KeywordAction {
+		log.Printf("ERROR: for %q: %q action is not an action but a %q", fullName, cancelName, keyword)
+		return defaultCallback
+	}
+
+	return func(submitted bool) {
+		if submitted {
+			Action(actConfirm, ui.FullNameFor(fullName, submitName), win, uiDescr)
+		} else {
+			Action(actDismiss, ui.FullNameFor(fullName, cancelName), win, uiDescr)
+		}
+	}
+}
+
+func CloseCallback(childDescr ui.CommandsDescr, fullName string, win fyne.Window, uiDescr ui.CommandsDescr) func() {
+	defaultCallback := func() {
+		return
+	}
+	actClose, _ := childDescr.Get("close")
+	if actClose == nil { // action is optional
+		return defaultCallback
+	}
+	keyword := actClose[ui.AttrKeyword].(string)
+	if keyword != ui.KeywordAction {
+		log.Printf("ERROR: for %q: close action is not an action but a %q", fullName, keyword)
+		return defaultCallback
+	}
+
+	return func() {
+		Action(actClose, ui.FullNameFor(fullName, "close"), win, uiDescr)
 	}
 }
 

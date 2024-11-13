@@ -1,11 +1,12 @@
 package ui
 
 import (
-	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/app"
 	"log"
 	"os"
 	"sync/atomic"
+
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/app"
 )
 
 var fapp fyne.App // needed for exiting cleanly in actions

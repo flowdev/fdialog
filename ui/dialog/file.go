@@ -10,10 +10,11 @@ import (
 )
 
 func runOpenFile(ofDescr ui.AttributesDescr, fullName string, win fyne.Window, uiDescr ui.CommandsDescr) {
-	outputKey, _ := ofDescr[ui.KeyOutputKey].(string)
-	id, _ := ofDescr[ui.KeyID].(string)
-	group, _ := ofDescr[ui.KeyGroup].(string)
-	callback := confirmCallback(ofDescr[ui.KeyChildren].(ui.CommandsDescr), fullName, win, uiDescr)
+	outputKey, _ := ofDescr[ui.AttrOutputKey].(string)
+	id, _ := ofDescr[ui.AttrID].(string)
+	group, _ := ofDescr[ui.AttrGroup].(string)
+	callback := run.BooleanCallback(ofDescr[ui.AttrChildren].(ui.CommandsDescr),
+		ui.NameChoose, ui.NameCancel, fullName, win, uiDescr)
 	ofDialog := dialog.NewFileOpen(func(frd fyne.URIReadCloser, err error) {
 		if err != nil {
 			dialog.ShowError(err, win)
@@ -62,10 +63,11 @@ func runOpenFile(ofDescr ui.AttributesDescr, fullName string, win fyne.Window, u
 }
 
 func runSaveFile(sfDescr ui.AttributesDescr, fullName string, win fyne.Window, uiDescr ui.CommandsDescr) {
-	outputKey, _ := sfDescr[ui.KeyOutputKey].(string)
-	id, _ := sfDescr[ui.KeyID].(string)
-	group, _ := sfDescr[ui.KeyGroup].(string)
-	callback := confirmCallback(sfDescr[ui.KeyChildren].(ui.CommandsDescr), fullName, win, uiDescr)
+	outputKey, _ := sfDescr[ui.AttrOutputKey].(string)
+	id, _ := sfDescr[ui.AttrID].(string)
+	group, _ := sfDescr[ui.AttrGroup].(string)
+	callback := run.BooleanCallback(sfDescr[ui.AttrChildren].(ui.CommandsDescr),
+		ui.NameChoose, ui.NameCancel, fullName, win, uiDescr)
 	sfDialog := dialog.NewFileSave(func(fwr fyne.URIWriteCloser, err error) {
 		if err != nil {
 			dialog.ShowError(err, win)
@@ -115,10 +117,11 @@ func runSaveFile(sfDescr ui.AttributesDescr, fullName string, win fyne.Window, u
 }
 
 func runOpenFolder(ofDescr ui.AttributesDescr, fullName string, win fyne.Window, uiDescr ui.CommandsDescr) {
-	outputKey, _ := ofDescr[ui.KeyOutputKey].(string)
-	id, _ := ofDescr[ui.KeyID].(string)
-	group, _ := ofDescr[ui.KeyGroup].(string) // group is optional with zero value as default
-	callback := confirmCallback(ofDescr[ui.KeyChildren].(ui.CommandsDescr), fullName, win, uiDescr)
+	outputKey, _ := ofDescr[ui.AttrOutputKey].(string)
+	id, _ := ofDescr[ui.AttrID].(string)
+	group, _ := ofDescr[ui.AttrGroup].(string) // group is optional with zero value as default
+	callback := run.BooleanCallback(ofDescr[ui.AttrChildren].(ui.CommandsDescr),
+		ui.NameChoose, ui.NameCancel, fullName, win, uiDescr)
 
 	ofDialog := dialog.NewFolderOpen(func(fold fyne.ListableURI, err error) {
 		if err != nil {
