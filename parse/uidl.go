@@ -63,7 +63,10 @@ func UIDL(input io.Reader, _ string) (ui.CommandsDescr, error) {
 	antlrParser.RemoveErrorListeners()
 	antlrParser.AddErrorListener(ael)
 
-	return convertUIDL(antlrParser.Uidl(), ael), ael.CombinedError()
+	if err = ael.CombinedError(); err != nil {
+		return nil, err
+	}
+	return convertUIDL(antlrParser.Uidl(), ael), nil
 }
 
 func convertUIDL(antlrUIDL uidl.IUidlContext, errColl ErrorCollector) ui.CommandsDescr {
@@ -90,6 +93,9 @@ func convertCommands(antlrCommands []uidl.ICommandContext, errColl ErrorCollecto
 	for _, command := range antlrCommands {
 		keyword := command.Identifier(0)
 		name := command.Identifier(1)
+		if keyword == nil || name == nil { // not really a command (shouldn't be possible, but ...)
+			continue
+		}
 		strName := name.GetText()
 		attrMap := convertAttributes(command.Attributes().AllAttribute(), errColl)
 		attrMap[ui.AttrKeyword] = keyword.GetText()
@@ -101,8 +107,8 @@ func convertCommands(antlrCommands []uidl.ICommandContext, errColl ErrorCollecto
 			continue
 		}
 
-		if command.CommandBody() != nil {
-			attrMap[ui.AttrChildren] = convertCommands(command.CommandBody().Commands().AllCommand(), errColl)
+		if body := command.CommandBody(); body != nil && body.Commands() != nil {
+			attrMap[ui.AttrChildren] = convertCommands(body.Commands().AllCommand(), errColl)
 		}
 	}
 

@@ -1,0 +1,22 @@
+#!/usr/bin/env -S fdialog run --file
+version 1
+
+window main(title="Please Register", width=800, height=600, exitCode=1) {
+    form registerForm (group="form") {
+        item entry1(type="entry", label="Name", hint="Your full name", placeHolder="Jane Doe",
+            minLen=2, maxLen=256, failText="Please enter a valid full name", outputKey="name")
+        item entry2(type="entry", label="Email", placeHolder="name@company.com", minLen=5, maxLen=64,
+            regexp=`[\w\d-.]{1,}@[\w\d-]{1,}\.[\w\d]{1,40}`, failText="Please enter a valid email address",
+            outputKey="email")
+        item multiEntry1(type="multiLineEntry", label="Bio", hint="Your biography",
+            placeHolder="I was born in the USA, ...", minLen=10, maxLen=3600,
+            failText="Please enter your biography", outputKey="bio")
+
+        # the actions 'submit' and 'cancel' decide what is done with the form data
+        action submit(type="group") {
+            action write(type="write", group="form")
+            action exit(type="exit", code=0)
+        }
+        action cancel(type="exit", code=3)
+    }
+}
