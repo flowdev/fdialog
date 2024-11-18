@@ -135,6 +135,27 @@ func convertAttributes(attributes []uidl.IAttributeContext, errColl ErrorCollect
 }
 
 func convertAttributeValue(antlrValue uidl.IValueContext, errColl ErrorCollector) any {
+	simpleValue := antlrValue.SimpleValue()
+	if simpleValue != nil {
+		return convertSimpleValue(simpleValue, errColl)
+	}
+	listValue := antlrValue.ListValue()
+	if listValue != nil {
+		return convertListValue(listValue, errColl)
+	}
+	return nil
+}
+
+func convertListValue(antlrList uidl.IListValueContext, errColl ErrorCollector) any {
+	antlrValues := antlrList.AllSimpleValue()
+	result := make([]any, len(antlrValues))
+	for i := 0; i < len(antlrValues); i++ {
+		result[i] = convertSimpleValue(antlrValues[i], errColl)
+	}
+	return result
+}
+
+func convertSimpleValue(antlrValue uidl.ISimpleValueContext, errColl ErrorCollector) any {
 	doubleQuotedString := antlrValue.DoubleQuotedString()
 	backQuotedString := antlrValue.BackQuotedString()
 	aFloat := antlrValue.Float()

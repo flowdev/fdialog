@@ -6,6 +6,7 @@ import (
 	"math"
 	"reflect"
 	"regexp"
+	"strconv"
 
 	"github.com/flowdev/fdialog/ui"
 )
@@ -43,7 +44,7 @@ func PreprocessUIDescription(descr ui.CommandsDescr, parent string) bool {
 }
 
 // ---------------------------------------------------------------------------
-// AttributeValidator(s): func(v any, strict bool, parent []string) (any, error)
+// AttributeValidator(s): func(v any, strict bool, parent string) (any, bool)
 //
 
 func StringValidator(minLen, maxLen int, regex *regexp.Regexp) ui.AttributeValidator {
@@ -165,6 +166,37 @@ func BoolValidator() ui.AttributeValidator {
 	}
 }
 
+func ListValidator(minLen, maxLen int, subValidator ui.AttributeValidator) ui.AttributeValidator {
+	return func(v any, strict bool, parent string) (any, bool) {
+		rv := reflect.ValueOf(v)
+		if rv.Kind() != reflect.Slice {
+			log.Printf(`ERROR: for %q: expecting a slice as list value, got %s`, parent, rv.Kind())
+			return v, false
+		}
+		s, ok := v.([]any)
+		if !ok {
+			log.Printf("ERROR: for %q: expecting a []any value, got %T", parent, v)
+			return v, false
+		}
+
+		if len(s) < minLen {
+			log.Printf("ERROR: for %q: expecting at least %d list elements, got %d", parent, minLen, len(s))
+			ok = false
+		}
+		if len(s) > maxLen {
+			log.Printf("ERROR: for %q: expecting at most %d list elements, got %d", parent, maxLen, len(s))
+			ok = false
+		}
+
+		for i := 0; i < len(s); i++ {
+			ok2 := false
+			s[i], ok2 = subValidator(s[i], strict, ui.FullNameFor(parent, strconv.Itoa(i)))
+			ok = ok && ok2
+		}
+		return s, ok
+	}
+}
+
 func ChildrenValidator(minLen, maxLen int) ui.AttributeValidator {
 	return func(v any, strict bool, parent string) (any, bool) {
 		rv := reflect.ValueOf(v)
@@ -172,7 +204,6 @@ func ChildrenValidator(minLen, maxLen int) ui.AttributeValidator {
 			log.Printf(`ERROR: for %q: expecting a pointer value for "children", got %s`, parent, rv.Kind())
 			return v, false
 		}
-
 		m, ok := v.(ui.CommandsDescr)
 		if !ok {
 			log.Printf("ERROR: for %q: expecting a omap.OrderedMap[string, map[string]any] value, got %T",
@@ -257,7 +288,7 @@ func validateAttributes(
 		_, ok3 := validateName(value, strict, fullName)
 		ok = ok && ok3
 	} else {
-		log.Printf(`for %q: attribute "name" is required`, parent)
+		log.Printf(`for %q: attribute ":name" is required`, parent)
 		ok = false
 	}
 

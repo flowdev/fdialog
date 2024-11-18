@@ -1,5 +1,5 @@
 #!/usr/bin/env -S fdialog run --file
-version 1
+uidl 1
 
 window main(title="Information", width=400, height=300) {
     dialog info(type="info", message="Please note.", buttonText="OK.", width=400, height=300) {

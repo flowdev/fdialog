@@ -6,9 +6,12 @@ import (
 	"github.com/flowdev/fdialog/valid"
 	"log"
 	"math"
+	"regexp"
 )
 
 const KeywordDialog = "dialog"
+
+var extensionRegex = regexp.MustCompile(`^\..+$`)
 
 func RegisterAll() error {
 	// -----------------------------------------------------------------------
@@ -134,7 +137,8 @@ func RegisterAll() error {
 				Validate: valid.ExactStringValidator("openFile"),
 			},
 			"extensions": {
-				Validate: valid.StringValidator(2, 0, nil),
+				Validate: valid.ListValidator(1, math.MaxInt,
+					valid.StringValidator(2, 0, extensionRegex)),
 			},
 			"dismissText": {
 				Validate: valid.StringValidator(1, 0, nil),
@@ -170,7 +174,8 @@ func RegisterAll() error {
 				Validate: valid.ExactStringValidator("saveFile"),
 			},
 			"extensions": {
-				Validate: valid.StringValidator(2, 0, nil),
+				Validate: valid.ListValidator(1, math.MaxInt,
+					valid.StringValidator(2, 0, extensionRegex)),
 			},
 			"dismissText": {
 				Validate: valid.StringValidator(1, 0, nil),

@@ -7,7 +7,6 @@ import (
 	"github.com/flowdev/fdialog/ui"
 	"log"
 	"regexp"
-	"strings"
 )
 
 // -----------------------------------------------------------------------
@@ -59,15 +58,3 @@ func StringValidator(child ui.AttributesDescr, fullName string) fyne.StringValid
 // -----------------------------------------------------------------------
 // Helpers
 //
-
-func linesToSlice(a any) []string {
-	str, ok := a.(string)
-	if !ok {
-		return nil
-	}
-	sl := strings.Split(str, "\n")
-	for i := 0; i < len(sl); i++ {
-		sl[i] = strings.TrimSpace(sl[i])
-	}
-	return sl
-}

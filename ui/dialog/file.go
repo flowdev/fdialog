@@ -32,11 +32,7 @@ func runOpenFile(ofDescr ui.AttributesDescr, fullName string, win fyne.Window, u
 
 	extAttr := ofDescr["extensions"]
 	if extAttr != nil {
-		extSlice := strings.Split(extAttr.(string), ",")
-		for i := 0; i < len(extSlice); i++ {
-			extSlice[i] = strings.TrimSpace(extSlice[i])
-		}
-		ofDialog.SetFilter(storage.NewExtensionFileFilter(extSlice))
+		ofDialog.SetFilter(storage.NewExtensionFileFilter(ui.AnysToStrings(extAttr)))
 	}
 
 	value := ofDescr["confirmText"]
@@ -86,11 +82,7 @@ func runSaveFile(sfDescr ui.AttributesDescr, fullName string, win fyne.Window, u
 
 	extAttr := sfDescr["extensions"]
 	if extAttr != nil {
-		extSlice := strings.Split(extAttr.(string), ",")
-		for i := 0; i < len(extSlice); i++ {
-			extSlice[i] = strings.TrimSpace(extSlice[i])
-		}
-		sfDialog.SetFilter(storage.NewExtensionFileFilter(extSlice))
+		sfDialog.SetFilter(storage.NewExtensionFileFilter(ui.AnysToStrings(extAttr)))
 	}
 
 	value := sfDescr["confirmText"]

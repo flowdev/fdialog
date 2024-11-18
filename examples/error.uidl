@@ -1,5 +1,5 @@
 #!/usr/bin/env -S fdialog run --file
-version 1
+uidl 1
 
 window main(width=400, height=300) {
     dialog error(

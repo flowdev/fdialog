@@ -13,7 +13,7 @@ uidl
     ;
 
 version
-    : ('version' | 'v') WhiteSpace Natural
+    : 'uidl' WhiteSpace Natural
     ;
 
 commands
@@ -30,11 +30,11 @@ commandSeparator
     ;
 
 commandBody
-    : '{' WhiteSpace? commands WhiteSpace? '}'
+    : '{' WhiteSpace? commands '}'
     ;
 
 attributes
-    : '(' WhiteSpace? (attribute (Comma attribute)* )? Comma? ')'
+    : '(' WhiteSpace? (attribute (Comma attribute)* Comma? )? ')'
     ;
 
 attribute
@@ -42,6 +42,15 @@ attribute
     ;
 
 value
+    : simpleValue
+    | listValue
+    ;
+
+listValue
+    : '[' WhiteSpace? (simpleValue (Comma simpleValue)* Comma? )? ']'
+    ;
+
+simpleValue
     : DoubleQuotedString
     | BackQuotedString
     | Float

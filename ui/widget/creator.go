@@ -1,6 +1,7 @@
 package widget
 
 import (
+	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
@@ -48,11 +49,11 @@ func createCheckBox(attrs ui.AttributesDescr, values map[string]any, outputKey, 
 }
 
 func createCheckGroup(attrs ui.AttributesDescr, values map[string]any, outputKey, _ string) fyne.CanvasObject {
-	cg := widget.NewCheckGroup(linesToSlice(attrs["options"]), func(selected []string) {
+	cg := widget.NewCheckGroup(ui.AnysToStrings(attrs["options"]), func(selected []string) {
 		result := strings.Join(selected, "\n")
 		values[outputKey] = &result
 	})
-	cg.SetSelected(linesToSlice(attrs["initiallySelected"]))
+	cg.SetSelected(ui.AnysToStrings(attrs["initiallySelected"]))
 	values[outputKey] = &cg.Selected
 	return cg
 }
@@ -68,7 +69,8 @@ func createHyperlink(attrs ui.AttributesDescr, _ map[string]any, _, fullName str
 }
 
 func createRadioGroup(attrs ui.AttributesDescr, values map[string]any, outputKey, _ string) fyne.CanvasObject {
-	rg := widget.NewRadioGroup(linesToSlice(attrs["options"]), nil)
+	fmt.Println("createRadioGroup: called")
+	rg := widget.NewRadioGroup(ui.AnysToStrings(attrs["options"]), nil)
 	horizontal, _ := attrs["horizontal"].(bool)
 	rg.Horizontal = horizontal
 	required, _ := attrs["required"].(bool)
@@ -99,7 +101,7 @@ func createRichText(attrs ui.AttributesDescr, _ map[string]any, _, _ string) fyn
 }
 
 func createSelect(attrs ui.AttributesDescr, values map[string]any, outputKey, _ string) fyne.CanvasObject {
-	sel := widget.NewSelect(linesToSlice(attrs["options"]), nil)
+	sel := widget.NewSelect(ui.AnysToStrings(attrs["options"]), nil)
 	if ph, ok := attrs["placeHolder"].(string); ok {
 		sel.PlaceHolder = ph
 	}
@@ -111,7 +113,7 @@ func createSelect(attrs ui.AttributesDescr, values map[string]any, outputKey, _ 
 }
 
 func createSelectEntry(attrs ui.AttributesDescr, values map[string]any, outputKey, fullName string) fyne.CanvasObject {
-	sel := widget.NewSelectEntry(linesToSlice(attrs["options"]))
+	sel := widget.NewSelectEntry(ui.AnysToStrings(attrs["options"]))
 	if ph, _ := attrs["placeHolder"].(string); ph != "" {
 		sel.SetPlaceHolder(ph)
 	}

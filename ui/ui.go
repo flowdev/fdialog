@@ -30,9 +30,9 @@ const (
 
 // Reserved attribute names:
 const (
-	AttrKeyword   = "keyword"
-	AttrName      = "name"
-	AttrChildren  = "children"
+	AttrKeyword   = ":keyword"
+	AttrName      = ":name"
+	AttrChildren  = ":children"
 	AttrType      = "type"      // type is used like an ordinary attribute, but it has special semantics
 	AttrGroup     = "group"     // group is allowed everywhere and used for writing JSON objects
 	AttrID        = "id"        // id is allowed everywhere and used for linking and output

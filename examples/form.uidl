@@ -1,19 +1,19 @@
 #!/usr/bin/env -S fdialog run --file
-version 1
+uidl 1
 
 window main(title="Form", width=800, height=600, exitCode=1) {
     form form (submitText="Submit", cancelText="Cancel") {
         item check1(type="checkBox", label="Required", hint="Is it required?", subLabel="It...",
             group="form", outputKey="required")
-        item check2(type="checkGroup", label="Dating?", options="yes\nno\nmaybe", initiallySelected="maybe",
+        item check2(type="checkGroup", label="Dating?", options=["yes","no","maybe"], initiallySelected="maybe",
             group="form", outputKey="dating")
         item link1(type="hyperlink", label="Info", text="Wikipedia", url="https://wikipedia.org/en")
-        item radio1(type="radioGroup", label="Gender", options="male\nfemale\ndivers", required=true,
+        item radio1(type="radioGroup", label="Gender", options=["male","female","divers"], required=true,
             group="form", outputKey="gender")
-        item sel1(type="select", label="Place", options="Sörup\nFlensburg\nOeversee\nHamburg\nBerlin\nMartinsheim", initiallySelected="Berlin",
+        item sel1(type="select", label="Place", options=["Sörup","Flensburg","Oeversee","Hamburg","Berlin","Martinsheim"], initiallySelected="Berlin",
             group="form", outputKey="place1")
         item sep1(type="separator")
-        item sel2(type="selectEntry", label="Place2", options="Sörup\nFlensburg\nOeversee\nHamburg\nBerlin\nMartinsheim", placeHolder="New York",
+        item sel2(type="selectEntry", label="Place2", options=["Sörup","Flensburg","Oeversee","Hamburg","Berlin","Martinsheim"], placeHolder="New York",
             group="form", outputKey="place2")
         item slide1(type="slider", label="Happiness", min=0, max=100, step=1, initialValue=50, group="form", outputKey="happiness")
         action submit(type="group") {

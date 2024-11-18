@@ -240,7 +240,8 @@ func RegisterAll() error {
 			},
 			"options": {
 				Required: true,
-				Validate: valid.StringValidator(1, 0, nil),
+				Validate: valid.ListValidator(1, math.MaxInt,
+					valid.StringValidator(1, 0, nil)),
 			},
 			"initiallySelected": {
 				Validate: valid.StringValidator(1, 0, nil),
@@ -307,7 +308,8 @@ func RegisterAll() error {
 			},
 			"options": {
 				Required: true,
-				Validate: valid.StringValidator(1, 0, nil),
+				Validate: valid.ListValidator(2, math.MaxInt,
+					valid.StringValidator(1, 0, nil)),
 			},
 			"initiallySelected": {
 				Validate: valid.StringValidator(1, 0, nil),
@@ -382,7 +384,8 @@ func RegisterAll() error {
 			},
 			"options": {
 				Required: true,
-				Validate: valid.StringValidator(1, 0, nil),
+				Validate: valid.ListValidator(0, math.MaxInt,
+					valid.StringValidator(1, 0, nil)),
 			},
 			"initiallySelected": {
 				Validate: valid.StringValidator(1, 0, nil),
@@ -421,7 +424,8 @@ func RegisterAll() error {
 			},
 			"options": {
 				Required: true,
-				Validate: valid.StringValidator(1, 0, nil),
+				Validate: valid.ListValidator(0, math.MaxInt,
+					valid.StringValidator(1, 0, nil)),
 			},
 			"minLen": {
 				Validate: valid.IntValidator(0, math.MaxInt),

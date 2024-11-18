@@ -1,5 +1,5 @@
 #!/usr/bin/env -S fdialog run --file
-version 1
+uidl 1
 
 window main(title="Pick Color", width=500, height=500, exitCode=1) {
     dialog pickColor (

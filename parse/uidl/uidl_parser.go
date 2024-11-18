@@ -34,66 +34,77 @@ var UIDLParserStaticData struct {
 func uidlParserInit() {
 	staticData := &UIDLParserStaticData
 	staticData.LiteralNames = []string{
-		"", "'version'", "'v'", "'{'", "'}'", "'('", "')'", "'='",
+		"", "'uidl'", "'{'", "'}'", "'('", "')'", "'='", "'['", "']'",
 	}
 	staticData.SymbolicNames = []string{
-		"", "", "", "", "", "", "", "", "Bool", "DoubleQuotedString", "BackQuotedString",
+		"", "", "", "", "", "", "", "", "", "Bool", "DoubleQuotedString", "BackQuotedString",
 		"Identifier", "Natural", "Float", "Int", "Semicolon", "Comma", "WhiteSpace",
 	}
 	staticData.RuleNames = []string{
 		"uidl", "version", "commands", "command", "commandSeparator", "commandBody",
-		"attributes", "attribute", "value",
+		"attributes", "attribute", "value", "listValue", "simpleValue",
 	}
 	staticData.PredictionContextCache = antlr.NewPredictionContextCache()
 	staticData.serializedATN = []int32{
-		4, 1, 17, 112, 2, 0, 7, 0, 2, 1, 7, 1, 2, 2, 7, 2, 2, 3, 7, 3, 2, 4, 7,
-		4, 2, 5, 7, 5, 2, 6, 7, 6, 2, 7, 7, 7, 2, 8, 7, 8, 1, 0, 3, 0, 20, 8, 0,
-		1, 0, 1, 0, 1, 0, 1, 0, 3, 0, 26, 8, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1,
-		1, 1, 2, 1, 2, 1, 2, 1, 2, 5, 2, 38, 8, 2, 10, 2, 12, 2, 41, 9, 2, 1, 2,
-		3, 2, 44, 8, 2, 1, 3, 1, 3, 1, 3, 1, 3, 3, 3, 50, 8, 3, 1, 3, 1, 3, 3,
-		3, 54, 8, 3, 1, 3, 3, 3, 57, 8, 3, 1, 4, 1, 4, 1, 4, 3, 4, 62, 8, 4, 1,
-		5, 1, 5, 3, 5, 66, 8, 5, 1, 5, 1, 5, 3, 5, 70, 8, 5, 1, 5, 1, 5, 1, 6,
-		1, 6, 3, 6, 76, 8, 6, 1, 6, 1, 6, 1, 6, 5, 6, 81, 8, 6, 10, 6, 12, 6, 84,
-		9, 6, 3, 6, 86, 8, 6, 1, 6, 3, 6, 89, 8, 6, 1, 6, 1, 6, 1, 7, 1, 7, 3,
-		7, 95, 8, 7, 1, 7, 1, 7, 3, 7, 99, 8, 7, 1, 7, 1, 7, 3, 7, 103, 8, 7, 1,
-		8, 1, 8, 1, 8, 1, 8, 1, 8, 3, 8, 110, 8, 8, 1, 8, 0, 0, 9, 0, 2, 4, 6,
-		8, 10, 12, 14, 16, 0, 2, 1, 0, 1, 2, 2, 0, 12, 12, 14, 14, 123, 0, 19,
-		1, 0, 0, 0, 2, 29, 1, 0, 0, 0, 4, 33, 1, 0, 0, 0, 6, 45, 1, 0, 0, 0, 8,
-		61, 1, 0, 0, 0, 10, 63, 1, 0, 0, 0, 12, 73, 1, 0, 0, 0, 14, 92, 1, 0, 0,
-		0, 16, 109, 1, 0, 0, 0, 18, 20, 5, 17, 0, 0, 19, 18, 1, 0, 0, 0, 19, 20,
-		1, 0, 0, 0, 20, 21, 1, 0, 0, 0, 21, 22, 3, 2, 1, 0, 22, 23, 3, 8, 4, 0,
-		23, 25, 3, 4, 2, 0, 24, 26, 5, 17, 0, 0, 25, 24, 1, 0, 0, 0, 25, 26, 1,
-		0, 0, 0, 26, 27, 1, 0, 0, 0, 27, 28, 5, 0, 0, 1, 28, 1, 1, 0, 0, 0, 29,
-		30, 7, 0, 0, 0, 30, 31, 5, 17, 0, 0, 31, 32, 5, 12, 0, 0, 32, 3, 1, 0,
-		0, 0, 33, 39, 3, 6, 3, 0, 34, 35, 3, 8, 4, 0, 35, 36, 3, 6, 3, 0, 36, 38,
-		1, 0, 0, 0, 37, 34, 1, 0, 0, 0, 38, 41, 1, 0, 0, 0, 39, 37, 1, 0, 0, 0,
-		39, 40, 1, 0, 0, 0, 40, 43, 1, 0, 0, 0, 41, 39, 1, 0, 0, 0, 42, 44, 3,
-		8, 4, 0, 43, 42, 1, 0, 0, 0, 43, 44, 1, 0, 0, 0, 44, 5, 1, 0, 0, 0, 45,
-		46, 5, 11, 0, 0, 46, 47, 5, 17, 0, 0, 47, 49, 5, 11, 0, 0, 48, 50, 5, 17,
-		0, 0, 49, 48, 1, 0, 0, 0, 49, 50, 1, 0, 0, 0, 50, 51, 1, 0, 0, 0, 51, 53,
-		3, 12, 6, 0, 52, 54, 5, 17, 0, 0, 53, 52, 1, 0, 0, 0, 53, 54, 1, 0, 0,
-		0, 54, 56, 1, 0, 0, 0, 55, 57, 3, 10, 5, 0, 56, 55, 1, 0, 0, 0, 56, 57,
-		1, 0, 0, 0, 57, 7, 1, 0, 0, 0, 58, 62, 5, 15, 0, 0, 59, 60, 5, 17, 0, 0,
-		60, 62, 4, 4, 0, 1, 61, 58, 1, 0, 0, 0, 61, 59, 1, 0, 0, 0, 62, 9, 1, 0,
-		0, 0, 63, 65, 5, 3, 0, 0, 64, 66, 5, 17, 0, 0, 65, 64, 1, 0, 0, 0, 65,
-		66, 1, 0, 0, 0, 66, 67, 1, 0, 0, 0, 67, 69, 3, 4, 2, 0, 68, 70, 5, 17,
-		0, 0, 69, 68, 1, 0, 0, 0, 69, 70, 1, 0, 0, 0, 70, 71, 1, 0, 0, 0, 71, 72,
-		5, 4, 0, 0, 72, 11, 1, 0, 0, 0, 73, 75, 5, 5, 0, 0, 74, 76, 5, 17, 0, 0,
-		75, 74, 1, 0, 0, 0, 75, 76, 1, 0, 0, 0, 76, 85, 1, 0, 0, 0, 77, 82, 3,
-		14, 7, 0, 78, 79, 5, 16, 0, 0, 79, 81, 3, 14, 7, 0, 80, 78, 1, 0, 0, 0,
-		81, 84, 1, 0, 0, 0, 82, 80, 1, 0, 0, 0, 82, 83, 1, 0, 0, 0, 83, 86, 1,
-		0, 0, 0, 84, 82, 1, 0, 0, 0, 85, 77, 1, 0, 0, 0, 85, 86, 1, 0, 0, 0, 86,
-		88, 1, 0, 0, 0, 87, 89, 5, 16, 0, 0, 88, 87, 1, 0, 0, 0, 88, 89, 1, 0,
-		0, 0, 89, 90, 1, 0, 0, 0, 90, 91, 5, 6, 0, 0, 91, 13, 1, 0, 0, 0, 92, 94,
-		5, 11, 0, 0, 93, 95, 5, 17, 0, 0, 94, 93, 1, 0, 0, 0, 94, 95, 1, 0, 0,
-		0, 95, 96, 1, 0, 0, 0, 96, 98, 5, 7, 0, 0, 97, 99, 5, 17, 0, 0, 98, 97,
-		1, 0, 0, 0, 98, 99, 1, 0, 0, 0, 99, 100, 1, 0, 0, 0, 100, 102, 3, 16, 8,
-		0, 101, 103, 5, 17, 0, 0, 102, 101, 1, 0, 0, 0, 102, 103, 1, 0, 0, 0, 103,
-		15, 1, 0, 0, 0, 104, 110, 5, 9, 0, 0, 105, 110, 5, 10, 0, 0, 106, 110,
-		5, 13, 0, 0, 107, 110, 7, 1, 0, 0, 108, 110, 5, 8, 0, 0, 109, 104, 1, 0,
-		0, 0, 109, 105, 1, 0, 0, 0, 109, 106, 1, 0, 0, 0, 109, 107, 1, 0, 0, 0,
-		109, 108, 1, 0, 0, 0, 110, 17, 1, 0, 0, 0, 18, 19, 25, 39, 43, 49, 53,
-		56, 61, 65, 69, 75, 82, 85, 88, 94, 98, 102, 109,
+		4, 1, 18, 136, 2, 0, 7, 0, 2, 1, 7, 1, 2, 2, 7, 2, 2, 3, 7, 3, 2, 4, 7,
+		4, 2, 5, 7, 5, 2, 6, 7, 6, 2, 7, 7, 7, 2, 8, 7, 8, 2, 9, 7, 9, 2, 10, 7,
+		10, 1, 0, 3, 0, 24, 8, 0, 1, 0, 1, 0, 1, 0, 1, 0, 3, 0, 30, 8, 0, 1, 0,
+		1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 2, 1, 2, 1, 2, 5, 2, 42, 8, 2, 10,
+		2, 12, 2, 45, 9, 2, 1, 2, 3, 2, 48, 8, 2, 1, 3, 1, 3, 1, 3, 1, 3, 3, 3,
+		54, 8, 3, 1, 3, 1, 3, 3, 3, 58, 8, 3, 1, 3, 3, 3, 61, 8, 3, 1, 4, 1, 4,
+		1, 4, 3, 4, 66, 8, 4, 1, 5, 1, 5, 3, 5, 70, 8, 5, 1, 5, 1, 5, 1, 5, 1,
+		6, 1, 6, 3, 6, 77, 8, 6, 1, 6, 1, 6, 1, 6, 5, 6, 82, 8, 6, 10, 6, 12, 6,
+		85, 9, 6, 1, 6, 3, 6, 88, 8, 6, 3, 6, 90, 8, 6, 1, 6, 1, 6, 1, 7, 1, 7,
+		3, 7, 96, 8, 7, 1, 7, 1, 7, 3, 7, 100, 8, 7, 1, 7, 1, 7, 3, 7, 104, 8,
+		7, 1, 8, 1, 8, 3, 8, 108, 8, 8, 1, 9, 1, 9, 3, 9, 112, 8, 9, 1, 9, 1, 9,
+		1, 9, 5, 9, 117, 8, 9, 10, 9, 12, 9, 120, 9, 9, 1, 9, 3, 9, 123, 8, 9,
+		3, 9, 125, 8, 9, 1, 9, 1, 9, 1, 10, 1, 10, 1, 10, 1, 10, 1, 10, 3, 10,
+		134, 8, 10, 1, 10, 0, 0, 11, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 0,
+		1, 2, 0, 13, 13, 15, 15, 149, 0, 23, 1, 0, 0, 0, 2, 33, 1, 0, 0, 0, 4,
+		37, 1, 0, 0, 0, 6, 49, 1, 0, 0, 0, 8, 65, 1, 0, 0, 0, 10, 67, 1, 0, 0,
+		0, 12, 74, 1, 0, 0, 0, 14, 93, 1, 0, 0, 0, 16, 107, 1, 0, 0, 0, 18, 109,
+		1, 0, 0, 0, 20, 133, 1, 0, 0, 0, 22, 24, 5, 18, 0, 0, 23, 22, 1, 0, 0,
+		0, 23, 24, 1, 0, 0, 0, 24, 25, 1, 0, 0, 0, 25, 26, 3, 2, 1, 0, 26, 27,
+		3, 8, 4, 0, 27, 29, 3, 4, 2, 0, 28, 30, 5, 18, 0, 0, 29, 28, 1, 0, 0, 0,
+		29, 30, 1, 0, 0, 0, 30, 31, 1, 0, 0, 0, 31, 32, 5, 0, 0, 1, 32, 1, 1, 0,
+		0, 0, 33, 34, 5, 1, 0, 0, 34, 35, 5, 18, 0, 0, 35, 36, 5, 13, 0, 0, 36,
+		3, 1, 0, 0, 0, 37, 43, 3, 6, 3, 0, 38, 39, 3, 8, 4, 0, 39, 40, 3, 6, 3,
+		0, 40, 42, 1, 0, 0, 0, 41, 38, 1, 0, 0, 0, 42, 45, 1, 0, 0, 0, 43, 41,
+		1, 0, 0, 0, 43, 44, 1, 0, 0, 0, 44, 47, 1, 0, 0, 0, 45, 43, 1, 0, 0, 0,
+		46, 48, 3, 8, 4, 0, 47, 46, 1, 0, 0, 0, 47, 48, 1, 0, 0, 0, 48, 5, 1, 0,
+		0, 0, 49, 50, 5, 12, 0, 0, 50, 51, 5, 18, 0, 0, 51, 53, 5, 12, 0, 0, 52,
+		54, 5, 18, 0, 0, 53, 52, 1, 0, 0, 0, 53, 54, 1, 0, 0, 0, 54, 55, 1, 0,
+		0, 0, 55, 57, 3, 12, 6, 0, 56, 58, 5, 18, 0, 0, 57, 56, 1, 0, 0, 0, 57,
+		58, 1, 0, 0, 0, 58, 60, 1, 0, 0, 0, 59, 61, 3, 10, 5, 0, 60, 59, 1, 0,
+		0, 0, 60, 61, 1, 0, 0, 0, 61, 7, 1, 0, 0, 0, 62, 66, 5, 16, 0, 0, 63, 64,
+		5, 18, 0, 0, 64, 66, 4, 4, 0, 1, 65, 62, 1, 0, 0, 0, 65, 63, 1, 0, 0, 0,
+		66, 9, 1, 0, 0, 0, 67, 69, 5, 2, 0, 0, 68, 70, 5, 18, 0, 0, 69, 68, 1,
+		0, 0, 0, 69, 70, 1, 0, 0, 0, 70, 71, 1, 0, 0, 0, 71, 72, 3, 4, 2, 0, 72,
+		73, 5, 3, 0, 0, 73, 11, 1, 0, 0, 0, 74, 76, 5, 4, 0, 0, 75, 77, 5, 18,
+		0, 0, 76, 75, 1, 0, 0, 0, 76, 77, 1, 0, 0, 0, 77, 89, 1, 0, 0, 0, 78, 83,
+		3, 14, 7, 0, 79, 80, 5, 17, 0, 0, 80, 82, 3, 14, 7, 0, 81, 79, 1, 0, 0,
+		0, 82, 85, 1, 0, 0, 0, 83, 81, 1, 0, 0, 0, 83, 84, 1, 0, 0, 0, 84, 87,
+		1, 0, 0, 0, 85, 83, 1, 0, 0, 0, 86, 88, 5, 17, 0, 0, 87, 86, 1, 0, 0, 0,
+		87, 88, 1, 0, 0, 0, 88, 90, 1, 0, 0, 0, 89, 78, 1, 0, 0, 0, 89, 90, 1,
+		0, 0, 0, 90, 91, 1, 0, 0, 0, 91, 92, 5, 5, 0, 0, 92, 13, 1, 0, 0, 0, 93,
+		95, 5, 12, 0, 0, 94, 96, 5, 18, 0, 0, 95, 94, 1, 0, 0, 0, 95, 96, 1, 0,
+		0, 0, 96, 97, 1, 0, 0, 0, 97, 99, 5, 6, 0, 0, 98, 100, 5, 18, 0, 0, 99,
+		98, 1, 0, 0, 0, 99, 100, 1, 0, 0, 0, 100, 101, 1, 0, 0, 0, 101, 103, 3,
+		16, 8, 0, 102, 104, 5, 18, 0, 0, 103, 102, 1, 0, 0, 0, 103, 104, 1, 0,
+		0, 0, 104, 15, 1, 0, 0, 0, 105, 108, 3, 20, 10, 0, 106, 108, 3, 18, 9,
+		0, 107, 105, 1, 0, 0, 0, 107, 106, 1, 0, 0, 0, 108, 17, 1, 0, 0, 0, 109,
+		111, 5, 7, 0, 0, 110, 112, 5, 18, 0, 0, 111, 110, 1, 0, 0, 0, 111, 112,
+		1, 0, 0, 0, 112, 124, 1, 0, 0, 0, 113, 118, 3, 20, 10, 0, 114, 115, 5,
+		17, 0, 0, 115, 117, 3, 20, 10, 0, 116, 114, 1, 0, 0, 0, 117, 120, 1, 0,
+		0, 0, 118, 116, 1, 0, 0, 0, 118, 119, 1, 0, 0, 0, 119, 122, 1, 0, 0, 0,
+		120, 118, 1, 0, 0, 0, 121, 123, 5, 17, 0, 0, 122, 121, 1, 0, 0, 0, 122,
+		123, 1, 0, 0, 0, 123, 125, 1, 0, 0, 0, 124, 113, 1, 0, 0, 0, 124, 125,
+		1, 0, 0, 0, 125, 126, 1, 0, 0, 0, 126, 127, 5, 8, 0, 0, 127, 19, 1, 0,
+		0, 0, 128, 134, 5, 10, 0, 0, 129, 134, 5, 11, 0, 0, 130, 134, 5, 14, 0,
+		0, 131, 134, 7, 0, 0, 0, 132, 134, 5, 9, 0, 0, 133, 128, 1, 0, 0, 0, 133,
+		129, 1, 0, 0, 0, 133, 130, 1, 0, 0, 0, 133, 131, 1, 0, 0, 0, 133, 132,
+		1, 0, 0, 0, 134, 21, 1, 0, 0, 0, 22, 23, 29, 43, 47, 53, 57, 60, 65, 69,
+		76, 83, 87, 89, 95, 99, 103, 107, 111, 118, 122, 124, 133,
 	}
 	deserializer := antlr.NewATNDeserializer(nil)
 	staticData.atn = deserializer.Deserialize(staticData.serializedATN)
@@ -139,16 +150,17 @@ const (
 	UIDLParserT__4               = 5
 	UIDLParserT__5               = 6
 	UIDLParserT__6               = 7
-	UIDLParserBool               = 8
-	UIDLParserDoubleQuotedString = 9
-	UIDLParserBackQuotedString   = 10
-	UIDLParserIdentifier         = 11
-	UIDLParserNatural            = 12
-	UIDLParserFloat              = 13
-	UIDLParserInt                = 14
-	UIDLParserSemicolon          = 15
-	UIDLParserComma              = 16
-	UIDLParserWhiteSpace         = 17
+	UIDLParserT__7               = 8
+	UIDLParserBool               = 9
+	UIDLParserDoubleQuotedString = 10
+	UIDLParserBackQuotedString   = 11
+	UIDLParserIdentifier         = 12
+	UIDLParserNatural            = 13
+	UIDLParserFloat              = 14
+	UIDLParserInt                = 15
+	UIDLParserSemicolon          = 16
+	UIDLParserComma              = 17
+	UIDLParserWhiteSpace         = 18
 )
 
 // UIDLParser rules.
@@ -162,6 +174,8 @@ const (
 	UIDLParserRULE_attributes       = 6
 	UIDLParserRULE_attribute        = 7
 	UIDLParserRULE_value            = 8
+	UIDLParserRULE_listValue        = 9
+	UIDLParserRULE_simpleValue      = 10
 )
 
 // IUidlContext is an interface to support dynamic dispatch.
@@ -289,7 +303,7 @@ func (p *UIDLParser) Uidl() (localctx IUidlContext) {
 	var _la int
 
 	p.EnterOuterAlt(localctx, 1)
-	p.SetState(19)
+	p.SetState(23)
 	p.GetErrorHandler().Sync(p)
 	if p.HasError() {
 		goto errorExit
@@ -298,7 +312,7 @@ func (p *UIDLParser) Uidl() (localctx IUidlContext) {
 
 	if _la == UIDLParserWhiteSpace {
 		{
-			p.SetState(18)
+			p.SetState(22)
 			p.Match(UIDLParserWhiteSpace)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -308,18 +322,18 @@ func (p *UIDLParser) Uidl() (localctx IUidlContext) {
 
 	}
 	{
-		p.SetState(21)
+		p.SetState(25)
 		p.Version()
 	}
 	{
-		p.SetState(22)
+		p.SetState(26)
 		p.CommandSeparator()
 	}
 	{
-		p.SetState(23)
+		p.SetState(27)
 		p.Commands()
 	}
-	p.SetState(25)
+	p.SetState(29)
 	p.GetErrorHandler().Sync(p)
 	if p.HasError() {
 		goto errorExit
@@ -328,7 +342,7 @@ func (p *UIDLParser) Uidl() (localctx IUidlContext) {
 
 	if _la == UIDLParserWhiteSpace {
 		{
-			p.SetState(24)
+			p.SetState(28)
 			p.Match(UIDLParserWhiteSpace)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -338,7 +352,7 @@ func (p *UIDLParser) Uidl() (localctx IUidlContext) {
 
 	}
 	{
-		p.SetState(27)
+		p.SetState(31)
 		p.Match(UIDLParserEOF)
 		if p.HasError() {
 			// Recognition error - abort rule
@@ -425,22 +439,17 @@ func (s *VersionContext) ToStringTree(ruleNames []string, recog antlr.Recognizer
 func (p *UIDLParser) Version() (localctx IVersionContext) {
 	localctx = NewVersionContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 2, UIDLParserRULE_version)
-	var _la int
-
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(29)
-		_la = p.GetTokenStream().LA(1)
-
-		if !(_la == UIDLParserT__0 || _la == UIDLParserT__1) {
-			p.GetErrorHandler().RecoverInline(p)
-		} else {
-			p.GetErrorHandler().ReportMatch(p)
-			p.Consume()
+		p.SetState(33)
+		p.Match(UIDLParserT__0)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
 		}
 	}
 	{
-		p.SetState(30)
+		p.SetState(34)
 		p.Match(UIDLParserWhiteSpace)
 		if p.HasError() {
 			// Recognition error - abort rule
@@ -448,7 +457,7 @@ func (p *UIDLParser) Version() (localctx IVersionContext) {
 		}
 	}
 	{
-		p.SetState(31)
+		p.SetState(35)
 		p.Match(UIDLParserNatural)
 		if p.HasError() {
 			// Recognition error - abort rule
@@ -615,10 +624,10 @@ func (p *UIDLParser) Commands() (localctx ICommandsContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(33)
+		p.SetState(37)
 		p.Command()
 	}
-	p.SetState(39)
+	p.SetState(43)
 	p.GetErrorHandler().Sync(p)
 	if p.HasError() {
 		goto errorExit
@@ -630,16 +639,16 @@ func (p *UIDLParser) Commands() (localctx ICommandsContext) {
 	for _alt != 2 && _alt != antlr.ATNInvalidAltNumber {
 		if _alt == 1 {
 			{
-				p.SetState(34)
+				p.SetState(38)
 				p.CommandSeparator()
 			}
 			{
-				p.SetState(35)
+				p.SetState(39)
 				p.Command()
 			}
 
 		}
-		p.SetState(41)
+		p.SetState(45)
 		p.GetErrorHandler().Sync(p)
 		if p.HasError() {
 			goto errorExit
@@ -649,12 +658,12 @@ func (p *UIDLParser) Commands() (localctx ICommandsContext) {
 			goto errorExit
 		}
 	}
-	p.SetState(43)
+	p.SetState(47)
 	p.GetErrorHandler().Sync(p)
 
 	if p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 3, p.GetParserRuleContext()) == 1 {
 		{
-			p.SetState(42)
+			p.SetState(46)
 			p.CommandSeparator()
 		}
 
@@ -789,7 +798,7 @@ func (p *UIDLParser) Command() (localctx ICommandContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(45)
+		p.SetState(49)
 		p.Match(UIDLParserIdentifier)
 		if p.HasError() {
 			// Recognition error - abort rule
@@ -797,7 +806,7 @@ func (p *UIDLParser) Command() (localctx ICommandContext) {
 		}
 	}
 	{
-		p.SetState(46)
+		p.SetState(50)
 		p.Match(UIDLParserWhiteSpace)
 		if p.HasError() {
 			// Recognition error - abort rule
@@ -805,14 +814,14 @@ func (p *UIDLParser) Command() (localctx ICommandContext) {
 		}
 	}
 	{
-		p.SetState(47)
+		p.SetState(51)
 		p.Match(UIDLParserIdentifier)
 		if p.HasError() {
 			// Recognition error - abort rule
 			goto errorExit
 		}
 	}
-	p.SetState(49)
+	p.SetState(53)
 	p.GetErrorHandler().Sync(p)
 	if p.HasError() {
 		goto errorExit
@@ -821,7 +830,7 @@ func (p *UIDLParser) Command() (localctx ICommandContext) {
 
 	if _la == UIDLParserWhiteSpace {
 		{
-			p.SetState(48)
+			p.SetState(52)
 			p.Match(UIDLParserWhiteSpace)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -831,15 +840,15 @@ func (p *UIDLParser) Command() (localctx ICommandContext) {
 
 	}
 	{
-		p.SetState(51)
+		p.SetState(55)
 		p.Attributes()
 	}
-	p.SetState(53)
+	p.SetState(57)
 	p.GetErrorHandler().Sync(p)
 
 	if p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 5, p.GetParserRuleContext()) == 1 {
 		{
-			p.SetState(52)
+			p.SetState(56)
 			p.Match(UIDLParserWhiteSpace)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -850,16 +859,16 @@ func (p *UIDLParser) Command() (localctx ICommandContext) {
 	} else if p.HasError() { // JIM
 		goto errorExit
 	}
-	p.SetState(56)
+	p.SetState(60)
 	p.GetErrorHandler().Sync(p)
 	if p.HasError() {
 		goto errorExit
 	}
 	_la = p.GetTokenStream().LA(1)
 
-	if _la == UIDLParserT__2 {
+	if _la == UIDLParserT__1 {
 		{
-			p.SetState(55)
+			p.SetState(59)
 			p.CommandBody()
 		}
 
@@ -955,7 +964,7 @@ func (s *CommandSeparatorContext) ToStringTree(ruleNames []string, recog antlr.R
 func (p *UIDLParser) CommandSeparator() (localctx ICommandSeparatorContext) {
 	localctx = NewCommandSeparatorContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 8, UIDLParserRULE_commandSeparator)
-	p.SetState(61)
+	p.SetState(65)
 	p.GetErrorHandler().Sync(p)
 	if p.HasError() {
 		goto errorExit
@@ -965,7 +974,7 @@ func (p *UIDLParser) CommandSeparator() (localctx ICommandSeparatorContext) {
 	case UIDLParserSemicolon:
 		p.EnterOuterAlt(localctx, 1)
 		{
-			p.SetState(58)
+			p.SetState(62)
 			p.Match(UIDLParserSemicolon)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -976,7 +985,7 @@ func (p *UIDLParser) CommandSeparator() (localctx ICommandSeparatorContext) {
 	case UIDLParserWhiteSpace:
 		p.EnterOuterAlt(localctx, 2)
 		{
-			p.SetState(59)
+			p.SetState(63)
 
 			var _m = p.Match(UIDLParserWhiteSpace)
 
@@ -986,7 +995,7 @@ func (p *UIDLParser) CommandSeparator() (localctx ICommandSeparatorContext) {
 				goto errorExit
 			}
 		}
-		p.SetState(60)
+		p.SetState(64)
 
 		if !(strings.ContainsRune((func() string {
 			if localctx.(*CommandSeparatorContext).GetWs() == nil {
@@ -1026,8 +1035,7 @@ type ICommandBodyContext interface {
 
 	// Getter signatures
 	Commands() ICommandsContext
-	AllWhiteSpace() []antlr.TerminalNode
-	WhiteSpace(i int) antlr.TerminalNode
+	WhiteSpace() antlr.TerminalNode
 
 	// IsCommandBodyContext differentiates from other interfaces.
 	IsCommandBodyContext()
@@ -1081,12 +1089,8 @@ func (s *CommandBodyContext) Commands() ICommandsContext {
 	return t.(ICommandsContext)
 }
 
-func (s *CommandBodyContext) AllWhiteSpace() []antlr.TerminalNode {
-	return s.GetTokens(UIDLParserWhiteSpace)
-}
-
-func (s *CommandBodyContext) WhiteSpace(i int) antlr.TerminalNode {
-	return s.GetToken(UIDLParserWhiteSpace, i)
+func (s *CommandBodyContext) WhiteSpace() antlr.TerminalNode {
+	return s.GetToken(UIDLParserWhiteSpace, 0)
 }
 
 func (s *CommandBodyContext) GetRuleContext() antlr.RuleContext {
@@ -1104,34 +1108,12 @@ func (p *UIDLParser) CommandBody() (localctx ICommandBodyContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(63)
-		p.Match(UIDLParserT__2)
+		p.SetState(67)
+		p.Match(UIDLParserT__1)
 		if p.HasError() {
 			// Recognition error - abort rule
 			goto errorExit
 		}
-	}
-	p.SetState(65)
-	p.GetErrorHandler().Sync(p)
-	if p.HasError() {
-		goto errorExit
-	}
-	_la = p.GetTokenStream().LA(1)
-
-	if _la == UIDLParserWhiteSpace {
-		{
-			p.SetState(64)
-			p.Match(UIDLParserWhiteSpace)
-			if p.HasError() {
-				// Recognition error - abort rule
-				goto errorExit
-			}
-		}
-
-	}
-	{
-		p.SetState(67)
-		p.Commands()
 	}
 	p.SetState(69)
 	p.GetErrorHandler().Sync(p)
@@ -1153,7 +1135,11 @@ func (p *UIDLParser) CommandBody() (localctx ICommandBodyContext) {
 	}
 	{
 		p.SetState(71)
-		p.Match(UIDLParserT__3)
+		p.Commands()
+	}
+	{
+		p.SetState(72)
+		p.Match(UIDLParserT__2)
 		if p.HasError() {
 			// Recognition error - abort rule
 			goto errorExit
@@ -1293,14 +1279,14 @@ func (p *UIDLParser) Attributes() (localctx IAttributesContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(73)
-		p.Match(UIDLParserT__4)
+		p.SetState(74)
+		p.Match(UIDLParserT__3)
 		if p.HasError() {
 			// Recognition error - abort rule
 			goto errorExit
 		}
 	}
-	p.SetState(75)
+	p.SetState(76)
 	p.GetErrorHandler().Sync(p)
 	if p.HasError() {
 		goto errorExit
@@ -1309,7 +1295,7 @@ func (p *UIDLParser) Attributes() (localctx IAttributesContext) {
 
 	if _la == UIDLParserWhiteSpace {
 		{
-			p.SetState(74)
+			p.SetState(75)
 			p.Match(UIDLParserWhiteSpace)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -1318,7 +1304,7 @@ func (p *UIDLParser) Attributes() (localctx IAttributesContext) {
 		}
 
 	}
-	p.SetState(85)
+	p.SetState(89)
 	p.GetErrorHandler().Sync(p)
 	if p.HasError() {
 		goto errorExit
@@ -1327,22 +1313,22 @@ func (p *UIDLParser) Attributes() (localctx IAttributesContext) {
 
 	if _la == UIDLParserIdentifier {
 		{
-			p.SetState(77)
+			p.SetState(78)
 			p.Attribute()
 		}
-		p.SetState(82)
+		p.SetState(83)
 		p.GetErrorHandler().Sync(p)
 		if p.HasError() {
 			goto errorExit
 		}
-		_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 11, p.GetParserRuleContext())
+		_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 10, p.GetParserRuleContext())
 		if p.HasError() {
 			goto errorExit
 		}
 		for _alt != 2 && _alt != antlr.ATNInvalidAltNumber {
 			if _alt == 1 {
 				{
-					p.SetState(78)
+					p.SetState(79)
 					p.Match(UIDLParserComma)
 					if p.HasError() {
 						// Recognition error - abort rule
@@ -1350,44 +1336,44 @@ func (p *UIDLParser) Attributes() (localctx IAttributesContext) {
 					}
 				}
 				{
-					p.SetState(79)
+					p.SetState(80)
 					p.Attribute()
 				}
 
 			}
-			p.SetState(84)
+			p.SetState(85)
 			p.GetErrorHandler().Sync(p)
 			if p.HasError() {
 				goto errorExit
 			}
-			_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 11, p.GetParserRuleContext())
+			_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 10, p.GetParserRuleContext())
 			if p.HasError() {
 				goto errorExit
 			}
 		}
+		p.SetState(87)
+		p.GetErrorHandler().Sync(p)
+		if p.HasError() {
+			goto errorExit
+		}
+		_la = p.GetTokenStream().LA(1)
 
-	}
-	p.SetState(88)
-	p.GetErrorHandler().Sync(p)
-	if p.HasError() {
-		goto errorExit
-	}
-	_la = p.GetTokenStream().LA(1)
-
-	if _la == UIDLParserComma {
-		{
-			p.SetState(87)
-			p.Match(UIDLParserComma)
-			if p.HasError() {
-				// Recognition error - abort rule
-				goto errorExit
+		if _la == UIDLParserComma {
+			{
+				p.SetState(86)
+				p.Match(UIDLParserComma)
+				if p.HasError() {
+					// Recognition error - abort rule
+					goto errorExit
+				}
 			}
+
 		}
 
 	}
 	{
-		p.SetState(90)
-		p.Match(UIDLParserT__5)
+		p.SetState(91)
+		p.Match(UIDLParserT__4)
 		if p.HasError() {
 			// Recognition error - abort rule
 			goto errorExit
@@ -1499,14 +1485,14 @@ func (p *UIDLParser) Attribute() (localctx IAttributeContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(92)
+		p.SetState(93)
 		p.Match(UIDLParserIdentifier)
 		if p.HasError() {
 			// Recognition error - abort rule
 			goto errorExit
 		}
 	}
-	p.SetState(94)
+	p.SetState(95)
 	p.GetErrorHandler().Sync(p)
 	if p.HasError() {
 		goto errorExit
@@ -1515,7 +1501,7 @@ func (p *UIDLParser) Attribute() (localctx IAttributeContext) {
 
 	if _la == UIDLParserWhiteSpace {
 		{
-			p.SetState(93)
+			p.SetState(94)
 			p.Match(UIDLParserWhiteSpace)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -1525,14 +1511,14 @@ func (p *UIDLParser) Attribute() (localctx IAttributeContext) {
 
 	}
 	{
-		p.SetState(96)
-		p.Match(UIDLParserT__6)
+		p.SetState(97)
+		p.Match(UIDLParserT__5)
 		if p.HasError() {
 			// Recognition error - abort rule
 			goto errorExit
 		}
 	}
-	p.SetState(98)
+	p.SetState(99)
 	p.GetErrorHandler().Sync(p)
 	if p.HasError() {
 		goto errorExit
@@ -1541,7 +1527,7 @@ func (p *UIDLParser) Attribute() (localctx IAttributeContext) {
 
 	if _la == UIDLParserWhiteSpace {
 		{
-			p.SetState(97)
+			p.SetState(98)
 			p.Match(UIDLParserWhiteSpace)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -1551,10 +1537,10 @@ func (p *UIDLParser) Attribute() (localctx IAttributeContext) {
 
 	}
 	{
-		p.SetState(100)
+		p.SetState(101)
 		p.Value()
 	}
-	p.SetState(102)
+	p.SetState(103)
 	p.GetErrorHandler().Sync(p)
 	if p.HasError() {
 		goto errorExit
@@ -1563,7 +1549,7 @@ func (p *UIDLParser) Attribute() (localctx IAttributeContext) {
 
 	if _la == UIDLParserWhiteSpace {
 		{
-			p.SetState(101)
+			p.SetState(102)
 			p.Match(UIDLParserWhiteSpace)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -1594,12 +1580,8 @@ type IValueContext interface {
 	GetParser() antlr.Parser
 
 	// Getter signatures
-	DoubleQuotedString() antlr.TerminalNode
-	BackQuotedString() antlr.TerminalNode
-	Float() antlr.TerminalNode
-	Natural() antlr.TerminalNode
-	Int() antlr.TerminalNode
-	Bool() antlr.TerminalNode
+	SimpleValue() ISimpleValueContext
+	ListValue() IListValueContext
 
 	// IsValueContext differentiates from other interfaces.
 	IsValueContext()
@@ -1637,28 +1619,36 @@ func NewValueContext(parser antlr.Parser, parent antlr.ParserRuleContext, invoki
 
 func (s *ValueContext) GetParser() antlr.Parser { return s.parser }
 
-func (s *ValueContext) DoubleQuotedString() antlr.TerminalNode {
-	return s.GetToken(UIDLParserDoubleQuotedString, 0)
+func (s *ValueContext) SimpleValue() ISimpleValueContext {
+	var t antlr.RuleContext
+	for _, ctx := range s.GetChildren() {
+		if _, ok := ctx.(ISimpleValueContext); ok {
+			t = ctx.(antlr.RuleContext)
+			break
+		}
+	}
+
+	if t == nil {
+		return nil
+	}
+
+	return t.(ISimpleValueContext)
 }
 
-func (s *ValueContext) BackQuotedString() antlr.TerminalNode {
-	return s.GetToken(UIDLParserBackQuotedString, 0)
-}
+func (s *ValueContext) ListValue() IListValueContext {
+	var t antlr.RuleContext
+	for _, ctx := range s.GetChildren() {
+		if _, ok := ctx.(IListValueContext); ok {
+			t = ctx.(antlr.RuleContext)
+			break
+		}
+	}
 
-func (s *ValueContext) Float() antlr.TerminalNode {
-	return s.GetToken(UIDLParserFloat, 0)
-}
+	if t == nil {
+		return nil
+	}
 
-func (s *ValueContext) Natural() antlr.TerminalNode {
-	return s.GetToken(UIDLParserNatural, 0)
-}
-
-func (s *ValueContext) Int() antlr.TerminalNode {
-	return s.GetToken(UIDLParserInt, 0)
-}
-
-func (s *ValueContext) Bool() antlr.TerminalNode {
-	return s.GetToken(UIDLParserBool, 0)
+	return t.(IListValueContext)
 }
 
 func (s *ValueContext) GetRuleContext() antlr.RuleContext {
@@ -1672,9 +1662,368 @@ func (s *ValueContext) ToStringTree(ruleNames []string, recog antlr.Recognizer) 
 func (p *UIDLParser) Value() (localctx IValueContext) {
 	localctx = NewValueContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 16, UIDLParserRULE_value)
+	p.SetState(107)
+	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
+
+	switch p.GetTokenStream().LA(1) {
+	case UIDLParserBool, UIDLParserDoubleQuotedString, UIDLParserBackQuotedString, UIDLParserNatural, UIDLParserFloat, UIDLParserInt:
+		p.EnterOuterAlt(localctx, 1)
+		{
+			p.SetState(105)
+			p.SimpleValue()
+		}
+
+	case UIDLParserT__6:
+		p.EnterOuterAlt(localctx, 2)
+		{
+			p.SetState(106)
+			p.ListValue()
+		}
+
+	default:
+		p.SetError(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		goto errorExit
+	}
+
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
+	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
+}
+
+// IListValueContext is an interface to support dynamic dispatch.
+type IListValueContext interface {
+	antlr.ParserRuleContext
+
+	// GetParser returns the parser.
+	GetParser() antlr.Parser
+
+	// Getter signatures
+	WhiteSpace() antlr.TerminalNode
+	AllSimpleValue() []ISimpleValueContext
+	SimpleValue(i int) ISimpleValueContext
+	AllComma() []antlr.TerminalNode
+	Comma(i int) antlr.TerminalNode
+
+	// IsListValueContext differentiates from other interfaces.
+	IsListValueContext()
+}
+
+type ListValueContext struct {
+	antlr.BaseParserRuleContext
+	parser antlr.Parser
+}
+
+func NewEmptyListValueContext() *ListValueContext {
+	var p = new(ListValueContext)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = UIDLParserRULE_listValue
+	return p
+}
+
+func InitEmptyListValueContext(p *ListValueContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = UIDLParserRULE_listValue
+}
+
+func (*ListValueContext) IsListValueContext() {}
+
+func NewListValueContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *ListValueContext {
+	var p = new(ListValueContext)
+
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
+
+	p.parser = parser
+	p.RuleIndex = UIDLParserRULE_listValue
+
+	return p
+}
+
+func (s *ListValueContext) GetParser() antlr.Parser { return s.parser }
+
+func (s *ListValueContext) WhiteSpace() antlr.TerminalNode {
+	return s.GetToken(UIDLParserWhiteSpace, 0)
+}
+
+func (s *ListValueContext) AllSimpleValue() []ISimpleValueContext {
+	children := s.GetChildren()
+	len := 0
+	for _, ctx := range children {
+		if _, ok := ctx.(ISimpleValueContext); ok {
+			len++
+		}
+	}
+
+	tst := make([]ISimpleValueContext, len)
+	i := 0
+	for _, ctx := range children {
+		if t, ok := ctx.(ISimpleValueContext); ok {
+			tst[i] = t.(ISimpleValueContext)
+			i++
+		}
+	}
+
+	return tst
+}
+
+func (s *ListValueContext) SimpleValue(i int) ISimpleValueContext {
+	var t antlr.RuleContext
+	j := 0
+	for _, ctx := range s.GetChildren() {
+		if _, ok := ctx.(ISimpleValueContext); ok {
+			if j == i {
+				t = ctx.(antlr.RuleContext)
+				break
+			}
+			j++
+		}
+	}
+
+	if t == nil {
+		return nil
+	}
+
+	return t.(ISimpleValueContext)
+}
+
+func (s *ListValueContext) AllComma() []antlr.TerminalNode {
+	return s.GetTokens(UIDLParserComma)
+}
+
+func (s *ListValueContext) Comma(i int) antlr.TerminalNode {
+	return s.GetToken(UIDLParserComma, i)
+}
+
+func (s *ListValueContext) GetRuleContext() antlr.RuleContext {
+	return s
+}
+
+func (s *ListValueContext) ToStringTree(ruleNames []string, recog antlr.Recognizer) string {
+	return antlr.TreesStringTree(s, ruleNames, recog)
+}
+
+func (p *UIDLParser) ListValue() (localctx IListValueContext) {
+	localctx = NewListValueContext(p, p.GetParserRuleContext(), p.GetState())
+	p.EnterRule(localctx, 18, UIDLParserRULE_listValue)
 	var _la int
 
-	p.SetState(109)
+	var _alt int
+
+	p.EnterOuterAlt(localctx, 1)
+	{
+		p.SetState(109)
+		p.Match(UIDLParserT__6)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
+	}
+	p.SetState(111)
+	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
+	_la = p.GetTokenStream().LA(1)
+
+	if _la == UIDLParserWhiteSpace {
+		{
+			p.SetState(110)
+			p.Match(UIDLParserWhiteSpace)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
+		}
+
+	}
+	p.SetState(124)
+	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
+	_la = p.GetTokenStream().LA(1)
+
+	if (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&60928) != 0 {
+		{
+			p.SetState(113)
+			p.SimpleValue()
+		}
+		p.SetState(118)
+		p.GetErrorHandler().Sync(p)
+		if p.HasError() {
+			goto errorExit
+		}
+		_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 18, p.GetParserRuleContext())
+		if p.HasError() {
+			goto errorExit
+		}
+		for _alt != 2 && _alt != antlr.ATNInvalidAltNumber {
+			if _alt == 1 {
+				{
+					p.SetState(114)
+					p.Match(UIDLParserComma)
+					if p.HasError() {
+						// Recognition error - abort rule
+						goto errorExit
+					}
+				}
+				{
+					p.SetState(115)
+					p.SimpleValue()
+				}
+
+			}
+			p.SetState(120)
+			p.GetErrorHandler().Sync(p)
+			if p.HasError() {
+				goto errorExit
+			}
+			_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 18, p.GetParserRuleContext())
+			if p.HasError() {
+				goto errorExit
+			}
+		}
+		p.SetState(122)
+		p.GetErrorHandler().Sync(p)
+		if p.HasError() {
+			goto errorExit
+		}
+		_la = p.GetTokenStream().LA(1)
+
+		if _la == UIDLParserComma {
+			{
+				p.SetState(121)
+				p.Match(UIDLParserComma)
+				if p.HasError() {
+					// Recognition error - abort rule
+					goto errorExit
+				}
+			}
+
+		}
+
+	}
+	{
+		p.SetState(126)
+		p.Match(UIDLParserT__7)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
+	}
+
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
+	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
+}
+
+// ISimpleValueContext is an interface to support dynamic dispatch.
+type ISimpleValueContext interface {
+	antlr.ParserRuleContext
+
+	// GetParser returns the parser.
+	GetParser() antlr.Parser
+
+	// Getter signatures
+	DoubleQuotedString() antlr.TerminalNode
+	BackQuotedString() antlr.TerminalNode
+	Float() antlr.TerminalNode
+	Natural() antlr.TerminalNode
+	Int() antlr.TerminalNode
+	Bool() antlr.TerminalNode
+
+	// IsSimpleValueContext differentiates from other interfaces.
+	IsSimpleValueContext()
+}
+
+type SimpleValueContext struct {
+	antlr.BaseParserRuleContext
+	parser antlr.Parser
+}
+
+func NewEmptySimpleValueContext() *SimpleValueContext {
+	var p = new(SimpleValueContext)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = UIDLParserRULE_simpleValue
+	return p
+}
+
+func InitEmptySimpleValueContext(p *SimpleValueContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = UIDLParserRULE_simpleValue
+}
+
+func (*SimpleValueContext) IsSimpleValueContext() {}
+
+func NewSimpleValueContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *SimpleValueContext {
+	var p = new(SimpleValueContext)
+
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
+
+	p.parser = parser
+	p.RuleIndex = UIDLParserRULE_simpleValue
+
+	return p
+}
+
+func (s *SimpleValueContext) GetParser() antlr.Parser { return s.parser }
+
+func (s *SimpleValueContext) DoubleQuotedString() antlr.TerminalNode {
+	return s.GetToken(UIDLParserDoubleQuotedString, 0)
+}
+
+func (s *SimpleValueContext) BackQuotedString() antlr.TerminalNode {
+	return s.GetToken(UIDLParserBackQuotedString, 0)
+}
+
+func (s *SimpleValueContext) Float() antlr.TerminalNode {
+	return s.GetToken(UIDLParserFloat, 0)
+}
+
+func (s *SimpleValueContext) Natural() antlr.TerminalNode {
+	return s.GetToken(UIDLParserNatural, 0)
+}
+
+func (s *SimpleValueContext) Int() antlr.TerminalNode {
+	return s.GetToken(UIDLParserInt, 0)
+}
+
+func (s *SimpleValueContext) Bool() antlr.TerminalNode {
+	return s.GetToken(UIDLParserBool, 0)
+}
+
+func (s *SimpleValueContext) GetRuleContext() antlr.RuleContext {
+	return s
+}
+
+func (s *SimpleValueContext) ToStringTree(ruleNames []string, recog antlr.Recognizer) string {
+	return antlr.TreesStringTree(s, ruleNames, recog)
+}
+
+func (p *UIDLParser) SimpleValue() (localctx ISimpleValueContext) {
+	localctx = NewSimpleValueContext(p, p.GetParserRuleContext(), p.GetState())
+	p.EnterRule(localctx, 20, UIDLParserRULE_simpleValue)
+	var _la int
+
+	p.SetState(133)
 	p.GetErrorHandler().Sync(p)
 	if p.HasError() {
 		goto errorExit
@@ -1684,7 +2033,7 @@ func (p *UIDLParser) Value() (localctx IValueContext) {
 	case UIDLParserDoubleQuotedString:
 		p.EnterOuterAlt(localctx, 1)
 		{
-			p.SetState(104)
+			p.SetState(128)
 			p.Match(UIDLParserDoubleQuotedString)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -1695,7 +2044,7 @@ func (p *UIDLParser) Value() (localctx IValueContext) {
 	case UIDLParserBackQuotedString:
 		p.EnterOuterAlt(localctx, 2)
 		{
-			p.SetState(105)
+			p.SetState(129)
 			p.Match(UIDLParserBackQuotedString)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -1706,7 +2055,7 @@ func (p *UIDLParser) Value() (localctx IValueContext) {
 	case UIDLParserFloat:
 		p.EnterOuterAlt(localctx, 3)
 		{
-			p.SetState(106)
+			p.SetState(130)
 			p.Match(UIDLParserFloat)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -1717,7 +2066,7 @@ func (p *UIDLParser) Value() (localctx IValueContext) {
 	case UIDLParserNatural, UIDLParserInt:
 		p.EnterOuterAlt(localctx, 4)
 		{
-			p.SetState(107)
+			p.SetState(131)
 			_la = p.GetTokenStream().LA(1)
 
 			if !(_la == UIDLParserNatural || _la == UIDLParserInt) {
@@ -1731,7 +2080,7 @@ func (p *UIDLParser) Value() (localctx IValueContext) {
 	case UIDLParserBool:
 		p.EnterOuterAlt(localctx, 5)
 		{
-			p.SetState(108)
+			p.SetState(132)
 			p.Match(UIDLParserBool)
 			if p.HasError() {
 				// Recognition error - abort rule

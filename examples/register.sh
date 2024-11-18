@@ -13,13 +13,10 @@ read -u "${gui[0]}" json
 echo "JSON: $json"
 if wait -f "$gui_pid"; then
   name=$(echo "$json" | jq -r '.name')
-  echo "name: $name"
   email=$(echo "$json" | jq -r '.email')
-  echo "email: $email"
   gender=$(echo "$json" | jq -r '.gender')
-  echo "gender: $gender"
   bio=$(echo "$json" | jq -r '.bio')
-  echo "bio: $bio"
+  echo "name: $name; email: $email; gender: $gender; bio: $bio"
   echo "INSERT INTO person (name, email, gender, bio) VALUES ('$name', '$email', $gender, '$bio')"
   ret=0
 else

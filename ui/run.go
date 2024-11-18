@@ -45,3 +45,15 @@ func NewWindow(title string) fyne.Window {
 func StoreExitCode(code int32) {
 	exitCode.Store(code)
 }
+
+func AnysToStrings(a any) []string {
+	al, ok := a.([]any)
+	if !ok {
+		return nil
+	}
+	sl := make([]string, len(al))
+	for i := 0; i < len(sl); i++ {
+		sl[i] = al[i].(string) // we validated this
+	}
+	return sl
+}
