@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/flowdev/fdialog/ui"
 	"io"
+	"math"
 	"os"
 	"reflect"
 	"testing"
@@ -83,6 +84,26 @@ func TestWrite(t *testing.T) {
 			gotDescr: ui.AttributesDescr{"group": "g"},
 			wantOutput: map[string]any{"i": map[string]any{"j": map[string]any{"k": float64(9)},
 				"l": map[string]any{"m": float64(10)}, "o": map[string]any{"k": float64(12)}}, "a": float64(11)},
+		}, {
+			name:        "simple-bool",
+			gotUIValues: []uiValue{{value: true, name: "b"}},
+			gotDescr:    ui.AttributesDescr{"outputKey": "l", "fullName": "b"},
+			wantOutput:  map[string]any{"l": true},
+		}, {
+			name:        "simple-string",
+			gotUIValues: []uiValue{{value: "bla", name: "s"}},
+			gotDescr:    ui.AttributesDescr{"outputKey": "l", "fullName": "s"},
+			wantOutput:  map[string]any{"l": "bla"},
+		}, {
+			name:        "simple-float",
+			gotUIValues: []uiValue{{value: math.Pi, name: "p"}},
+			gotDescr:    ui.AttributesDescr{"outputKey": "l", "fullName": "p"},
+			wantOutput:  map[string]any{"l": math.Pi},
+		}, {
+			name:        "list-string",
+			gotUIValues: []uiValue{{value: []string{"abc", "def"}, name: "s"}},
+			gotDescr:    ui.AttributesDescr{"outputKey": "l", "fullName": "s"},
+			wantOutput:  map[string]any{"l": []string{"abc", "def"}},
 		},
 	}
 

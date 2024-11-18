@@ -1,14 +1,12 @@
 package widget
 
 import (
-	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 	"github.com/flowdev/fdialog/ui"
 	"log"
 	"net/url"
-	"strings"
 )
 
 func createEntry(attrs ui.AttributesDescr, values map[string]any, outputKey, fullName string) fyne.CanvasObject {
@@ -50,11 +48,13 @@ func createCheckBox(attrs ui.AttributesDescr, values map[string]any, outputKey, 
 
 func createCheckGroup(attrs ui.AttributesDescr, values map[string]any, outputKey, _ string) fyne.CanvasObject {
 	cg := widget.NewCheckGroup(ui.AnysToStrings(attrs["options"]), func(selected []string) {
-		result := strings.Join(selected, "\n")
+		result := make([]any, len(selected))
+		for i := 0; i < len(selected); i++ {
+			result[i] = selected[i]
+		}
 		values[outputKey] = &result
 	})
 	cg.SetSelected(ui.AnysToStrings(attrs["initiallySelected"]))
-	values[outputKey] = &cg.Selected
 	return cg
 }
 
@@ -69,7 +69,6 @@ func createHyperlink(attrs ui.AttributesDescr, _ map[string]any, _, fullName str
 }
 
 func createRadioGroup(attrs ui.AttributesDescr, values map[string]any, outputKey, _ string) fyne.CanvasObject {
-	fmt.Println("createRadioGroup: called")
 	rg := widget.NewRadioGroup(ui.AnysToStrings(attrs["options"]), nil)
 	horizontal, _ := attrs["horizontal"].(bool)
 	rg.Horizontal = horizontal

@@ -75,13 +75,13 @@ func TestValidate(t *testing.T) {
 					":children": omap.New[string, ui.AttributesDescr](2).Build(
 						"confirm", map[string]any{
 							":keyword": "action",
-							"type":    "exit",
-							"code":    int64(0),
+							"type":     "exit",
+							"code":     int64(0),
 						}).Build(
 						"dismiss", map[string]any{
 							":keyword": "action",
-							"type":    "exit",
-							"code":    int64(1),
+							"type":     "exit",
+							"code":     int64(1),
 						}),
 				}),
 			givenStrict: true,

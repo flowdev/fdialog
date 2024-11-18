@@ -303,12 +303,21 @@ func writeJSONValue(value any, arena *fastjson.Arena, fullName string) *fastjson
 			return arena.NewTrue()
 		}
 		return arena.NewFalse()
+	case []any:
+		return writeJSONArray(v, arena, fullName)
 	case map[string]any:
 		return writeJSONMap(v, arena, fullName)
 	default:
 		log.Printf(`ERROR: for %q: unable to write unknown data type %T`, fullName, v)
 		return arena.NewNull()
 	}
+}
+func writeJSONArray(value []any, arena *fastjson.Arena, fullName string) *fastjson.Value {
+	arr := arena.NewArray()
+	for i, v := range value {
+		arr.SetArrayItem(i, writeJSONValue(v, arena, fullName))
+	}
+	return arr
 }
 
 // ---------------------------------------------------------------------------

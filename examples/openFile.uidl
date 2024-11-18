@@ -6,7 +6,7 @@ window main(title="Open File", width=800, height=600, exitCode=1) {
         type="openFile",
         confirmText="Open",
         dismissText="Go back",
-        extensions=".jpg,.jpeg",
+        extensions=[".jpg", ".jpeg"],
         width=800, height=600,
     ) {
         action choose(type="group") {

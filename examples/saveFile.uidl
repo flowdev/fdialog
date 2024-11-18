@@ -6,7 +6,7 @@ window main(title="Save File", width=800, height=600, exitCode=1) {
         type="saveFile",
         confirmText="Save",
         dismissText="Cancel",
-        extensions=".jpg,.jpeg",
+        extensions=[".jpg", ".jpeg"],
         width=800, height=600,
     ) {
         action choose(type="group") {
