@@ -1,0 +1,92 @@
+{
+   "main": {
+       ":keyword": "window",
+       "title": "Form",
+       "width": 800,
+       "height": 600,
+       "exitCode": 1,
+       ":children": {
+           "form": {
+               ":keyword": "form",
+               "submitText": "Submit",
+               "cancelText": "Cancel",
+               ":children": {
+                   "check1": {
+                       ":keyword": "item",
+                       "type": "checkGroup",
+                       "label": "Dating?",
+                       "options": [
+                           "yes",
+                           "no",
+                           "maybe"
+                       ],
+                       "initiallySelected": "maybe",
+                       "group": "form",
+                       "outputKey": "dating"
+                   },
+                   "radio1": {
+                       ":keyword": "item",
+                       "type": "radioGroup",
+                       "label": "Gender",
+                       "options": [
+                           "divers",
+                           "female",
+                           "male"
+                       ],
+                       "required": true,
+                       "group": "form",
+                       "outputKey": "gender"
+                   },
+                   "sel1": {
+                       ":keyword": "item",
+                       "type": "select",
+                       "label": "Place",
+                       "options": [
+                           "Sörup",
+                           "Flensburg",
+                           "Oeversee",
+                           "Hamburg",
+                           "Berlin",
+                           "Martinsheim"
+                       ],
+                       "initiallySelected": "Berlin",
+                       "group": "form",
+                       "outputKey": "place1"
+                   },
+                   "slide1": {
+                       ":keyword": "item",
+                       "type": "slider",
+                       "label": "Happiness",
+                       "min": 0,
+                       "max": 100,
+                       "step": 1,
+                       "initialValue": 50,
+                       "group": "form",
+                       "outputKey": "happiness"
+                   },
+                   "submit": {
+                       ":keyword": "action",
+                       "type": "group",
+                       ":children": {
+                           "write": {
+                               ":keyword": "action",
+                               "type": "write",
+                               "group": "form"
+                           },
+                           "exit": {
+                               ":keyword": "action",
+                               "type": "exit",
+                               "code": 0
+                           }
+                       }
+                   },
+                   "cancel": {
+                       ":keyword": "action",
+                       "type": "exit",
+                       "code": 1
+                   }
+               }
+           }
+       }
+   }
+}

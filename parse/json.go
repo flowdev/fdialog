@@ -7,6 +7,7 @@ import (
 	"github.com/flowdev/fdialog/x/omap"
 	"github.com/valyala/fastjson"
 	"io"
+	"strconv"
 )
 
 var jsonParser = &fastjson.ParserPool{}
@@ -89,20 +90,67 @@ func convertJSONValue(val *fastjson.Value, parent string) (any, error) {
 	case fastjson.TypeTrue:
 		return true, nil
 	case fastjson.TypeString:
-		return val.StringBytes()
+		return convertJSONString(val, parent)
 	case fastjson.TypeObject:
 		return convertJSONCommands(val, parent)
+	case fastjson.TypeArray:
+		return convertJSONArray(val, parent)
 	case fastjson.TypeNumber:
-		f, err := val.Float64()
-		if err != nil {
-			return nil, fmt.Errorf("for %q: %w", parent, err)
-		}
-		i := int64(f)
-		if float64(i) == f { // use int64 if representation is exact
-			return i, nil
-		}
-		return f, nil
+		return convertJSONNumber(val, parent)
 	default:
-		return nil, fmt.Errorf("for %q: unable to convert JSON data type %s", parent, val.Type().String())
+		return nil, fmt.Errorf("for %q: unable to convert JSON value type %s", parent, val.Type().String())
 	}
+}
+
+func convertJSONSubValue(val *fastjson.Value, parent string) (any, error) {
+	switch val.Type() {
+	case fastjson.TypeFalse:
+		return false, nil
+	case fastjson.TypeTrue:
+		return true, nil
+	case fastjson.TypeString:
+		return convertJSONString(val, parent)
+	case fastjson.TypeNumber:
+		return convertJSONNumber(val, parent)
+	default:
+		return nil, fmt.Errorf("for %q: unable to convert JSON sub-value type %s", parent, val.Type().String())
+	}
+}
+
+func convertJSONString(val *fastjson.Value, fullName string) (any, error) {
+	bs, err := val.StringBytes()
+	if err != nil {
+		return "", fmt.Errorf("for %q: converting string: %w", fullName, err)
+	}
+	if len(bs) == 0 {
+		return "", nil
+	}
+	return string(bs), nil
+}
+
+func convertJSONNumber(val *fastjson.Value, fullName string) (any, error) {
+	f, err := val.Float64()
+	if err != nil {
+		return nil, fmt.Errorf("for %q: %w", fullName, err)
+	}
+	i := int64(f)
+	if float64(i) == f { // use int64 if representation is exact
+		return i, nil
+	}
+	return f, nil
+}
+
+func convertJSONArray(val *fastjson.Value, fullName string) (any, error) {
+	arr, err := val.Array()
+	if err != nil {
+		return nil, fmt.Errorf("for %q: error converting array: %w", fullName, err)
+	}
+	result := make([]any, len(arr))
+	errs := make([]error, 0, len(arr))
+	for i, v := range arr {
+		converted, err := convertJSONSubValue(v, ui.FullNameFor(fullName, strconv.Itoa(i)))
+		errs = append(errs, err)
+		result[i] = converted
+	}
+	return result, errors.Join(errs...)
 }
