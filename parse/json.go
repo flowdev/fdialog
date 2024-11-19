@@ -3,11 +3,13 @@ package parse
 import (
 	"errors"
 	"fmt"
-	"github.com/flowdev/fdialog/ui"
-	"github.com/flowdev/fdialog/x/omap"
-	"github.com/valyala/fastjson"
 	"io"
 	"strconv"
+
+	"github.com/valyala/fastjson"
+
+	"github.com/flowdev/fdialog/ui"
+	"github.com/flowdev/fdialog/x/omap"
 )
 
 var jsonParser = &fastjson.ParserPool{}

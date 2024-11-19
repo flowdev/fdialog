@@ -101,9 +101,9 @@ func TestWrite(t *testing.T) {
 			wantOutput:  map[string]any{"l": math.Pi},
 		}, {
 			name:        "list-string",
-			gotUIValues: []uiValue{{value: []string{"abc", "def"}, name: "s"}},
+			gotUIValues: []uiValue{{value: []any{"abc", "def"}, name: "s"}},
 			gotDescr:    ui.AttributesDescr{"outputKey": "l", "fullName": "s"},
-			wantOutput:  map[string]any{"l": []string{"abc", "def"}},
+			wantOutput:  map[string]any{"l": []any{"abc", "def"}},
 		},
 	}
 
