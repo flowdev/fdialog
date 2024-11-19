@@ -334,33 +334,22 @@ func BooleanCallback(
 		return
 	}
 
-	actConfirm, _ := childrenDescr.Get(submitName)
-	if actConfirm == nil {
-		log.Printf("ERROR: for %q: %q action is missing", fullName, submitName)
+	keySubmit, _ := childrenDescr.Get(submitName)
+	if keySubmit == nil {
+		log.Printf("ERROR: for %q: %q keyword is missing", fullName, submitName)
 		return defaultCallback
 	}
-	keyword := actConfirm[ui.AttrKeyword].(string)
-	if keyword != ui.KeywordAction {
-		log.Printf("ERROR: for %q: %q action is not an action but a %q", fullName, submitName, keyword)
-		return defaultCallback
-	}
-
-	actDismiss, _ := childrenDescr.Get(cancelName)
-	if actDismiss == nil {
-		log.Printf("ERROR: for %q: %q action is missing", fullName, cancelName)
-		return defaultCallback
-	}
-	keyword = actDismiss[ui.AttrKeyword].(string)
-	if keyword != ui.KeywordAction {
-		log.Printf("ERROR: for %q: %q action is not an action but a %q", fullName, cancelName, keyword)
+	keyCancel, _ := childrenDescr.Get(cancelName)
+	if keyCancel == nil {
+		log.Printf("ERROR: for %q: %q keyword is missing", fullName, cancelName)
 		return defaultCallback
 	}
 
 	return func(submitted bool) {
 		if submitted {
-			Action(actConfirm, ui.FullNameFor(fullName, submitName), win, uiDescr)
+			Keyword(keySubmit, ui.FullNameFor(fullName, submitName), win, uiDescr)
 		} else {
-			Action(actDismiss, ui.FullNameFor(fullName, cancelName), win, uiDescr)
+			Keyword(keyCancel, ui.FullNameFor(fullName, cancelName), win, uiDescr)
 		}
 	}
 }
@@ -369,18 +358,13 @@ func CloseCallback(childDescr ui.CommandsDescr, fullName string, win fyne.Window
 	defaultCallback := func() {
 		return
 	}
-	actClose, _ := childDescr.Get("close")
-	if actClose == nil { // action is optional
-		return defaultCallback
-	}
-	keyword := actClose[ui.AttrKeyword].(string)
-	if keyword != ui.KeywordAction {
-		log.Printf("ERROR: for %q: close action is not an action but a %q", fullName, keyword)
+	keyClose, _ := childDescr.Get("close")
+	if keyClose == nil { // action is optional
 		return defaultCallback
 	}
 
 	return func() {
-		Action(actClose, ui.FullNameFor(fullName, "close"), win, uiDescr)
+		Keyword(keyClose, ui.FullNameFor(fullName, "close"), win, uiDescr)
 	}
 }
 
