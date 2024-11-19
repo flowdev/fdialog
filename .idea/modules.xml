@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project version="4">
-  <component name="ProjectModuleManager">
-    <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/fdialog.iml" filepath="$PROJECT_DIR$/.idea/fdialog.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../../ole108/parcomb/.idea/parcomb.iml" filepath="$PROJECT_DIR$/../../ole108/parcomb/.idea/parcomb.iml" />
-    </modules>
-  </component>
-</project>

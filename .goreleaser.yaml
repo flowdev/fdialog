@@ -18,9 +18,12 @@ before:
 
 builds:
   - env:
-      - CGO_ENABLED=0
+      - CGO_ENABLED=1
     goos:
       - linux
+    goarch:
+      - amd64
+      - arm64
     ldflags:
       - -X github.com/https://github.com/flowdev/fdialog/generated/buildinfo.buildDate={{.CommitDate}}
       - -X github.com/https://github.com/flowdev/fdialog/generated/buildinfo.buildVersion={{.Version}}
