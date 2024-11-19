@@ -28,7 +28,7 @@ builds:
       - -X github.com/https://github.com/flowdev/fdialog/generated/buildinfo.buildVersion={{.Version}}
       - -X github.com/https://github.com/flowdev/fdialog/generated/buildinfo.commit={{.ShortCommit}}
     tags:
-      - "{{.Env.BUILD_ENV}}"
+      - "production"
 
 archives:
   - format: tar.gz
