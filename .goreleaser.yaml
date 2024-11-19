@@ -23,7 +23,6 @@ builds:
       - linux
     goarch:
       - amd64
-      - arm64
     ldflags:
       - -X github.com/https://github.com/flowdev/fdialog/generated/buildinfo.buildDate={{.CommitDate}}
       - -X github.com/https://github.com/flowdev/fdialog/generated/buildinfo.buildVersion={{.Version}}
