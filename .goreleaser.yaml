@@ -27,8 +27,9 @@ builds:
       - -X github.com/https://github.com/flowdev/fdialog/generated/buildinfo.buildDate={{.CommitDate}}
       - -X github.com/https://github.com/flowdev/fdialog/generated/buildinfo.buildVersion={{.Version}}
       - -X github.com/https://github.com/flowdev/fdialog/generated/buildinfo.commit={{.ShortCommit}}
-    tags:
-      - "production"
+    flags:
+      - -tags=production
+      - -v
 
 archives:
   - format: tar.gz
