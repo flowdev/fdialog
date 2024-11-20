@@ -244,7 +244,8 @@ func RegisterAll() error {
 					valid.StringValidator(1, 0, nil)),
 			},
 			"initiallySelected": {
-				Validate: valid.StringValidator(1, 0, nil),
+				Validate: valid.ListValidator(0, math.MaxInt,
+					valid.StringValidator(1, 0, nil)),
 			},
 		},
 	})
@@ -337,8 +338,7 @@ func RegisterAll() error {
 				Validate: valid.ExactStringValidator("richText"),
 			},
 			"label": {
-				Required: true,
-				Validate: valid.StringValidator(1, 0, nil),
+				Validate: valid.StringValidator(0, 0, nil),
 			},
 			"hint": {
 				Validate: valid.StringValidator(1, 0, nil),
