@@ -12,8 +12,8 @@ import (
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "fdialog",
-	Short: "A small tool for displaying GUIs",
-	Long:  `A small tool for displaying GUIs`,
+	Short: "Create Native GUIs With Ease",
+	Long:  "Create Native GUIs With Ease",
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

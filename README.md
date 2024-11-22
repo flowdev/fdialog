@@ -1,4 +1,6 @@
-# fdialog - A new tool in the toolbox
+# fdialog - Create Native GUIs With Ease
+
+
 
 ## Installation
 
@@ -27,6 +29,10 @@ The script will install the binary into `$HOME/bin` folder by default, you can o
 
 Get the archive that fits your system from the [Releases](https://github.com/https://github.com/flowdev/fdialog/releases) page and
 extract the binary into a folder that is mentioned in your `$PATH` variable.
+
+## Usage
+
+
 
 ## Notes
 

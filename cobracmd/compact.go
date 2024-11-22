@@ -20,5 +20,5 @@ var compactCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(compactCmd)
+	//rootCmd.AddCommand(compactCmd)
 }

@@ -24,10 +24,10 @@ var generateCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(generateCmd)
-
-	generateCmd.Flags().StringVarP(&generateCmdData.format, "format", "t", "uidl",
-		"format of the GUI description (valid values are: json, go or uidl)")
-	generateCmd.Flags().StringVarP(&generateCmdData.dest, "dest", "d", ".",
-		"destination directory for the generated result files")
+	//rootCmd.AddCommand(generateCmd)
+	//
+	//generateCmd.Flags().StringVarP(&generateCmdData.format, "format", "t", "uidl",
+	//	"format of the GUI description (valid values are: 'json' and 'uidl')")
+	//generateCmd.Flags().StringVarP(&generateCmdData.dest, "dest", "d", ".",
+	//	"destination directory for the generated result files")
 }
