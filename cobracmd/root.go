@@ -1,6 +1,7 @@
 package cobracmd
 
 import (
+	"log"
 	"os"
 
 	cmd "github.com/can3p/kleiner/shared/cmd/cobra"
@@ -27,7 +28,12 @@ func Execute() {
 
 func init() {
 	info := buildinfo.Info()
-
 	cmd.Setup(info, rootCmd)
+
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("WARNING: %v", r)
+		}
+	}()
 	published.MaybeNotifyAboutNewVersion(info)
 }
