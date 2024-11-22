@@ -32,8 +32,15 @@ extract the binary into a folder that is mentioned in your `$PATH` variable.
 
 ## Usage
 
+The basic usage is:
+```shell
+fdialog run --file dialog.uidl
+```
 
+Please run `fdialog help` for more information.
 
 ## Notes
+
+The UIDL file format is documented [here](./UIDL.md).
 
 The project has been scaffolded with the help of [kleiner](https://github.com/can3p/kleiner)
