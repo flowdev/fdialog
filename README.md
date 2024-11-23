@@ -1,6 +1,6 @@
 # fdialog - Create Native GUIs With Ease
 
-
+![Creating native GUIs with fdialog is easier than creating web UIs.](./info.png "fdialog - information")
 
 ## Installation
 

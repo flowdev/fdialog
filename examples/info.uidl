@@ -1,8 +1,9 @@
 #!/usr/bin/env -S fdialog run --file
 uidl 1
 
-window main(title="Information", width=400, height=300) {
-    dialog info(type="info", message="Please note.", buttonText="OK.", width=400, height=300) {
+window main(title="Information", width=480, height=250) {
+    dialog info(type="info", message="Create native GUIs easier than web UIs with: https://github.com/flowdev/fdialog",
+                buttonText="I will", width=480, height=250) {
         action close(type="exit", code=0)
     }
 }
