@@ -127,3 +127,246 @@ All attributes are optional but either `group` or `outputKey` and one of
   (optional, string type, minimum length: 1)
 * `cancelText`: text of the cancel button
   (optional, string type, minimum length: 1)
+
+### Keyword: `item`
+* Keyword: `item`
+* Type: `entry`
+* Function: display a single line text entry of a form
+* Children: none
+###### Attributes:
+* `label`: label of the text entry
+  (required, string type, minimum length: 1)
+* `disabled`: is the entry initially disabled?
+  (optional, boolean type)
+* `hint`: hint text for the entry
+  (optional, string type, minimum length: 1)
+* `placeHolder`: text initially shown in the entry area
+  (optional, string type, minimum length: 1)
+* `minLen`: minimum length of a valid entry
+  (optional, integer type, minimum value: 0)
+* `maxLen`: maximum length of a valid entry
+  (optional, integer type, minimum value: 0)
+* `regexp`: regular expression that a valid entry has to match
+  (optional, string type, minimum length: 1)
+* `failText`: text shown if the validation of entry text fails
+  (optional, string type, minimum length: 1)
+* `outputKey`: key of the entry data for writing to output
+  (optional, string type, valid identifier)
+
+### Keyword: `item`
+* Keyword: `item`
+* Type: `multiLineEntry`
+* Function: display a multiple line text entry of a form
+* Children: none
+###### Attributes:
+* `label`: label of the text entry
+  (required, string type, minimum length: 1)
+* `disabled`: is the entry initially disabled?
+  (optional, boolean type)
+* `hint`: hint text for the entry
+  (optional, string type, minimum length: 1)
+* `placeHolder`: text initially shown in the entry area
+  (optional, string type, minimum length: 1)
+* `minLen`: minimum length of a valid entry
+  (optional, integer type, minimum value: 0)
+* `maxLen`: maximum length of a valid entry
+  (optional, integer type, minimum value: 0)
+* `regexp`: regular expression that a valid entry has to match
+  (optional, string type, minimum length: 1)
+* `failText`: text shown if the validation of entry text fails
+  (optional, string type, minimum length: 1)
+* `outputKey`: key of the entry data for writing to output
+  (optional, string type, valid identifier)
+
+### Keyword: `item`
+* Keyword: `item`
+* Type: `passwordEntry`
+* Function: display a text entry for passwords (hidden text) of a form
+* Children: none
+###### Attributes:
+* `label`: label of the text entry
+  (required, string type, minimum length: 1)
+* `disabled`: is the entry initially disabled?
+  (optional, boolean type)
+* `hint`: hint text for the entry
+  (optional, string type, minimum length: 1)
+* `placeHolder`: text initially shown in the entry area
+  (optional, string type, minimum length: 1)
+* `minLen`: minimum length of a valid entry
+  (optional, integer type, minimum value: 0)
+* `maxLen`: maximum length of a valid entry
+  (optional, integer type, minimum value: 0)
+* `regexp`: regular expression that a valid entry has to match
+  (optional, string type, minimum length: 1)
+* `failText`: text shown if the validation of entry text fails
+  (optional, string type, minimum length: 1)
+* `outputKey`: key of the entry data for writing to output
+  (optional, string type, valid identifier)
+
+### Keyword: `item`
+* Keyword: `item`
+* Type: `checkBox`
+* Function: display a checkbox of a form
+* Children: none
+###### Attributes:
+* `label`: label of the checkbox
+  (required, string type, minimum length: 1)
+* `disabled`: is the checkbox initially disabled?
+  (optional, boolean type)
+* `hint`: hint text for the checkbox
+  (optional, string type, minimum length: 1)
+* `subLabel`: text displayed next to the checkbox itself
+  (optional, string type, minimum length: 1)
+* `outputKey`: key of the entry data for writing to output
+  (optional, string type, valid identifier)
+
+### Keyword: `item`
+* Keyword: `item`
+* Type: `checkGroup`
+* Function: display a group of checkboxes of a form
+* Children: none
+###### Attributes:
+* `label`: label of the checkboxes
+  (required, string type, minimum length: 1)
+* `disabled`: are the checkboxes initially disabled?
+  (optional, boolean type)
+* `hint`: hint text for the checkboxes
+  (optional, string type, minimum length: 1)
+* `options`: texts displayed next to the checkboxes
+  (required, list of strings type, minimum length: 1)
+* `initiallySelected`: initially selected checkboxes
+  (optional, list of strings type, minimum length: 0)
+* `outputKey`: key of the entry data for writing to output
+  (optional, string type, valid identifier)
+
+### Keyword: `item`
+* Keyword: `item`
+* Type: `radioGroup`
+* Function: display a group of radio buttons of a form
+* Children: none
+###### Attributes:
+* `label`: label of the radio button group
+  (required, string type, minimum length: 1)
+* `disabled`: are the buttons initially disabled?
+  (optional, boolean type)
+* `hint`: hint text for the radio buttons
+  (optional, string type, minimum length: 1)
+* `options`: texts displayed next to the checkboxes
+  (required, list of strings type, minimum length: 2)
+* `initiallySelected`: initially selected checkboxes
+  (optional, list of strings type, minimum length: 1)
+* `horizontal`: are the buttons arranged horizontally?
+  (optional, boolean type)
+* `required`: has one button to be selected?
+  (optional, boolean type)
+* `outputKey`: key of the entry data for writing to output
+  (optional, string type, valid identifier)
+
+### Keyword: `item`, Type `select`
+* Keyword: `item`
+* Type: `select`
+* Function: display a select entry (a.k.a. drop-down list) of a form
+* Children: none
+###### Attributes:
+* `label`: label of the select entry
+  (required, string type, minimum length: 1)
+* `disabled`: are the entry initially disabled?
+  (optional, boolean type)
+* `hint`: hint text for the select entry
+  (optional, string type, minimum length: 1)
+* `placeHolder`: text initially shown in the entry area
+  (optional, string type, minimum length: 1)
+* `options`: texts displayed next to the checkboxes
+  (required, list of strings type, minimum length: 2)
+* `initiallySelected`: initially selected checkboxes
+  (optional, string type, minimum length: 1)
+* `outputKey`: key of the entry data for writing to output
+  (optional, string type, valid identifier)
+
+### Keyword: `item`, Type `selectEntry`
+* Keyword: `item`
+* Type: `selectEntry`
+* Function: display a mix of a select and a text entry of a form
+* Children: none
+###### Attributes:
+* `label`: label of the select entry
+  (required, string type, minimum length: 1)
+* `disabled`: is the entry initially disabled?
+  (optional, boolean type)
+* `hint`: hint text for the select entry
+  (optional, string type, minimum length: 1)
+* `placeHolder`: text initially shown in the entry area
+  (optional, string type, minimum length: 1)
+* `options`: texts displayed next to the checkboxes
+  (required, list of strings type, minimum length: 0)
+* `minLen`: minimum length of a valid entry
+  (optional, integer type, minimum value: 0)
+* `maxLen`: maximum length of a valid entry
+  (optional, integer type, minimum value: 0)
+* `regexp`: regular expression that a valid entry has to match
+  (optional, string type, minimum length: 1)
+* `failText`: text shown if the validation of entry text fails
+  (optional, string type, minimum length: 1)
+* `outputKey`: key of the entry data for writing to output
+  (optional, string type, valid identifier)
+
+### Keyword: `item`, Type `slider`
+* Keyword: `item`
+* Type: `slider`
+* Function: display a value slider in a form
+* Children: none
+###### Attributes:
+* `label`: label of the slider
+  (required, string type, minimum length: 1)
+* `disabled`: is the slider initially disabled?
+  (optional, boolean type)
+* `hint`: hint text for the slider
+  (optional, string type, minimum length: 1)
+* `min`: minimum value of a valid entry
+  (optional, float type, any value except `NaN`, `+inf` and `-inf`)
+* `max`: maximum value of a valid entry
+  (optional, float type, any value except `NaN`, `+inf` and `-inf`)
+* `step`: the gap between valid values
+  (optional, float type, minimum value: 0.0)
+* `initialValue`: initial value of the slider
+  (optional, float type, any value except `NaN`, `+inf` and `-inf`)
+* `outputKey`: key of the entry data for writing to output
+  (optional, string type, valid identifier)
+
+### Keyword: `item`, Type `richText`
+* Keyword: `item`
+* Type: `richText`
+* Function: display some formated text in a form
+* Children: none
+###### Attributes:
+* `label`: label of the text
+  (optional, string type, minimum length: 1)
+* `hint`: hint text for the slider
+  (optional, string type, minimum length: 1)
+* `text`: text in MarkDown format to be displayed
+  (required, string type, minimum length: 1)
+* `scroll`: scrollbars for the text
+  (optional, string type, `horizontal`, `vertical`, `both` or `none`)
+
+### Keyword: `item`, Type `hyperlink`
+* Keyword: `item`
+* Type: `hyperlink`
+* Function: display a hyperlink (HTTP or HTTPS) in a form
+* Children: none
+###### Attributes:
+* `label`: label of the text
+  (optional, string type, minimum length: 1)
+* `hint`: hint text for the slider
+  (optional, string type, minimum length: 1)
+* `text`: text to be displayed
+  (required, string type, minimum length: 1)
+* `url`: destination of the link as HTTP or HTTPS
+  (required, string type, valid HTTP or HTTPS URL)
+
+### Keyword: `item`, Type `separator`
+* Keyword: `item`
+* Type: `separator`
+* Function: display a separator in a form
+* Children: none
+###### Attributes:
+None.

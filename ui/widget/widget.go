@@ -62,7 +62,7 @@ func RegisterAll() error {
 				Validate: valid.ExactStringValidator("entry"),
 			},
 			ui.AttrOutputKey: {
-				Validate: valid.StringValidator(1, 0, nil),
+				Validate: valid.StringValidator(1, 0, ui.NameRegex),
 			},
 			"label": {
 				Required: true,
@@ -106,7 +106,7 @@ func RegisterAll() error {
 				Validate: valid.ExactStringValidator("multiLineEntry"),
 			},
 			ui.AttrOutputKey: {
-				Validate: valid.StringValidator(1, 0, nil),
+				Validate: valid.StringValidator(1, 0, ui.NameRegex),
 			},
 			"label": {
 				Required: true,
@@ -150,7 +150,7 @@ func RegisterAll() error {
 				Validate: valid.ExactStringValidator("passwordEntry"),
 			},
 			ui.AttrOutputKey: {
-				Validate: valid.StringValidator(1, 0, nil),
+				Validate: valid.StringValidator(1, 0, ui.NameRegex),
 			},
 			"label": {
 				Required: true,
@@ -194,7 +194,7 @@ func RegisterAll() error {
 				Validate: valid.ExactStringValidator("checkBox"),
 			},
 			ui.AttrOutputKey: {
-				Validate: valid.StringValidator(1, 0, nil),
+				Validate: valid.StringValidator(1, 0, ui.NameRegex),
 			},
 			"label": {
 				Required: true,
@@ -226,7 +226,7 @@ func RegisterAll() error {
 				Validate: valid.ExactStringValidator("checkGroup"),
 			},
 			ui.AttrOutputKey: {
-				Validate: valid.StringValidator(1, 0, nil),
+				Validate: valid.StringValidator(1, 0, ui.NameRegex),
 			},
 			"label": {
 				Required: true,
@@ -264,7 +264,6 @@ func RegisterAll() error {
 				Validate: valid.ExactStringValidator("hyperlink"),
 			},
 			"label": {
-				Required: true,
 				Validate: valid.StringValidator(1, 0, nil),
 			},
 			"hint": {
@@ -295,7 +294,7 @@ func RegisterAll() error {
 				Validate: valid.ExactStringValidator("radioGroup"),
 			},
 			ui.AttrOutputKey: {
-				Validate: valid.StringValidator(1, 0, nil),
+				Validate: valid.StringValidator(1, 0, ui.NameRegex),
 			},
 			"label": {
 				Required: true,
@@ -338,7 +337,7 @@ func RegisterAll() error {
 				Validate: valid.ExactStringValidator("richText"),
 			},
 			"label": {
-				Validate: valid.StringValidator(0, 0, nil),
+				Validate: valid.StringValidator(1, 0, nil),
 			},
 			"hint": {
 				Validate: valid.StringValidator(1, 0, nil),
@@ -367,7 +366,7 @@ func RegisterAll() error {
 				Validate: valid.ExactStringValidator("select"),
 			},
 			ui.AttrOutputKey: {
-				Validate: valid.StringValidator(1, 0, nil),
+				Validate: valid.StringValidator(1, 0, ui.NameRegex),
 			},
 			"label": {
 				Required: true,
@@ -384,7 +383,7 @@ func RegisterAll() error {
 			},
 			"options": {
 				Required: true,
-				Validate: valid.ListValidator(0, math.MaxInt,
+				Validate: valid.ListValidator(2, math.MaxInt,
 					valid.StringValidator(1, 0, nil)),
 			},
 			"initiallySelected": {
@@ -407,7 +406,7 @@ func RegisterAll() error {
 				Validate: valid.ExactStringValidator("selectEntry"),
 			},
 			ui.AttrOutputKey: {
-				Validate: valid.StringValidator(1, 0, nil),
+				Validate: valid.StringValidator(1, 0, ui.NameRegex),
 			},
 			"label": {
 				Required: true,
@@ -472,7 +471,7 @@ func RegisterAll() error {
 				Validate: valid.ExactStringValidator("slider"),
 			},
 			ui.AttrOutputKey: {
-				Validate: valid.StringValidator(1, 0, nil),
+				Validate: valid.StringValidator(1, 0, ui.NameRegex),
 			},
 			"label": {
 				Required: true,
