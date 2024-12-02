@@ -39,66 +39,6 @@ func createPasswordEntry(attrs ui.AttributesDescr, values map[string]any, output
 	return entry
 }
 
-func createCheckBox(attrs ui.AttributesDescr, values map[string]any, outputKey, _ string) fyne.CanvasObject {
-	subLabel, _ := attrs["subLabel"].(string)
-	box := widget.NewCheck(subLabel, nil)
-	values[outputKey] = &box.Checked
-	return box
-}
-
-func createCheckGroup(attrs ui.AttributesDescr, values map[string]any, outputKey, _ string) fyne.CanvasObject {
-	cg := widget.NewCheckGroup(ui.AnysToStrings(attrs["options"]), func(selected []string) {
-		result := make([]any, len(selected))
-		for i := 0; i < len(selected); i++ {
-			result[i] = selected[i]
-		}
-		values[outputKey] = &result
-	})
-	cg.SetSelected(ui.AnysToStrings(attrs["initiallySelected"]))
-	return cg
-}
-
-func createHyperlink(attrs ui.AttributesDescr, _ map[string]any, _, fullName string) fyne.CanvasObject {
-	text, _ := attrs["text"].(string)
-	surl, _ := attrs["url"].(string)
-	link, err := url.Parse(surl)
-	if err != nil {
-		log.Printf("ERROR: for %q: %v", fullName, err)
-	}
-	return widget.NewHyperlink(text, link)
-}
-
-func createRadioGroup(attrs ui.AttributesDescr, values map[string]any, outputKey, _ string) fyne.CanvasObject {
-	rg := widget.NewRadioGroup(ui.AnysToStrings(attrs["options"]), nil)
-	horizontal, _ := attrs["horizontal"].(bool)
-	rg.Horizontal = horizontal
-	required, _ := attrs["required"].(bool)
-	rg.Required = required
-	if initial, ok := attrs["initiallySelected"].(string); ok {
-		rg.SetSelected(initial)
-	}
-	values[outputKey] = &rg.Selected
-	return rg
-}
-
-func createRichText(attrs ui.AttributesDescr, _ map[string]any, _, _ string) fyne.CanvasObject {
-	text, _ := attrs["text"].(string)
-	rt := widget.NewRichTextFromMarkdown(text)
-	rt.Wrapping = fyne.TextWrapWord
-	scroll, _ := attrs["scroll"].(string)
-	switch scroll {
-	case "both":
-		rt.Scroll = container.ScrollBoth
-	case "horizontal":
-		rt.Scroll = container.ScrollHorizontalOnly
-	case "vertical":
-		rt.Scroll = container.ScrollVerticalOnly
-	case "none":
-		rt.Scroll = container.ScrollNone
-	}
-	return rt
-}
-
 func createSelect(attrs ui.AttributesDescr, values map[string]any, outputKey, _ string) fyne.CanvasObject {
 	sel := widget.NewSelect(ui.AnysToStrings(attrs["options"]), nil)
 	if ph, ok := attrs["placeHolder"].(string); ok {
@@ -121,8 +61,36 @@ func createSelectEntry(attrs ui.AttributesDescr, values map[string]any, outputKe
 	return sel
 }
 
-func createSeparator(_ ui.AttributesDescr, _ map[string]any, _, _ string) fyne.CanvasObject {
-	return widget.NewSeparator()
+func createCheckBox(attrs ui.AttributesDescr, values map[string]any, outputKey, _ string) fyne.CanvasObject {
+	subLabel, _ := attrs["subLabel"].(string)
+	box := widget.NewCheck(subLabel, nil)
+	values[outputKey] = &box.Checked
+	return box
+}
+
+func createCheckGroup(attrs ui.AttributesDescr, values map[string]any, outputKey, _ string) fyne.CanvasObject {
+	cg := widget.NewCheckGroup(ui.AnysToStrings(attrs["options"]), func(selected []string) {
+		result := make([]any, len(selected))
+		for i := 0; i < len(selected); i++ {
+			result[i] = selected[i]
+		}
+		values[outputKey] = &result
+	})
+	cg.SetSelected(ui.AnysToStrings(attrs["initiallySelected"]))
+	return cg
+}
+
+func createRadioGroup(attrs ui.AttributesDescr, values map[string]any, outputKey, _ string) fyne.CanvasObject {
+	rg := widget.NewRadioGroup(ui.AnysToStrings(attrs["options"]), nil)
+	horizontal, _ := attrs["horizontal"].(bool)
+	rg.Horizontal = horizontal
+	required, _ := attrs["required"].(bool)
+	rg.Required = required
+	if initial, ok := attrs["initiallySelected"].(string); ok {
+		rg.SetSelected(initial)
+	}
+	values[outputKey] = &rg.Selected
+	return rg
 }
 
 func createSlider(attrs ui.AttributesDescr, values map[string]any, outputKey, _ string) fyne.CanvasObject {
@@ -140,4 +108,36 @@ func createSlider(attrs ui.AttributesDescr, values map[string]any, outputKey, _ 
 	}
 	values[outputKey] = &slider.Value
 	return slider
+}
+
+func createRichText(attrs ui.AttributesDescr, _ map[string]any, _, _ string) fyne.CanvasObject {
+	text, _ := attrs["text"].(string)
+	rt := widget.NewRichTextFromMarkdown(text)
+	rt.Wrapping = fyne.TextWrapWord
+	scroll, _ := attrs["scroll"].(string)
+	switch scroll {
+	case "both":
+		rt.Scroll = container.ScrollBoth
+	case "horizontal":
+		rt.Scroll = container.ScrollHorizontalOnly
+	case "vertical":
+		rt.Scroll = container.ScrollVerticalOnly
+	case "none":
+		rt.Scroll = container.ScrollNone
+	}
+	return rt
+}
+
+func createHyperlink(attrs ui.AttributesDescr, _ map[string]any, _, fullName string) fyne.CanvasObject {
+	text, _ := attrs["text"].(string)
+	surl, _ := attrs["url"].(string)
+	link, err := url.Parse(surl)
+	if err != nil {
+		log.Printf("ERROR: for %q: %v", fullName, err)
+	}
+	return widget.NewHyperlink(text, link)
+}
+
+func createSeparator(_ ui.AttributesDescr, _ map[string]any, _, _ string) fyne.CanvasObject {
+	return widget.NewSeparator()
 }
