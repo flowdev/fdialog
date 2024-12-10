@@ -35,7 +35,7 @@ func runPickColor(colorDescr ui.AttributesDescr, fullName string, win fyne.Windo
 	})
 	picker.Refresh() // update the picker internal UI to prevent nil pointer dereference
 
-	value = colorDescr["buttonText"]
+	value = colorDescr["cancelText"]
 	if value != nil {
 		picker.SetDismissText(value.(string))
 	}

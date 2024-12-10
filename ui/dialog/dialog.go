@@ -140,10 +140,10 @@ func RegisterAll() error {
 				Validate: valid.ListValidator(1, math.MaxInt,
 					valid.StringValidator(2, 0, extensionRegex)),
 			},
-			"dismissText": {
+			"cancelText": {
 				Validate: valid.StringValidator(1, 0, nil),
 			},
-			"confirmText": {
+			"chooseText": {
 				Validate: valid.StringValidator(1, 0, nil),
 			},
 			"width": {
@@ -177,10 +177,10 @@ func RegisterAll() error {
 				Validate: valid.ListValidator(1, math.MaxInt,
 					valid.StringValidator(2, 0, extensionRegex)),
 			},
-			"dismissText": {
+			"cancelText": {
 				Validate: valid.StringValidator(1, 0, nil),
 			},
-			"confirmText": {
+			"chooseText": {
 				Validate: valid.StringValidator(1, 0, nil),
 			},
 			"width": {
@@ -210,10 +210,10 @@ func RegisterAll() error {
 				Required: true,
 				Validate: valid.ExactStringValidator("openFolder"),
 			},
-			"dismissText": {
+			"cancelText": {
 				Validate: valid.StringValidator(1, 0, nil),
 			},
-			"confirmText": {
+			"chooseText": {
 				Validate: valid.StringValidator(1, 0, nil),
 			},
 			"width": {
@@ -246,7 +246,7 @@ func RegisterAll() error {
 			"title": {
 				Validate: valid.StringValidator(1, 0, nil),
 			},
-			"buttonText": {
+			"cancelText": {
 				Validate: valid.StringValidator(1, 0, nil),
 			},
 			"width": {

@@ -5,7 +5,7 @@ window main(title="Pick Color", width=500, height=500, exitCode=1) {
     dialog pickColor (
         type="pickColor",
         title="Pick Color",
-        buttonText="Cancel",
+        cancelText="Cancel",
         initialColor="#1f8f2f",
         advanced=true,
         width=500, height=500,

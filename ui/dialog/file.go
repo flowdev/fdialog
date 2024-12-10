@@ -85,11 +85,11 @@ func runSaveFile(sfDescr ui.AttributesDescr, fullName string, win fyne.Window, u
 		sfDialog.SetFilter(storage.NewExtensionFileFilter(ui.AnysToStrings(extAttr)))
 	}
 
-	value := sfDescr["confirmText"]
+	value := sfDescr["chooseText"]
 	if value != nil {
 		sfDialog.SetConfirmText(value.(string))
 	}
-	value = sfDescr["dismissText"]
+	value = sfDescr["cancelText"]
 	if value != nil {
 		sfDialog.SetDismissText(value.(string))
 	}
@@ -129,11 +129,11 @@ func runOpenFolder(ofDescr ui.AttributesDescr, fullName string, win fyne.Window,
 		callback(true)
 	}, win)
 
-	value := ofDescr["confirmText"]
+	value := ofDescr["chooseText"]
 	if value != nil {
 		ofDialog.SetConfirmText(value.(string))
 	}
-	value = ofDescr["dismissText"]
+	value = ofDescr["cancelText"]
 	if value != nil {
 		ofDialog.SetDismissText(value.(string))
 	}

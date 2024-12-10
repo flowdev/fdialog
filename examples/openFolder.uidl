@@ -4,8 +4,8 @@ uidl 1
 window main(title="Open Folder", width=800, height=600, exitCode=1) {
     dialog openFolder (
         type="openFolder",
-        confirmText="Open",
-        dismissText="Cancel",
+        chooseText="Open",
+        cancelText="Cancel",
         width=800, height=600,
     ) {
         action choose(type="group") {

@@ -4,8 +4,8 @@ uidl 1
 window main(title="Open File", width=800, height=600, exitCode=1) {
     dialog openFile (
         type="openFile",
-        confirmText="Open",
-        dismissText="Go back",
+        chooseText="Open",
+        cancelText="Go back",
         extensions=[".jpg", ".jpeg"],
         width=800, height=600,
     ) {
